@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Dialog } from "@/components/ui/Dialog";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { DocumentPreviewModal } from "@/components/ui/DocumentPreviewModal";
+import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
 import type { InventoryItem } from "@/types";
@@ -33,11 +34,8 @@ export const InventoryPage: React.FC = () => {
     hasPermission("manage_inventory") ||
     hasPermission("audit_finance") ||
     isPresident;
-
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
 
-  // TanStack Query
   const { data: items = [], isLoading } = useQuery<InventoryItem[]>({
     queryKey: queryKeys.inventory,
     queryFn: () => api.get<InventoryItem[]>("/inventory"),
@@ -45,10 +43,7 @@ export const InventoryPage: React.FC = () => {
 
   // Modals
   const [createOpen, setCreateOpen] = useState(false);
-  const [previewProof, setPreviewProof] = useState<{
-    title: string;
-    url: string;
-  } | null>(null);
+  const [previewProof, setPreviewProof] = useState<InventoryItem | null>(null);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [deletingItem, setDeletingItem] = useState<InventoryItem | null>(null);
 
@@ -248,12 +243,7 @@ export const InventoryPage: React.FC = () => {
                           <div className="flex items-center gap-1.5">
                             <button
                               type="button"
-                              onClick={() =>
-                                setPreviewProof({
-                                  title: `Proof of Receipt: ${item.itemName}`,
-                                  url: item.proofUrl!,
-                                })
-                              }
+                              onClick={() => setPreviewProof(item)}
                               className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary text-[10px] font-semibold transition-colors"
                               title="Preview proof of item received"
                             >
@@ -401,18 +391,14 @@ export const InventoryPage: React.FC = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-foreground mb-1">
-              Remarks & Custody Notes
-            </label>
-            <textarea
-              value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
-              rows={2}
-              className="w-full px-3 py-1.5 rounded-md text-xs border border-input bg-transparent text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-              placeholder="Serial numbers, donor info, or custody notes..."
-            />
-          </div>
+          <MarkdownTextarea
+            label="Remarks & Custody Notes"
+            value={remarks}
+            onChange={setRemarks}
+            placeholder="Serial numbers, donor info, or custody notes..."
+            minHeight="min-h-[85px]"
+            maxHeight="max-h-[200px]"
+          />
 
           <div className="flex justify-end gap-2 pt-4">
             <Button
@@ -504,17 +490,14 @@ export const InventoryPage: React.FC = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-foreground mb-1">
-              Remarks & Custody Notes
-            </label>
-            <textarea
-              value={editRemarks}
-              onChange={(e) => setEditRemarks(e.target.value)}
-              rows={2}
-              className="w-full px-3 py-1.5 rounded-md text-xs border border-input bg-transparent text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
+          <MarkdownTextarea
+            label="Remarks & Custody Notes"
+            value={editRemarks}
+            onChange={setEditRemarks}
+            placeholder="Serial numbers, donor info, or custody notes..."
+            minHeight="min-h-[85px]"
+            maxHeight="max-h-[200px]"
+          />
 
           <div className="flex justify-end gap-2 pt-4">
             <Button
@@ -544,14 +527,32 @@ export const InventoryPage: React.FC = () => {
         onClose={() => setDeletingItem(null)}
       />
 
-      {/* Proof of Item Received Preview Modal */}
+      {/* Proof of Item Received Preview Modal with Left Information Sidebar */}
       {previewProof && (
         <DocumentPreviewModal
           open={!!previewProof}
           onClose={() => setPreviewProof(null)}
-          title={previewProof.title}
+          title={`Proof of Receipt: ${previewProof.itemName}`}
           subtitle="Property Acknowledgment Receipt / Delivery Confirmation Document"
-          url={previewProof.url}
+          url={previewProof.proofUrl || ""}
+          fileMeta={{
+            title: previewProof.itemName,
+            fileName: `PAR_${previewProof.itemName.replace(/\s+/g, "_")}.pdf`,
+            fileType: "Property Acknowledgment Receipt (PAR)",
+            category: "Asset Inventory Record",
+            status: previewProof.condition.toUpperCase(),
+            dateUploaded: new Date(previewProof.updatedAt).toLocaleDateString(undefined, {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }),
+            description: previewProof.remarks,
+            customFields: [
+              { label: "Quantity", value: `${previewProof.quantity} units` },
+              { label: "Condition", value: previewProof.condition },
+              { label: "Storage Location", value: previewProof.location || "Unassigned" },
+            ],
+          }}
         />
       )}
     </>

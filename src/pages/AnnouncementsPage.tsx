@@ -14,6 +14,8 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Dialog } from "@/components/ui/Dialog";
 import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import type { Announcement, AnnouncementScope } from "@/types";
 
 const PAGE_SIZE = 6;
@@ -189,9 +191,9 @@ export const AnnouncementsPage: React.FC = () => {
                   <h4 className="text-sm font-bold text-foreground">
                     {item.title}
                   </h4>
-                  <p className="text-xs text-muted-foreground mt-2 leading-relaxed whitespace-pre-wrap">
-                    {item.content}
-                  </p>
+                  <div className="mt-2 text-xs leading-relaxed">
+                    <MarkdownRenderer content={item.content} />
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -243,19 +245,15 @@ export const AnnouncementsPage: React.FC = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-foreground mb-1">
-              Content
-            </label>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              required
-              rows={4}
-              className="w-full px-3 py-1.5 rounded-md text-xs border border-input bg-transparent text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-              placeholder="Official announcement body..."
-            />
-          </div>
+          <MarkdownTextarea
+            label="Content"
+            value={content}
+            onChange={setContent}
+            required
+            placeholder="Official announcement body..."
+            minHeight="min-h-[100px]"
+            maxHeight="max-h-[250px]"
+          />
 
           <div className="p-3 rounded-lg border border-border bg-secondary/30 space-y-2">
             <div className="flex items-center gap-2">

@@ -31,6 +31,8 @@ import { Dialog } from "@/components/ui/Dialog";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Select } from "@/components/ui/Select";
 import { SearchBar } from "@/components/ui/SearchBar";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import { buildGoogleCalendarUrl } from "@/lib/calendar";
 import type { GPOAEvent, Task, TaskStatus, User } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -1272,14 +1274,10 @@ export const TasksPage: React.FC = () => {
               <div
                 className={
                   "p-3 rounded-lg border border-border bg-card/60 " +
-                  "text-xs text-foreground whitespace-pre-wrap min-h-[80px]"
+                  "text-xs text-foreground min-h-[80px] max-h-56 overflow-y-auto"
                 }
               >
-                {selectedTask.description || (
-                  <span className="text-muted-foreground italic">
-                    No detailed description provided for this item.
-                  </span>
-                )}
+                <MarkdownRenderer content={selectedTask.description} />
               </div>
             </div>
 
@@ -1720,26 +1718,14 @@ export const TasksPage: React.FC = () => {
             />
           </div>
 
-          <div>
-            <label
-              className={
-                "block text-[11px] font-semibold " + "text-foreground mb-1"
-              }
-            >
-              Description
-            </label>
-            <textarea
-              value={editDescription}
-              onChange={(e) => setEditDescription(e.target.value)}
-              rows={3}
-              className={
-                "w-full px-3 py-1.5 rounded-md text-xs border " +
-                "border-input bg-transparent text-foreground " +
-                "focus:outline-none focus:ring-1 focus:ring-ring"
-              }
-              placeholder="Provide context and requirements..."
-            />
-          </div>
+          <MarkdownTextarea
+            label="Description"
+            value={editDescription}
+            onChange={setEditDescription}
+            placeholder="Provide context and requirements..."
+            minHeight="min-h-[85px]"
+            maxHeight="max-h-[200px]"
+          />
 
           <div className="flex justify-end gap-2 pt-2">
             <Button
@@ -1823,26 +1809,14 @@ export const TasksPage: React.FC = () => {
             />
           </div>
 
-          <div>
-            <label
-              className={
-                "block text-[11px] font-semibold " + "text-foreground mb-1"
-              }
-            >
-              Description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              className={
-                "w-full px-3 py-1.5 rounded-md text-xs border " +
-                "border-input bg-transparent text-foreground " +
-                "focus:outline-none focus:ring-1 focus:ring-ring"
-              }
-              placeholder="Provide context and requirements..."
-            />
-          </div>
+          <MarkdownTextarea
+            label="Description"
+            value={description}
+            onChange={setDescription}
+            placeholder="Provide context and requirements..."
+            minHeight="min-h-[85px]"
+            maxHeight="max-h-[200px]"
+          />
 
           <div>
             <label

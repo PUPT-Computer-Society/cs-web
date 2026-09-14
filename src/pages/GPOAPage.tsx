@@ -23,8 +23,8 @@ import { Dialog } from "@/components/ui/Dialog";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { SearchBar } from "@/components/ui/SearchBar";
 import { buildGoogleCalendarUrl } from "@/lib/calendar";
+import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import type { GPOAEvent } from "@/types";
-import { type } from "os";
 
 const formatForDateTimeLocal = (dateStr: string) => {
   if (!dateStr) return "";
@@ -388,24 +388,14 @@ export const GPOAPage: React.FC = () => {
             />
           </div>
 
-          <div>
-            <label
-              className={"block text-[11px] font-semibold text-foreground mb-1"}
-            >
-              Description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={2}
-              className={
-                "w-full px-3 py-1.5 rounded-md text-xs border " +
-                "border-input bg-transparent text-foreground " +
-                "focus:outline-none focus:ring-1 focus:ring-ring"
-              }
-              placeholder="Agenda flow and objectives..."
-            />
-          </div>
+          <MarkdownTextarea
+            label="Description"
+            value={description}
+            onChange={setDescription}
+            placeholder="Agenda flow, deliverables, and objectives..."
+            minHeight="min-h-[85px]"
+            maxHeight="max-h-[200px]"
+          />
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -537,24 +527,14 @@ export const GPOAPage: React.FC = () => {
             />
           </div>
 
-          <div>
-            <label
-              className={"block text-[11px] font-semibold text-foreground mb-1"}
-            >
-              Description
-            </label>
-            <textarea
-              value={editDescription}
-              onChange={(e) => setEditDescription(e.target.value)}
-              rows={2}
-              className={
-                "w-full px-3 py-1.5 rounded-md text-xs border " +
-                "border-input bg-transparent text-foreground " +
-                "focus:outline-none focus:ring-1 focus:ring-ring"
-              }
-              placeholder="Agenda flow and objectives..."
-            />
-          </div>
+          <MarkdownTextarea
+            label="Description"
+            value={editDescription}
+            onChange={setEditDescription}
+            placeholder="Agenda flow, deliverables, and objectives..."
+            minHeight="min-h-[85px]"
+            maxHeight="max-h-[200px]"
+          />
 
           <div className="grid grid-cols-2 gap-3">
             <div>

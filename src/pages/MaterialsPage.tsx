@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Dialog } from "@/components/ui/Dialog";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { DocumentPreviewModal } from "@/components/ui/DocumentPreviewModal";
+import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
 import { getGooglePreviewUrl } from "@/lib/preview";
@@ -583,18 +584,14 @@ export const MaterialsPage: React.FC = () => {
             </p>
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-foreground mb-1">
-              Description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={2}
-              className="w-full px-3 py-1.5 rounded-md text-xs border border-input bg-transparent text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-              placeholder="Syllabus coverage or usage instructions..."
-            />
-          </div>
+          <MarkdownTextarea
+            label="Description"
+            value={description}
+            onChange={setDescription}
+            placeholder="Syllabus coverage, topics, or usage instructions..."
+            minHeight="min-h-[85px]"
+            maxHeight="max-h-[220px]"
+          />
 
           <div className="flex justify-end gap-2 pt-4">
             <Button
@@ -671,17 +668,14 @@ export const MaterialsPage: React.FC = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-foreground mb-1">
-              Description
-            </label>
-            <textarea
-              value={editDescription}
-              onChange={(e) => setEditDescription(e.target.value)}
-              rows={2}
-              className="w-full px-3 py-1.5 rounded-md text-xs border border-input bg-transparent text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
+          <MarkdownTextarea
+            label="Description"
+            value={editDescription}
+            onChange={setEditDescription}
+            placeholder="Syllabus coverage, topics, or usage instructions..."
+            minHeight="min-h-[85px]"
+            maxHeight="max-h-[220px]"
+          />
 
           <div className="flex justify-end gap-2 pt-4">
             <Button
@@ -711,7 +705,7 @@ export const MaterialsPage: React.FC = () => {
         onClose={() => setDeletingMaterial(null)}
       />
 
-      {/* Portal Document Preview */}
+      {/* Portal Document Preview with Left Information Sidebar */}
       {previewMaterial && (
         <DocumentPreviewModal
           open={!!previewMaterial}
@@ -719,6 +713,19 @@ export const MaterialsPage: React.FC = () => {
           title={previewMaterial.title}
           subtitle={`${previewMaterial.category.toUpperCase()} • ${previewMaterial.fileType}`}
           url={previewMaterial.driveUrl}
+          fileMeta={{
+            title: previewMaterial.title,
+            fileName: previewMaterial.title,
+            fileType: previewMaterial.fileType,
+            category: previewMaterial.category.toUpperCase(),
+            status: "Active Repository File",
+            dateUploaded: new Date(previewMaterial.createdAt).toLocaleDateString(undefined, {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }),
+            description: previewMaterial.description,
+          }}
         />
       )}
     </>

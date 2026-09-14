@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
+import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import type { Role, User } from "@/types";
 
 const PAGE_SIZE = 10;
@@ -610,18 +611,14 @@ export const AdminPage: React.FC = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-foreground mb-1">
-              Duties & Constitutional Scope
-            </label>
-            <textarea
-              value={newRoleDesc}
-              onChange={(e) => setNewRoleDesc(e.target.value)}
-              rows={3}
-              className="w-full px-3 py-1.5 rounded-md text-xs border border-input bg-transparent text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-              placeholder="Detailed responsibilities, reporting hierarchy, and errands..."
-            />
-          </div>
+          <MarkdownTextarea
+            label="Duties & Constitutional Scope"
+            value={newRoleDesc}
+            onChange={setNewRoleDesc}
+            placeholder="Detailed responsibilities, reporting hierarchy, and errands..."
+            minHeight="min-h-[85px]"
+            maxHeight="max-h-[220px]"
+          />
 
           <div className="flex justify-end gap-2 pt-3">
             <Button

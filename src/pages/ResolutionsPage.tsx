@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Dialog } from "@/components/ui/Dialog";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { DocumentPreviewModal } from "@/components/ui/DocumentPreviewModal";
+import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
 import { DriveGuideModal } from "@/components/ui/DriveGuideModal";
@@ -660,19 +661,15 @@ export const ResolutionsPage: React.FC = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-foreground mb-1">
-              Clauses / Executive Summary
-            </label>
-            <textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              required
-              rows={4}
-              className="w-full px-3 py-1.5 rounded-md text-xs border border-input bg-transparent text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-              placeholder="WHEREAS, the organization..."
-            />
-          </div>
+          <MarkdownTextarea
+            label="Clauses / Executive Summary"
+            value={body}
+            onChange={setBody}
+            required
+            placeholder="WHEREAS, the organization..."
+            minHeight="min-h-[100px]"
+            maxHeight="max-h-[250px]"
+          />
 
           <div className="flex justify-end gap-2 pt-4">
             <Button
@@ -776,18 +773,15 @@ export const ResolutionsPage: React.FC = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-foreground mb-1">
-              Clauses / Executive Summary
-            </label>
-            <textarea
-              value={editBody}
-              onChange={(e) => setEditBody(e.target.value)}
-              required
-              rows={4}
-              className="w-full px-3 py-1.5 rounded-md text-xs border border-input bg-transparent text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
+          <MarkdownTextarea
+            label="Clauses / Executive Summary"
+            value={editBody}
+            onChange={setEditBody}
+            required
+            placeholder="WHEREAS, the organization..."
+            minHeight="min-h-[100px]"
+            maxHeight="max-h-[250px]"
+          />
 
           <div className="flex justify-end gap-2 pt-4">
             <Button
@@ -817,7 +811,7 @@ export const ResolutionsPage: React.FC = () => {
         onClose={() => setDeletingResolution(null)}
       />
 
-      {/* Portal Document Preview */}
+      {/* Portal Document Preview with Left Information Sidebar */}
       {previewResolution && (
         <DocumentPreviewModal
           open={!!previewResolution}
@@ -825,6 +819,23 @@ export const ResolutionsPage: React.FC = () => {
           title={`${DOCUMENT_TYPE_LABELS[previewResolution.documentType] || "Document"} ${previewResolution.resolutionNo}: ${previewResolution.title}`}
           subtitle={`STATUS: ${previewResolution.status} • Formal Council Record`}
           url={previewResolution.driveDocUrl || ""}
+          fileMeta={{
+            title: previewResolution.title,
+            fileName: `${previewResolution.resolutionNo}.gdoc`,
+            fileType: DOCUMENT_TYPE_LABELS[previewResolution.documentType] || "Document",
+            category: previewResolution.documentType.toUpperCase(),
+            status: previewResolution.status.toUpperCase(),
+            dateUploaded: previewResolution.passedDate || new Date(previewResolution.createdAt).toLocaleDateString(undefined, {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }),
+            description: previewResolution.body,
+            customFields: [
+              { label: "Document ID", value: previewResolution.resolutionNo },
+              { label: "Resolution Status", value: previewResolution.status },
+            ],
+          }}
         />
       )}
 

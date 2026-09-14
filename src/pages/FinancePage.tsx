@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Dialog } from "@/components/ui/Dialog";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { DocumentPreviewModal } from "@/components/ui/DocumentPreviewModal";
+import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
 import type { FinanceSummary, FinanceTransaction } from "@/types";
@@ -61,11 +62,7 @@ export const FinancePage: React.FC = () => {
 
   // Modals
   const [createOpen, setCreateOpen] = useState(false);
-  const [previewReceipt, setPreviewReceipt] = useState<{
-    title: string;
-    url: string;
-    refNo?: string | null;
-  } | null>(null);
+  const [previewReceipt, setPreviewReceipt] = useState<FinanceTransaction | null>(null);
   const [editingTx, setEditingTx] = useState<FinanceTransaction | null>(null);
   const [deletingTx, setDeletingTx] = useState<FinanceTransaction | null>(null);
 
@@ -362,13 +359,7 @@ export const FinancePage: React.FC = () => {
                           <div className="flex items-center gap-1.5">
                             <button
                               type="button"
-                              onClick={() =>
-                                setPreviewReceipt({
-                                  title: `Receipt: ${tx.title}`,
-                                  url: tx.receiptUrl!,
-                                  refNo: tx.referenceNo,
-                                })
-                              }
+                              onClick={() => setPreviewReceipt(tx)}
                               className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary text-[10px] font-semibold transition-colors"
                               title="Preview receipt in portal"
                             >
@@ -534,18 +525,14 @@ export const FinancePage: React.FC = () => {
             </p>
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-foreground mb-1">
-              Auditor & Ledger Notes
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              className="w-full px-3 py-1.5 rounded-md text-xs border border-input bg-transparent text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-              placeholder="Payment breakdown, payee, or auditor notes..."
-            />
-          </div>
+          <MarkdownTextarea
+            label="Auditor & Ledger Notes"
+            value={notes}
+            onChange={setNotes}
+            placeholder="Payment breakdown, payee, or auditor notes..."
+            minHeight="min-h-[85px]"
+            maxHeight="max-h-[200px]"
+          />
 
           <div className="flex justify-end gap-2 pt-4">
             <Button
@@ -653,17 +640,14 @@ export const FinancePage: React.FC = () => {
             </p>
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-foreground mb-1">
-              Auditor & Ledger Notes
-            </label>
-            <textarea
-              value={editNotes}
-              onChange={(e) => setEditNotes(e.target.value)}
-              rows={2}
-              className="w-full px-3 py-1.5 rounded-md text-xs border border-input bg-transparent text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
+          <MarkdownTextarea
+            label="Auditor & Ledger Notes"
+            value={editNotes}
+            onChange={setEditNotes}
+            placeholder="Payment breakdown, payee, or auditor notes..."
+            minHeight="min-h-[85px]"
+            maxHeight="max-h-[200px]"
+          />
 
           <div className="flex justify-end gap-2 pt-4">
             <Button
@@ -693,14 +677,48 @@ export const FinancePage: React.FC = () => {
         onClose={() => setDeletingTx(null)}
       />
 
-      {/* In-Portal Receipt Preview Modal */}
+      {/* In-Portal Receipt Preview Modal with Left Information Sidebar */}
       {previewReceipt && (
         <DocumentPreviewModal
           open={!!previewReceipt}
           onClose={() => setPreviewReceipt(null)}
-          title={previewReceipt.title}
-          subtitle={`OFFICIAL RECEIPT REF: ${previewReceipt.refNo || "N/A"} • Audited Disbursement Record`}
-          url={previewReceipt.url}
+          title={`Receipt: ${previewReceipt.title}`}
+          subtitle={`OFFICIAL RECEIPT REF: ${previewReceipt.referenceNo || "N/A"} • Audited Disbursement Record`}
+          url={previewReceipt.receiptUrl || ""}
+          fileMeta={{
+            title: previewReceipt.title,
+            fileName: previewReceipt.referenceNo
+              ? `Receipt_${previewReceipt.referenceNo}.pdf`
+              : `Receipt_${previewReceipt.title}.pdf`,
+            fileType: "Audited Voucher / Receipt Document",
+            category: previewReceipt.category.toUpperCase(),
+            status: previewReceipt.transactionType.toUpperCase(),
+            dateUploaded: new Date(previewReceipt.createdAt).toLocaleDateString(undefined, {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }),
+            description: previewReceipt.notes,
+            customFields: [
+              {
+                label: "Transaction Flow",
+                value:
+                  previewReceipt.transactionType === "income"
+                    ? "Collection (+)"
+                    : "Disbursement (-)",
+              },
+              {
+                label: "Audited Amount",
+                value: `₱${previewReceipt.amount.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                })}`,
+              },
+              {
+                label: "Reference No.",
+                value: previewReceipt.referenceNo || "N/A",
+              },
+            ],
+          }}
         />
       )}
     </>
