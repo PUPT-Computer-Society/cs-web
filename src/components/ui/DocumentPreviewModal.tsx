@@ -20,6 +20,7 @@ import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { getGooglePreviewUrl } from "@/lib/preview";
 import { useToast } from "@/context/ToastContext";
 import { cn } from "@/lib/utils";
+import { title } from "process";
 
 export interface DocumentCustomField {
   label: string;
@@ -111,7 +112,9 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
               size="sm"
               onClick={() => setShowSidebar((prev) => !prev)}
               className="h-8 px-2.5 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-              title={showSidebar ? "Hide details sidebar" : "Show details sidebar"}
+              title={
+                showSidebar ? "Hide details sidebar" : "Show details sidebar"
+              }
             >
               {showSidebar ? (
                 <>
@@ -167,18 +170,27 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
               <div className="space-y-2 pb-3 border-b border-border/60">
                 <div className="flex items-center gap-2 flex-wrap">
                   {fileMeta?.status && (
-                    <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] font-bold uppercase tracking-wider"
+                    >
                       {fileMeta.status}
                     </Badge>
                   )}
                   {fileMeta?.category && (
-                    <Badge variant="secondary" className="text-[10px] font-semibold flex items-center gap-1">
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] font-semibold flex items-center gap-1"
+                    >
                       <Tag className="w-2.5 h-2.5" />
                       <span>{fileMeta.category}</span>
                     </Badge>
                   )}
                   {fileMeta?.fileType && (
-                    <Badge variant="outline" className="text-[10px] font-mono text-muted-foreground">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] font-mono text-muted-foreground"
+                    >
                       {fileMeta.fileType}
                     </Badge>
                   )}
@@ -232,7 +244,10 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
 
                   {/* Custom Domain Fields */}
                   {fileMeta?.customFields?.map((field, fIdx) => (
-                    <div key={`custom-${fIdx}`} className="flex items-start justify-between gap-2 text-xs">
+                    <div
+                      key={`custom-${fIdx}`}
+                      className="flex items-start justify-between gap-2 text-xs"
+                    >
                       <span className="text-muted-foreground shrink-0">
                         {field.label}
                       </span>
@@ -267,7 +282,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
               <div className="flex items-center gap-1.5 truncate">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">
-                  Requires <strong>"Anyone with the link"</strong> on Google Drive. If blank, open directly.
+                  Requires <strong>"Anyone with the link"</strong> on Google
+                  Drive. If blank, open directly.
                 </span>
               </div>
               <a
@@ -308,7 +324,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                       Embedded preview unavailable for this URL format.
                     </p>
                     <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-                      This resource is hosted externally or uses an unrecognized Drive link scheme.
+                      This resource is hosted externally or uses an unrecognized
+                      Drive link scheme.
                     </p>
                   </div>
                   <a
@@ -331,7 +348,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           <div className="flex items-center gap-1.5 text-[11px]">
             <Info className="w-3.5 h-3.5 shrink-0 text-primary" />
             <span>
-              Google Drive: <em>Share → General Access → Anyone with the link</em>.
+              Google Drive:{" "}
+              <em>Share → General Access → Anyone with the link</em>.
             </span>
           </div>
 

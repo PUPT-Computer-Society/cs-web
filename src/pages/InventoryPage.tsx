@@ -541,16 +541,22 @@ export const InventoryPage: React.FC = () => {
             fileType: "Property Acknowledgment Receipt (PAR)",
             category: "Asset Inventory Record",
             status: previewProof.condition.toUpperCase(),
-            dateUploaded: new Date(previewProof.updatedAt).toLocaleDateString(undefined, {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            }),
+            dateUploaded: new Date(previewProof.updatedAt).toLocaleDateString(
+              undefined,
+              {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              },
+            ),
             description: previewProof.remarks,
             customFields: [
               { label: "Quantity", value: `${previewProof.quantity} units` },
               { label: "Condition", value: previewProof.condition },
-              { label: "Storage Location", value: previewProof.location || "Unassigned" },
+              {
+                label: "Storage Location",
+                value: previewProof.location || "Unassigned",
+              },
             ],
           }}
         />

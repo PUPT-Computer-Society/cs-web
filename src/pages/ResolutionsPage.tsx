@@ -100,8 +100,9 @@ export const ResolutionsPage: React.FC = () => {
   // Create Form
   const [resolutionNo, setResolutionNo] = useState("");
   const [title, setTitle] = useState("");
-  const [documentType, setDocumentType] =
-    useState<InternalDocumentType | "">("");
+  const [documentType, setDocumentType] = useState<InternalDocumentType | "">(
+    "",
+  );
   const [body, setBody] = useState("");
   const [driveDocUrl, setDriveDocUrl] = useState("");
   const [status, setStatus] = useState("");
@@ -822,14 +823,21 @@ export const ResolutionsPage: React.FC = () => {
           fileMeta={{
             title: previewResolution.title,
             fileName: `${previewResolution.resolutionNo}.gdoc`,
-            fileType: DOCUMENT_TYPE_LABELS[previewResolution.documentType] || "Document",
+            fileType:
+              DOCUMENT_TYPE_LABELS[previewResolution.documentType] ||
+              "Document",
             category: previewResolution.documentType.toUpperCase(),
             status: previewResolution.status.toUpperCase(),
-            dateUploaded: previewResolution.passedDate || new Date(previewResolution.createdAt).toLocaleDateString(undefined, {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            }),
+            dateUploaded:
+              previewResolution.passedDate ||
+              new Date(previewResolution.createdAt).toLocaleDateString(
+                undefined,
+                {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                },
+              ),
             description: previewResolution.body,
             customFields: [
               { label: "Document ID", value: previewResolution.resolutionNo },
@@ -839,10 +847,7 @@ export const ResolutionsPage: React.FC = () => {
         />
       )}
 
-      <DriveGuideModal
-        open={driveGuideOpen}
-        onOpenChange={setDriveGuideOpen}
-      />
+      <DriveGuideModal open={driveGuideOpen} onOpenChange={setDriveGuideOpen} />
     </>
   );
 };

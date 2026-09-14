@@ -62,7 +62,8 @@ export const FinancePage: React.FC = () => {
 
   // Modals
   const [createOpen, setCreateOpen] = useState(false);
-  const [previewReceipt, setPreviewReceipt] = useState<FinanceTransaction | null>(null);
+  const [previewReceipt, setPreviewReceipt] =
+    useState<FinanceTransaction | null>(null);
   const [editingTx, setEditingTx] = useState<FinanceTransaction | null>(null);
   const [deletingTx, setDeletingTx] = useState<FinanceTransaction | null>(null);
 
@@ -693,11 +694,14 @@ export const FinancePage: React.FC = () => {
             fileType: "Audited Voucher / Receipt Document",
             category: previewReceipt.category.toUpperCase(),
             status: previewReceipt.transactionType.toUpperCase(),
-            dateUploaded: new Date(previewReceipt.createdAt).toLocaleDateString(undefined, {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            }),
+            dateUploaded: new Date(previewReceipt.createdAt).toLocaleDateString(
+              undefined,
+              {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              },
+            ),
             description: previewReceipt.notes,
             customFields: [
               {

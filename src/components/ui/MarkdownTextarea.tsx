@@ -49,7 +49,11 @@ export const MarkdownTextarea: React.FC<MarkdownTextareaProps> = ({
   const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const applyFormatting = (prefix: string, suffix: string = "", defaultPlaceholder: string = "") => {
+  const applyFormatting = (
+    prefix: string,
+    suffix: string = "",
+    defaultPlaceholder: string = "",
+  ) => {
     if (disabled || !textareaRef.current) return;
     const el = textareaRef.current;
     const start = el.selectionStart;
@@ -86,7 +90,9 @@ export const MarkdownTextarea: React.FC<MarkdownTextareaProps> = ({
           >
             {label} {required && <span className="text-destructive">*</span>}
           </label>
-        ) : <div />}
+        ) : (
+          <div />
+        )}
 
         <div className="flex items-center rounded-lg border border-border/70 bg-secondary/30 p-0.5 text-[11px]">
           <button
@@ -187,7 +193,9 @@ export const MarkdownTextarea: React.FC<MarkdownTextareaProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => applyFormatting("[", "](https://example.com)", "link title")}
+              onClick={() =>
+                applyFormatting("[", "](https://example.com)", "link title")
+              }
               title="Link ([title](url))"
               className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
             >
@@ -233,7 +241,8 @@ export const MarkdownTextarea: React.FC<MarkdownTextareaProps> = ({
               <MarkdownRenderer content={value} />
             ) : (
               <p className="text-xs text-muted-foreground italic">
-                Nothing to preview yet. Switch back to Write mode to add Markdown content.
+                Nothing to preview yet. Switch back to Write mode to add
+                Markdown content.
               </p>
             )}
           </div>

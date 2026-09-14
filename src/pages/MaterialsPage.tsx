@@ -719,7 +719,9 @@ export const MaterialsPage: React.FC = () => {
             fileType: previewMaterial.fileType,
             category: previewMaterial.category.toUpperCase(),
             status: "Active Repository File",
-            dateUploaded: new Date(previewMaterial.createdAt).toLocaleDateString(undefined, {
+            dateUploaded: new Date(
+              previewMaterial.createdAt,
+            ).toLocaleDateString(undefined, {
               year: "numeric",
               month: "short",
               day: "numeric",

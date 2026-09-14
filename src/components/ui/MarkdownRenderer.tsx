@@ -46,7 +46,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       }
 
       // Link: [text](url)
-      const linkMatch = remaining.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/);
+      const linkMatch = remaining.match(
+        /^\[([^\]]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/,
+      );
       if (linkMatch) {
         tokens.push(
           <a
@@ -67,7 +69,10 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       const boldMatch = remaining.match(/^(\*\*|__)(.*?)\1/);
       if (boldMatch) {
         tokens.push(
-          <strong key={`bold-${keyIdx++}`} className="font-bold text-foreground">
+          <strong
+            key={`bold-${keyIdx++}`}
+            className="font-bold text-foreground"
+          >
             {boldMatch[2]}
           </strong>,
         );
@@ -77,7 +82,11 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
       // Italic: *text* or _text_
       const italicMatch = remaining.match(/^(\*|_)(.*?)\1/);
-      if (italicMatch && !italicMatch[2].startsWith(" ") && !italicMatch[2].endsWith(" ")) {
+      if (
+        italicMatch &&
+        !italicMatch[2].startsWith(" ") &&
+        !italicMatch[2].endsWith(" ")
+      ) {
         tokens.push(
           <em key={`italic-${keyIdx++}`} className="italic">
             {italicMatch[2]}
@@ -91,7 +100,10 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       const strikeMatch = remaining.match(/^~~(.*?)~~/);
       if (strikeMatch) {
         tokens.push(
-          <del key={`del-${keyIdx++}`} className="line-through text-muted-foreground">
+          <del
+            key={`del-${keyIdx++}`}
+            className="line-through text-muted-foreground"
+          >
             {strikeMatch[1]}
           </del>,
         );
@@ -192,7 +204,10 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     // Blockquote: > text
     if (line.startsWith("> ") || line === ">") {
       const quoteLines: string[] = [];
-      while (i < lines.length && (lines[i].startsWith("> ") || lines[i] === ">")) {
+      while (
+        i < lines.length &&
+        (lines[i].startsWith("> ") || lines[i] === ">")
+      ) {
         quoteLines.push(lines[i].replace(/^>\s?/, ""));
         i++;
       }
@@ -211,7 +226,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
     // Unordered List: - item or * item
     if (line.match(/^(\s*)[-*]\s+/)) {
-      const listItems: { text: string; indent: number; isChecked?: boolean }[] = [];
+      const listItems: { text: string; indent: number; isChecked?: boolean }[] =
+        [];
       while (i < lines.length && lines[i].match(/^(\s*)[-*]\s+/)) {
         const itemMatch = lines[i].match(/^(\s*)[-*]\s+(.*)$/);
         if (itemMatch) {
@@ -233,13 +249,17 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       }
 
       elements.push(
-        <ul key={`ul-${i}`} className="space-y-1 my-1.5 pl-4 list-disc text-xs text-foreground">
+        <ul
+          key={`ul-${i}`}
+          className="space-y-1 my-1.5 pl-4 list-disc text-xs text-foreground"
+        >
           {listItems.map((item, liIdx) => (
             <li
               key={`li-${liIdx}`}
               className={cn(
                 "leading-relaxed",
-                item.isChecked !== undefined && "list-none flex items-center gap-1.5 -ml-4",
+                item.isChecked !== undefined &&
+                  "list-none flex items-center gap-1.5 -ml-4",
               )}
             >
               {item.isChecked !== undefined ? (
@@ -250,7 +270,11 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                     readOnly
                     className="rounded border-border w-3.5 h-3.5 text-primary focus:ring-0 cursor-default"
                   />
-                  <span className={item.isChecked ? "line-through text-muted-foreground" : ""}>
+                  <span
+                    className={
+                      item.isChecked ? "line-through text-muted-foreground" : ""
+                    }
+                  >
                     {renderFormattedLine(item.text)}
                   </span>
                 </>
@@ -272,7 +296,10 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         i++;
       }
       elements.push(
-        <ol key={`ol-${i}`} className="space-y-1 my-1.5 pl-5 list-decimal text-xs text-foreground">
+        <ol
+          key={`ol-${i}`}
+          className="space-y-1 my-1.5 pl-5 list-decimal text-xs text-foreground"
+        >
           {listItems.map((text, liIdx) => (
             <li key={`oli-${liIdx}`} className="leading-relaxed">
               {renderFormattedLine(text)}
@@ -285,7 +312,10 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
     // Regular Paragraph
     elements.push(
-      <p key={`p-${i}`} className="text-xs text-foreground/90 leading-relaxed my-1">
+      <p
+        key={`p-${i}`}
+        className="text-xs text-foreground/90 leading-relaxed my-1"
+      >
         {renderFormattedLine(line)}
       </p>,
     );
