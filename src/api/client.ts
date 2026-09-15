@@ -78,7 +78,12 @@ export const api = {
   post: <T>(endpoint: string, body?: any) =>
     apiRequest<T>(endpoint, {
       method: "POST",
-      body: body ? JSON.stringify(body) : undefined,
+      body:
+        body instanceof FormData
+          ? body
+          : body
+            ? JSON.stringify(body)
+            : undefined,
     }),
   postForm: <T>(endpoint: string, formData: FormData) =>
     apiRequest<T>(endpoint, {
@@ -88,12 +93,22 @@ export const api = {
   put: <T>(endpoint: string, body?: any) =>
     apiRequest<T>(endpoint, {
       method: "PUT",
-      body: body ? JSON.stringify(body) : undefined,
+      body:
+        body instanceof FormData
+          ? body
+          : body
+            ? JSON.stringify(body)
+            : undefined,
     }),
   patch: <T>(endpoint: string, body?: any) =>
     apiRequest<T>(endpoint, {
       method: "PATCH",
-      body: body ? JSON.stringify(body) : undefined,
+      body:
+        body instanceof FormData
+          ? body
+          : body
+            ? JSON.stringify(body)
+            : undefined,
     }),
   delete: <T>(endpoint: string) =>
     apiRequest<T>(endpoint, { method: "DELETE" }),

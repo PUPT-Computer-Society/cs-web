@@ -70,7 +70,7 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
       if (category) formData.append("category", category);
       if (targetFolderId) formData.append("target_folder_id", targetFolderId);
 
-      const res = await api.post<DriveUploadResponse>(
+      const res = await api.postForm<DriveUploadResponse>(
         "/drive/upload",
         formData,
       );
