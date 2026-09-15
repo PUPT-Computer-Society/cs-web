@@ -1,6 +1,11 @@
-const RAW_API_URL = import.meta.env.VITE_API_URL || "";
-export const BASE_SERVER_URL = RAW_API_URL.replace(/\/+$/, "");
-export const API_BASE_URL = `${BASE_SERVER_URL}/api/v1`;
+const RAW_API_URL = (import.meta.env.VITE_API_URL || "")
+  .trim()
+  .replace(/\/+$/, "");
+
+export const BASE_SERVER_URL = RAW_API_URL.replace(/\/api\/v1\/?$/, "");
+export const API_BASE_URL = RAW_API_URL.endsWith("/api/v1")
+  ? RAW_API_URL
+  : (BASE_SERVER_URL ? `${BASE_SERVER_URL}/api/v1` : "/api/v1");
 
 export class ApiClientError extends Error {
   status: number;
