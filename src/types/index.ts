@@ -206,3 +206,39 @@ export interface Task {
   completedSubtasksCount?: number;
   totalSubtasksCount?: number;
 }
+
+export type LogCategory = "audit" | "security" | "system";
+export type LogSeverity = "info" | "warning" | "error" | "critical";
+
+export interface AuditLogEntry {
+  id: string;
+  category: LogCategory;
+  severity: LogSeverity;
+  action: string;
+  actorId?: string | null;
+  actorName?: string | null;
+  resourceType?: string | null;
+  resourceId?: string | null;
+  details?: Record<string, unknown> | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  statusCode: number;
+  createdAt: string;
+}
+
+export interface AuditLogsSummary {
+  total: number;
+  audit: number;
+  security: number;
+  system: number;
+  errors: number;
+}
+
+export interface AuditLogsResponse {
+  items: AuditLogEntry[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  summary: AuditLogsSummary;
+}

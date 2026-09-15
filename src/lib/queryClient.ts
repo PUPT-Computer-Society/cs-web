@@ -20,7 +20,12 @@ export const queryKeys = {
   finance: ["finance"] as const,
   financeSummary: ["finance", "summary"] as const,
   inventory: ["inventory"] as const,
-  materials: (category?: string) => ["materials", category || "all"] as const,
-  resolutions: (docType?: string) => ["resolutions", docType || "all"] as const,
-  announcements: (scope?: string) => ["announcements", scope || "all"] as const,
+  materials: (category?: string) =>
+    ["materials", category || "all"] as const,
+  resolutions: (docType?: string) =>
+    ["resolutions", docType || "all"] as const,
+  announcements: (scope?: string) =>
+    ["announcements", scope || "all"] as const,
+  auditLogs: (params?: Record<string, unknown>) =>
+    ["audit-logs", params || {}] as const,
 };

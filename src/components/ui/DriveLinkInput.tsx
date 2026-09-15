@@ -245,7 +245,7 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
             {/* Full DOM Overlay Dim */}
             <div
               className={cn(
-                "fixed inset-0 bg-background backdrop-blur-xs z-[100]",
+                "fixed inset-0 bg-black/60 backdrop-blur-xs z-[100]",
                 "animate-in fade-in-0 duration-150 cursor-pointer",
               )}
               onClick={() => setTooltipOpen(false)}
@@ -263,8 +263,8 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
               }}
               className={cn(
                 "fixed z-[101] w-80 sm:w-[350px]",
-                "rounded-xl border border-border bg-popover p-3.5 sm:p-4",
-                "shadow-2xl text-popover-foreground text-left",
+                "rounded-xl border border-border bg-background p-3.5 sm:p-4",
+                "shadow-2xl text-foreground text-left",
                 "animate-in fade-in-0 zoom-in-95 duration-150 space-y-3",
               )}
               onClick={(e) => e.stopPropagation()}
@@ -274,7 +274,7 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
               <div
                 style={{ left: `${pos.arrowLeft}px` }}
                 className={cn(
-                  "absolute w-2.5 h-2.5 bg-popover rotate-45",
+                  "absolute w-2.5 h-2.5 bg-background rotate-45",
                   "pointer-events-none",
                   pos.placement === "bottom"
                     ? "-top-1.5 border-t border-l border-border"

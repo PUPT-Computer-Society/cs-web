@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
+  Activity,
   BookOpen,
   Boxes,
   Calendar,
@@ -168,16 +169,24 @@ export const Sidebar: React.FC = () => {
     },
   ];
 
-  const adminItem = {
-    to: "/admin",
-    label: "RBAC & Roles",
-    shortLabel: "Admin",
-    icon: ShieldAlert,
-  };
+  const adminItems = [
+    {
+      to: "/admin",
+      label: "RBAC & Roles",
+      shortLabel: "Admin",
+      icon: ShieldAlert,
+    },
+    {
+      to: "/admin/audit-logs",
+      label: "Audit & Logs",
+      shortLabel: "Logs",
+      icon: Activity,
+    },
+  ];
 
   const allItems = [
     ...navGroups.flatMap((g) => g.items),
-    ...(isPresident ? [adminItem] : []),
+    ...(isPresident ? adminItems : []),
   ];
 
   const isActive = (to: string) => {
@@ -561,53 +570,85 @@ export const Sidebar: React.FC = () => {
                       : "max-height 150ms ease-in, opacity 100ms ease-in",
                   }}
                 >
-                  <p className="px-2.5 pt-1 pb-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 whitespace-nowrap">
+                  <p
+                    className={cn(
+                      "px-2.5 pt-1 pb-0.5 text-[10px] font-bold uppercase",
+                      "tracking-wider text-amber-600 dark:text-amber-400",
+                      "whitespace-nowrap",
+                    )}
+                  >
                     Administration
                   </p>
                 </div>
 
-                <Link
-                  to={adminItem.to}
-                  title={!visualExpanded ? adminItem.label : undefined}
-                  className={cn(
-                    "group flex cursor-pointer items-center rounded-xl",
-                    visualExpanded
-                      ? "justify-start gap-3 px-3 py-2"
-                      : "justify-center p-2.5",
-                    "transition-all duration-150",
-                    isActive(adminItem.to)
-                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 font-semibold shadow-xs"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground",
-                  )}
-                >
-                  <div className="flex h-5 w-5 shrink-0 items-center justify-center">
-                    <ShieldAlert className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <span
-                    className="min-w-0 overflow-hidden whitespace-nowrap text-xs font-semibold text-amber-600 dark:text-amber-400"
-                    style={{
-                      maxWidth: showExpandedContent ? "11.5rem" : "0rem",
-                      opacity: showExpandedContent ? 1 : 0,
-                      transform: showExpandedContent
-                        ? "translate3d(0, 0, 0)"
-                        : "translate3d(-0.4375rem, 0, 0)",
-                      transition: showExpandedContent
-                        ? [
-                            `max-width 300ms ${CONTENT_EASING}`,
-                            "opacity 220ms ease-out",
-                            `transform 280ms ${CONTENT_EASING}`,
-                          ].join(", ")
-                        : [
-                            `max-width 190ms ${SHELL_EASING}`,
-                            "opacity 120ms ease-out",
-                            `transform 170ms ${SHELL_EASING}`,
-                          ].join(", "),
-                      willChange: "max-width, opacity, transform",
-                    }}
-                  >
-                    {adminItem.label}
-                  </span>
-                </Link>
+                {adminItems.map((item) => {
+                  const ItemIcon = item.icon;
+                  const active = isActive(item.to);
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      title={!visualExpanded ? item.label : undefined}
+                      className={cn(
+                        "group flex cursor-pointer items-center rounded-xl",
+                        visualExpanded
+                          ? "justify-start gap-3 px-3 py-2"
+                          : "justify-center p-2.5",
+                        "transition-all duration-150",
+                        active
+                          ? cn(
+                              "bg-amber-500/15 text-amber-600",
+                              "dark:text-amber-400 font-semibold shadow-xs",
+                            )
+                          : cn(
+                              "text-muted-foreground",
+                              "hover:bg-secondary hover:text-foreground",
+                            ),
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "flex h-5 w-5 shrink-0 items-center justify-center",
+                        )}
+                      >
+                        <ItemIcon
+                          className={cn(
+                            "h-4 w-4 shrink-0",
+                            "text-amber-600 dark:text-amber-400",
+                          )}
+                        />
+                      </div>
+                      <span
+                        className={cn(
+                          "min-w-0 overflow-hidden whitespace-nowrap",
+                          "text-xs font-semibold",
+                          "text-amber-600 dark:text-amber-400",
+                        )}
+                        style={{
+                          maxWidth: showExpandedContent ? "11.5rem" : "0rem",
+                          opacity: showExpandedContent ? 1 : 0,
+                          transform: showExpandedContent
+                            ? "translate3d(0, 0, 0)"
+                            : "translate3d(-0.4375rem, 0, 0)",
+                          transition: showExpandedContent
+                            ? [
+                                `max-width 300ms ${CONTENT_EASING}`,
+                                "opacity 220ms ease-out",
+                                `transform 280ms ${CONTENT_EASING}`,
+                              ].join(", ")
+                            : [
+                                `max-width 190ms ${SHELL_EASING}`,
+                                "opacity 120ms ease-out",
+                                `transform 170ms ${SHELL_EASING}`,
+                              ].join(", "),
+                          willChange: "max-width, opacity, transform",
+                        }}
+                      >
+                        {item.label}
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </nav>
