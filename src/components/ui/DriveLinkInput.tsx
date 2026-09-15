@@ -237,13 +237,15 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
       )}
 
       {/* Tutorial SOP Tooltip Anchored to Trigger with DOM Overlay Dim */}
-      {entry && tooltipOpen && typeof document !== "undefined" &&
+      {entry &&
+        tooltipOpen &&
+        typeof document !== "undefined" &&
         createPortal(
           <>
             {/* Full DOM Overlay Dim */}
             <div
               className={cn(
-                "fixed inset-0 bg-black/60 backdrop-blur-xs z-[100]",
+                "fixed inset-0 bg-background backdrop-blur-xs z-[100]",
                 "animate-in fade-in-0 duration-150 cursor-pointer",
               )}
               onClick={() => setTooltipOpen(false)}
@@ -417,9 +419,7 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
                     </strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground block">
-                      Owner:
-                    </span>
+                    <span className="text-muted-foreground block">Owner:</span>
                     <strong
                       className={cn(
                         "text-foreground font-semibold truncate block",
