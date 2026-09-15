@@ -27,6 +27,7 @@ import { DocumentPreviewModal } from "@/components/ui/DocumentPreviewModal";
 import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
+import { DriveLinkInput } from "@/components/ui/DriveLinkInput";
 import { getGooglePreviewUrl } from "@/lib/preview";
 import type { Material, MaterialCategory } from "@/types";
 
@@ -36,6 +37,12 @@ const MATERIAL_CATEGORY_OPTIONS = [
   { value: "creative", label: "Creative Material" },
   { value: "sports", label: "Sports Material" },
 ];
+
+const MATERIAL_CATEGORY_TO_REGISTRY_KEY: Record<MaterialCategory, string> = {
+  academic: "courseReviewers",
+  creative: "pubmatsSourceFiles",
+  sports: "sportsTournaments",
+};
 
 export const MaterialsPage: React.FC = () => {
   const { success: toastSuccess, error: toastError } = useToast();
@@ -567,22 +574,17 @@ export const MaterialsPage: React.FC = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-foreground mb-1">
-              Google Drive URL
-            </label>
-            <Input
-              type="url"
-              value={driveUrl}
-              onChange={(e) => setDriveUrl(e.target.value)}
-              required
-              placeholder="https://drive.google.com/..."
-            />
-            <p className="text-[10px] text-muted-foreground mt-1">
-              Make sure General Access is set to{" "}
-              <strong>"Anyone with the link"</strong> on Drive for live preview.
-            </p>
-          </div>
+          <DriveLinkInput
+            registryKey={
+              (category && MATERIAL_CATEGORY_TO_REGISTRY_KEY[category]) ||
+              "courseReviewers"
+            }
+            value={driveUrl}
+            onChange={setDriveUrl}
+            label="Google Drive URL"
+            placeholder="https://drive.google.com/..."
+            required
+          />
 
           <MarkdownTextarea
             label="Description"
@@ -656,17 +658,18 @@ export const MaterialsPage: React.FC = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-foreground mb-1">
-              Google Drive URL
-            </label>
-            <Input
-              type="url"
-              value={editDriveUrl}
-              onChange={(e) => setEditDriveUrl(e.target.value)}
-              required
-            />
-          </div>
+          <DriveLinkInput
+            registryKey={
+              (editCategory &&
+                MATERIAL_CATEGORY_TO_REGISTRY_KEY[editCategory]) ||
+              "courseReviewers"
+            }
+            value={editDriveUrl}
+            onChange={setEditDriveUrl}
+            label="Google Drive URL"
+            placeholder="https://drive.google.com/..."
+            required
+          />
 
           <MarkdownTextarea
             label="Description"
@@ -706,30 +709,36 @@ export const MaterialsPage: React.FC = () => {
       />
 
       {/* Portal Document Preview with Left Information Sidebar */}
-      {previewMaterial && (
-        <DocumentPreviewModal
-          open={!!previewMaterial}
-          onClose={() => setPreviewMaterial(null)}
-          title={previewMaterial.title}
-          subtitle={`${previewMaterial.category.toUpperCase()} • ${previewMaterial.fileType}`}
-          url={previewMaterial.driveUrl}
-          fileMeta={{
-            title: previewMaterial.title,
-            fileName: previewMaterial.title,
-            fileType: previewMaterial.fileType,
-            category: previewMaterial.category.toUpperCase(),
-            status: "Active Repository File",
-            dateUploaded: new Date(
-              previewMaterial.createdAt,
-            ).toLocaleDateString(undefined, {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            }),
-            description: previewMaterial.description,
-          }}
-        />
-      )}
+      <DocumentPreviewModal
+        open={Boolean(previewMaterial)}
+        onClose={() => setPreviewMaterial(null)}
+        title={previewMaterial?.title || ""}
+        subtitle={
+          previewMaterial
+            ? `${previewMaterial.category.toUpperCase()} • ${previewMaterial.fileType}`
+            : undefined
+        }
+        url={previewMaterial?.driveUrl || ""}
+        fileMeta={
+          previewMaterial
+            ? {
+                title: previewMaterial.title,
+                fileName: previewMaterial.title,
+                fileType: previewMaterial.fileType,
+                category: previewMaterial.category.toUpperCase(),
+                status: "Active Repository File",
+                dateUploaded: new Date(
+                  previewMaterial.createdAt,
+                ).toLocaleDateString(undefined, {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                }),
+                description: previewMaterial.description,
+              }
+            : undefined
+        }
+      />
     </>
   );
 };

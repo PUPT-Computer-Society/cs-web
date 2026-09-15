@@ -17,6 +17,7 @@ import { DocumentPreviewModal } from "@/components/ui/DocumentPreviewModal";
 import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
+import { DriveLinkInput } from "@/components/ui/DriveLinkInput";
 import type { InventoryItem } from "@/types";
 
 const PAGE_SIZE = 10;
@@ -376,18 +377,13 @@ export const InventoryPage: React.FC = () => {
               />
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <label className="block text-[11px] font-semibold text-foreground mb-1">
-                Proof Material URL (Optional)
-              </label>
-              <Input
-                type="url"
+              <DriveLinkInput
+                registryKey="inventoryCustody"
                 value={proofUrl}
-                onChange={(e) => setProofUrl(e.target.value)}
+                onChange={setProofUrl}
+                label="Proof Material URL (Optional)"
                 placeholder="https://drive.google.com/..."
               />
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Google Drive PAR, delivery receipt, or photo of item received.
-              </p>
             </div>
           </div>
 
@@ -475,18 +471,13 @@ export const InventoryPage: React.FC = () => {
               />
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <label className="block text-[11px] font-semibold text-foreground mb-1">
-                Proof Material URL (Optional)
-              </label>
-              <Input
-                type="url"
+              <DriveLinkInput
+                registryKey="inventoryCustody"
                 value={editProofUrl}
-                onChange={(e) => setEditProofUrl(e.target.value)}
+                onChange={setEditProofUrl}
+                label="Proof Material URL (Optional)"
                 placeholder="https://drive.google.com/..."
               />
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Google Drive PAR, delivery receipt, or photo of item received.
-              </p>
             </div>
           </div>
 
@@ -528,39 +519,49 @@ export const InventoryPage: React.FC = () => {
       />
 
       {/* Proof of Item Received Preview Modal with Left Information Sidebar */}
-      {previewProof && (
-        <DocumentPreviewModal
-          open={!!previewProof}
-          onClose={() => setPreviewProof(null)}
-          title={`Proof of Receipt: ${previewProof.itemName}`}
-          subtitle="Property Acknowledgment Receipt / Delivery Confirmation Document"
-          url={previewProof.proofUrl || ""}
-          fileMeta={{
-            title: previewProof.itemName,
-            fileName: `PAR_${previewProof.itemName.replace(/\s+/g, "_")}.pdf`,
-            fileType: "Property Acknowledgment Receipt (PAR)",
-            category: "Asset Inventory Record",
-            status: previewProof.condition.toUpperCase(),
-            dateUploaded: new Date(previewProof.updatedAt).toLocaleDateString(
-              undefined,
-              {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              },
-            ),
-            description: previewProof.remarks,
-            customFields: [
-              { label: "Quantity", value: `${previewProof.quantity} units` },
-              { label: "Condition", value: previewProof.condition },
-              {
-                label: "Storage Location",
-                value: previewProof.location || "Unassigned",
-              },
-            ],
-          }}
-        />
-      )}
+      <DocumentPreviewModal
+        open={Boolean(previewProof)}
+        onClose={() => setPreviewProof(null)}
+        title={
+          previewProof ? `Proof of Receipt: ${previewProof.itemName}` : ""
+        }
+        subtitle={
+          previewProof
+            ? "Property Acknowledgment Receipt / Delivery Confirmation Document"
+            : undefined
+        }
+        url={previewProof?.proofUrl || ""}
+        fileMeta={
+          previewProof
+            ? {
+                title: previewProof.itemName,
+                fileName: `PAR_${previewProof.itemName.replace(/\s+/g, "_")}.pdf`,
+                fileType: "Property Acknowledgment Receipt (PAR)",
+                category: "Asset Inventory Record",
+                status: previewProof.condition.toUpperCase(),
+                dateUploaded: new Date(
+                  previewProof.updatedAt,
+                ).toLocaleDateString(undefined, {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                }),
+                description: previewProof.remarks,
+                customFields: [
+                  {
+                    label: "Quantity",
+                    value: `${previewProof.quantity} units`,
+                  },
+                  { label: "Condition", value: previewProof.condition },
+                  {
+                    label: "Storage Location",
+                    value: previewProof.location || "Unassigned",
+                  },
+                ],
+              }
+            : undefined
+        }
+      />
     </>
   );
 };

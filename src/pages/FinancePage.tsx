@@ -26,6 +26,7 @@ import { DocumentPreviewModal } from "@/components/ui/DocumentPreviewModal";
 import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
+import { DriveLinkInput } from "@/components/ui/DriveLinkInput";
 import type { FinanceSummary, FinanceTransaction } from "@/types";
 
 const PAGE_SIZE = 10;
@@ -510,21 +511,13 @@ export const FinancePage: React.FC = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-foreground mb-1">
-              Proof of Receipt / Attachment URL (Optional)
-            </label>
-            <Input
-              type="url"
-              value={receiptUrl}
-              onChange={(e) => setReceiptUrl(e.target.value)}
-              placeholder="https://drive.google.com/..."
-            />
-            <p className="text-[10px] text-muted-foreground mt-1">
-              Ensure Google Drive sharing is set to{" "}
-              <strong>"Anyone with the link"</strong> for portal preview.
-            </p>
-          </div>
+          <DriveLinkInput
+            registryKey="financeReceipts"
+            value={receiptUrl}
+            onChange={setReceiptUrl}
+            label="Proof of Receipt / Attachment URL (Optional)"
+            placeholder="https://drive.google.com/..."
+          />
 
           <MarkdownTextarea
             label="Auditor & Ledger Notes"
@@ -625,21 +618,13 @@ export const FinancePage: React.FC = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-foreground mb-1">
-              Proof of Receipt / Attachment URL (Optional)
-            </label>
-            <Input
-              type="url"
-              value={editReceiptUrl}
-              onChange={(e) => setEditReceiptUrl(e.target.value)}
-              placeholder="https://drive.google.com/..."
-            />
-            <p className="text-[10px] text-muted-foreground mt-1">
-              Ensure Google Drive sharing is set to{" "}
-              <strong>"Anyone with the link"</strong> for portal preview.
-            </p>
-          </div>
+          <DriveLinkInput
+            registryKey="financeReceipts"
+            value={editReceiptUrl}
+            onChange={setEditReceiptUrl}
+            label="Proof of Receipt / Attachment URL (Optional)"
+            placeholder="https://drive.google.com/..."
+          />
 
           <MarkdownTextarea
             label="Auditor & Ledger Notes"
@@ -679,52 +664,58 @@ export const FinancePage: React.FC = () => {
       />
 
       {/* In-Portal Receipt Preview Modal with Left Information Sidebar */}
-      {previewReceipt && (
-        <DocumentPreviewModal
-          open={!!previewReceipt}
-          onClose={() => setPreviewReceipt(null)}
-          title={`Receipt: ${previewReceipt.title}`}
-          subtitle={`OFFICIAL RECEIPT REF: ${previewReceipt.referenceNo || "N/A"} • Audited Disbursement Record`}
-          url={previewReceipt.receiptUrl || ""}
-          fileMeta={{
-            title: previewReceipt.title,
-            fileName: previewReceipt.referenceNo
-              ? `Receipt_${previewReceipt.referenceNo}.pdf`
-              : `Receipt_${previewReceipt.title}.pdf`,
-            fileType: "Audited Voucher / Receipt Document",
-            category: previewReceipt.category.toUpperCase(),
-            status: previewReceipt.transactionType.toUpperCase(),
-            dateUploaded: new Date(previewReceipt.createdAt).toLocaleDateString(
-              undefined,
-              {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              },
-            ),
-            description: previewReceipt.notes,
-            customFields: [
-              {
-                label: "Transaction Flow",
-                value:
-                  previewReceipt.transactionType === "income"
-                    ? "Collection (+)"
-                    : "Disbursement (-)",
-              },
-              {
-                label: "Audited Amount",
-                value: `₱${previewReceipt.amount.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                })}`,
-              },
-              {
-                label: "Reference No.",
-                value: previewReceipt.referenceNo || "N/A",
-              },
-            ],
-          }}
-        />
-      )}
+      <DocumentPreviewModal
+        open={Boolean(previewReceipt)}
+        onClose={() => setPreviewReceipt(null)}
+        title={previewReceipt ? `Receipt: ${previewReceipt.title}` : ""}
+        subtitle={
+          previewReceipt
+            ? `OFFICIAL RECEIPT REF: ${previewReceipt.referenceNo || "N/A"} ` +
+              "• Audited Disbursement Record"
+            : undefined
+        }
+        url={previewReceipt?.receiptUrl || ""}
+        fileMeta={
+          previewReceipt
+            ? {
+                title: previewReceipt.title,
+                fileName: previewReceipt.referenceNo
+                  ? `Receipt_${previewReceipt.referenceNo}.pdf`
+                  : `Receipt_${previewReceipt.title}.pdf`,
+                fileType: "Audited Voucher / Receipt Document",
+                category: previewReceipt.category.toUpperCase(),
+                status: previewReceipt.transactionType.toUpperCase(),
+                dateUploaded: new Date(
+                  previewReceipt.createdAt,
+                ).toLocaleDateString(undefined, {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                }),
+                description: previewReceipt.notes,
+                customFields: [
+                  {
+                    label: "Transaction Flow",
+                    value:
+                      previewReceipt.transactionType === "income"
+                        ? "Collection (+)"
+                        : "Disbursement (-)",
+                  },
+                  {
+                    label: "Audited Amount",
+                    value: `₱${previewReceipt.amount.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                    })}`,
+                  },
+                  {
+                    label: "Reference No.",
+                    value: previewReceipt.referenceNo || "N/A",
+                  },
+                ],
+              }
+            : undefined
+        }
+      />
     </>
   );
 };

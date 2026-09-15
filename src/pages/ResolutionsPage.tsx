@@ -28,6 +28,7 @@ import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
 import { DriveGuideModal } from "@/components/ui/DriveGuideModal";
+import { DriveLinkInput } from "@/components/ui/DriveLinkInput";
 import { getGooglePreviewUrl } from "@/lib/preview";
 import type { Resolution, InternalDocumentType } from "@/types";
 
@@ -40,6 +41,14 @@ const DOC_TYPE_OPTIONS = [
   { value: "policy", label: "Policy Guideline" },
   { value: "constitution", label: "Constitution" },
 ];
+
+const DOC_TYPE_TO_REGISTRY_KEY: Record<InternalDocumentType, string> = {
+  resolution: "resolutions",
+  memorandum: "memorandums",
+  meeting_minutes: "meetingMinutes",
+  policy: "policyGuidelines",
+  constitution: "constitution",
+};
 
 const RESOLUTION_STATUS_OPTIONS = [
   { value: "Approved", label: "Approved / In Effect" },
@@ -623,29 +632,18 @@ export const ResolutionsPage: React.FC = () => {
               />
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-[11px] font-semibold text-foreground">
-                  Google Docs URL (Optional)
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setDriveGuideOpen(true)}
-                  className="text-[10px] text-primary hover:underline"
-                >
-                  Storage SOP &rarr;
-                </button>
-              </div>
-              <Input
-                type="url"
+              <DriveLinkInput
+                registryKey={
+                  (documentType &&
+                    DOC_TYPE_TO_REGISTRY_KEY[documentType]) ||
+                  "resolutions"
+                }
                 value={driveDocUrl}
-                onChange={(e) => setDriveDocUrl(e.target.value)}
+                onChange={setDriveDocUrl}
+                label="Google Docs URL (Optional)"
                 placeholder="https://docs.google.com/document/d/..."
+                onOpenSopModal={() => setDriveGuideOpen(true)}
               />
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Make sure General Access is set to{" "}
-                <strong>"Anyone with the link"</strong> on Drive for live
-                preview.
-              </p>
             </div>
           </div>
 
@@ -736,29 +734,18 @@ export const ResolutionsPage: React.FC = () => {
               />
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-[11px] font-semibold text-foreground">
-                  Google Docs URL (Optional)
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setDriveGuideOpen(true)}
-                  className="text-[10px] text-primary hover:underline"
-                >
-                  Storage SOP &rarr;
-                </button>
-              </div>
-              <Input
-                type="url"
+              <DriveLinkInput
+                registryKey={
+                  (editDocType &&
+                    DOC_TYPE_TO_REGISTRY_KEY[editDocType]) ||
+                  "resolutions"
+                }
                 value={editDriveUrl}
-                onChange={(e) => setEditDriveUrl(e.target.value)}
+                onChange={setEditDriveUrl}
+                label="Google Docs URL (Optional)"
                 placeholder="https://docs.google.com/document/d/..."
+                onOpenSopModal={() => setDriveGuideOpen(true)}
               />
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Make sure General Access is set to{" "}
-                <strong>"Anyone with the link"</strong> on Drive for live
-                preview.
-              </p>
             </div>
           </div>
 
@@ -813,39 +800,56 @@ export const ResolutionsPage: React.FC = () => {
       />
 
       {/* Portal Document Preview with Left Information Sidebar */}
-      {previewResolution && (
-        <DocumentPreviewModal
-          open={!!previewResolution}
-          onClose={() => setPreviewResolution(null)}
-          title={`${DOCUMENT_TYPE_LABELS[previewResolution.documentType] || "Document"} ${previewResolution.resolutionNo}: ${previewResolution.title}`}
-          subtitle={`STATUS: ${previewResolution.status} • Formal Council Record`}
-          url={previewResolution.driveDocUrl || ""}
-          fileMeta={{
-            title: previewResolution.title,
-            fileName: `${previewResolution.resolutionNo}.gdoc`,
-            fileType:
-              DOCUMENT_TYPE_LABELS[previewResolution.documentType] ||
-              "Document",
-            category: previewResolution.documentType.toUpperCase(),
-            status: previewResolution.status.toUpperCase(),
-            dateUploaded:
-              previewResolution.passedDate ||
-              new Date(previewResolution.createdAt).toLocaleDateString(
-                undefined,
-                {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                },
-              ),
-            description: previewResolution.body,
-            customFields: [
-              { label: "Document ID", value: previewResolution.resolutionNo },
-              { label: "Resolution Status", value: previewResolution.status },
-            ],
-          }}
-        />
-      )}
+      <DocumentPreviewModal
+        open={Boolean(previewResolution)}
+        onClose={() => setPreviewResolution(null)}
+        title={
+          previewResolution
+            ? `${DOCUMENT_TYPE_LABELS[previewResolution.documentType] || "Document"} ` +
+              `${previewResolution.resolutionNo}: ${previewResolution.title}`
+            : ""
+        }
+        subtitle={
+          previewResolution
+            ? `STATUS: ${previewResolution.status} • Formal Council Record`
+            : undefined
+        }
+        url={previewResolution?.driveDocUrl || ""}
+        fileMeta={
+          previewResolution
+            ? {
+                title: previewResolution.title,
+                fileName: `${previewResolution.resolutionNo}.gdoc`,
+                fileType:
+                  DOCUMENT_TYPE_LABELS[previewResolution.documentType] ||
+                  "Document",
+                category: previewResolution.documentType.toUpperCase(),
+                status: previewResolution.status.toUpperCase(),
+                dateUploaded:
+                  previewResolution.passedDate ||
+                  new Date(previewResolution.createdAt).toLocaleDateString(
+                    undefined,
+                    {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    },
+                  ),
+                description: previewResolution.body,
+                customFields: [
+                  {
+                    label: "Document ID",
+                    value: previewResolution.resolutionNo,
+                  },
+                  {
+                    label: "Resolution Status",
+                    value: previewResolution.status,
+                  },
+                ],
+              }
+            : undefined
+        }
+      />
 
       <DriveGuideModal open={driveGuideOpen} onOpenChange={setDriveGuideOpen} />
     </>
