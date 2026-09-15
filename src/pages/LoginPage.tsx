@@ -4,8 +4,6 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock,
-  KeyRound,
-  ShieldCheck,
   UserPlus,
 } from "lucide-react";
 import { api } from "@/api/client";
@@ -24,6 +22,9 @@ import { WaveBackground } from "@/components/ui/WaveBackground";
 import { useGlobalLoader } from "@/context/LoadingContext";
 import type { AuthResponse } from "@/types";
 
+const LABEL_CLS = "block text-[11px] font-semibold text-foreground mb-1";
+const OPT_CLS = "text-muted-foreground text-[10px] font-normal";
+
 export const LoginPage: React.FC = () => {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [loginIdentifier, setLoginIdentifier] = useState("");
@@ -33,21 +34,13 @@ export const LoginPage: React.FC = () => {
   const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
   const [suffix, setSuffix] = useState("");
-  const [password, setPassword] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [otpDigits, setOtpDigits] = useState<string[]>([
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-  ]);
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
   const [isPendingVerification, setIsPendingVerification] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isResending, setIsResending] = useState(false);
   const [cardHeight, setCardHeight] = useState<number | undefined>(undefined);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -66,66 +59,17 @@ export const LoginPage: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
-  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
   const { setAuthSession } = useAuth();
   const { showLoader, hideLoader } = useGlobalLoader();
   const navigate = useNavigate();
 
-  const handleOtpChange = (val: string, index: number) => {
-    const digit = val.slice(-1);
-    if (digit && !/^\d$/.test(digit)) return;
-
-    const newDigits = [...otpDigits];
-    newDigits[index] = digit;
-    setOtpDigits(newDigits);
-
-    if (digit && index < 5) {
-      otpRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleOtpKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>,
-    index: number,
-  ) => {
-    if (e.key === "Backspace" && !otpDigits[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "");
-    if (!pasted) return;
-
-    const newDigits = [...otpDigits];
-    for (let i = 0; i < 6; i++) {
-      newDigits[i] = pasted[i] || "";
-    }
-    setOtpDigits(newDigits);
-
-    const nextIndex = Math.min(pasted.length, 5);
-    otpRefs.current[nextIndex]?.focus();
-  };
-
-  const handleResendOtp = async () => {
-    if (!email) {
-      setErrorMessage("Enter your whitelisted university email first.");
-      return;
-    }
+  const switchMode = (nextMode: "login" | "register") => {
+    setMode(nextMode);
+    setRegisterPassword("");
+    setConfirmPassword("");
     setErrorMessage("");
     setInfoMessage("");
-    setIsResending(true);
-    try {
-      await api.post("/auth/activation/resend-otp", { email });
-      setInfoMessage(
-        "A fresh 6-digit activation code was dispatched to your email / terminal log.",
-      );
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to resend activation code.");
-    } finally {
-      setIsResending(false);
-    }
+    setIsPendingVerification(false);
   };
 
   const handleNativeSubmit = async (e: React.FormEvent) => {
@@ -140,12 +84,12 @@ export const LoginPage: React.FC = () => {
         showLoader("VERIFYING CREDENTIALS // SIGNING IN...", 25);
         const res = await api.post<AuthResponse>("/auth/login/native", {
           identifier: loginIdentifier.trim(),
-          password,
+          password: loginPassword,
         });
         setAuthSession(res);
         await hideLoader(true, "ACCESS GRANTED // REDIRECTING...");
         navigate("/dashboard");
-      } else if (mode === "register") {
+      } else {
         if (
           !username.trim() ||
           !firstName.trim() ||
@@ -154,10 +98,10 @@ export const LoginPage: React.FC = () => {
         ) {
           throw new Error("Please fill in all required registration fields.");
         }
-        if (password !== confirmPassword) {
+        if (registerPassword !== confirmPassword) {
           throw new Error("Passwords do not match.");
         }
-        if (password.length < 8) {
+        if (registerPassword.length < 8) {
           throw new Error("Password must be at least 8 characters long.");
         }
 
@@ -167,7 +111,7 @@ export const LoginPage: React.FC = () => {
           {
             username: username.trim(),
             email: email.trim(),
-            password,
+            password: registerPassword,
             firstName: firstName.trim(),
             middleName: middleName.trim() || undefined,
             lastName: lastName.trim(),
@@ -181,7 +125,6 @@ export const LoginPage: React.FC = () => {
           `${firstName.trim()}${mid} ${lastName.trim()}${sfx}`.trim();
 
         await hideLoader(true, "MANIFEST RECEIVED // PROCEEDING...");
-        // Redirect immediately out of registration page to the dedicated view
         navigate("/pending-verification", {
           state: {
             fullName: full,
@@ -190,29 +133,6 @@ export const LoginPage: React.FC = () => {
             message: res.message,
           },
         });
-        return;
-      } else {
-        const fullOtp = otpDigits.join("");
-        if (fullOtp.length !== 6) {
-          throw new Error("Please enter all 6 digits of your activation code.");
-        }
-        if (password !== confirmPassword) {
-          throw new Error("Passwords do not match.");
-        }
-        if (password.length < 8) {
-          throw new Error("Password must be at least 8 characters long.");
-        }
-
-        showLoader("VALIDATING ACTIVATION OTP & ROLE...", 25);
-        const res = await api.post<AuthResponse>("/auth/activate", {
-          email: email.trim(),
-          otp: fullOtp,
-          password,
-        });
-
-        setAuthSession(res);
-        await hideLoader(true, "ACCOUNT ACTIVATED // REDIRECTING...");
-        navigate("/dashboard");
       }
     } catch (err: any) {
       await hideLoader(false);
@@ -227,7 +147,12 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 bg-background overflow-hidden">
+    <div
+      className={
+        "relative min-h-screen flex items-center justify-center p-4 " +
+        "bg-background overflow-hidden"
+      }
+    >
       <WaveBackground />
       <Card
         style={{
@@ -272,7 +197,8 @@ export const LoginPage: React.FC = () => {
                 className="animate-in fade-in-0 duration-200"
               >
                 {mode === "login"
-                  ? "Access central governance, council resources, and RBAC tools."
+                  ? "Access central governance, council resources, and " +
+                    "RBAC tools."
                   : "Submit your application for council review and admission."}
               </CardDescription>
             </div>
@@ -296,12 +222,7 @@ export const LoginPage: React.FC = () => {
               />
               <button
                 type="button"
-                onClick={() => {
-                  setMode("login");
-                  setErrorMessage("");
-                  setInfoMessage("");
-                  setIsPendingVerification(false);
-                }}
+                onClick={() => switchMode("login")}
                 className={
                   "relative z-10 flex-1 py-1.5 text-xs font-medium " +
                   "rounded-md transition-colors duration-200 " +
@@ -314,12 +235,7 @@ export const LoginPage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setMode("register");
-                  setErrorMessage("");
-                  setInfoMessage("");
-                  setIsPendingVerification(false);
-                }}
+                onClick={() => switchMode("register")}
                 className={
                   "relative z-10 flex-1 py-1.5 text-xs font-medium " +
                   "rounded-md transition-colors duration-200 flex " +
@@ -337,12 +253,23 @@ export const LoginPage: React.FC = () => {
 
           <CardContent className="space-y-4">
             {isPendingVerification && (
-              <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-medium space-y-2">
+              <div
+                className={
+                  "p-3.5 rounded-lg bg-amber-500/10 border " +
+                  "border-amber-500/30 text-amber-700 dark:text-amber-300 " +
+                  "text-xs font-medium space-y-2"
+                }
+              >
                 <div className="flex items-center gap-2 font-semibold">
                   <Clock className="w-4 h-4 text-amber-500 shrink-0" />
                   <span>Account Pending Verification</span>
                 </div>
-                <p className="text-[11px] leading-relaxed text-amber-600 dark:text-amber-400">
+                <p
+                  className={
+                    "text-[11px] leading-relaxed text-amber-600 " +
+                    "dark:text-amber-400"
+                  }
+                >
                   User account is pending for verification. Please wait for an
                   administrator to admit your account.
                 </p>
@@ -356,7 +283,11 @@ export const LoginPage: React.FC = () => {
                         },
                       })
                     }
-                    className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 hover:text-foreground underline underline-offset-4 flex items-center gap-1"
+                    className={
+                      "text-[11px] font-semibold text-amber-700 " +
+                      "dark:text-amber-300 hover:text-foreground underline " +
+                      "underline-offset-4 flex items-center gap-1"
+                    }
                   >
                     <span>Track admission status</span>
                     <ArrowRight className="w-3 h-3" />
@@ -366,13 +297,26 @@ export const LoginPage: React.FC = () => {
             )}
 
             {errorMessage && !isPendingVerification && (
-              <div className="p-2.5 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium">
+              <div
+                className={
+                  "p-2.5 rounded-md bg-rose-500/10 border " +
+                  "border-rose-500/20 text-rose-600 dark:text-rose-400 " +
+                  "text-xs font-medium"
+                }
+              >
                 {errorMessage}
               </div>
             )}
 
             {infoMessage && !isPendingVerification && (
-              <div className="p-2.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-medium flex items-center gap-2">
+              <div
+                className={
+                  "p-2.5 rounded-md bg-emerald-500/10 border " +
+                  "border-emerald-500/20 text-emerald-600 " +
+                  "dark:text-emerald-400 text-xs font-medium flex " +
+                  "items-center gap-2"
+                }
+              >
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span>{infoMessage}</span>
               </div>
@@ -389,7 +333,7 @@ export const LoginPage: React.FC = () => {
                 {mode === "login" && (
                   <>
                     <div>
-                      <label className="block text-[11px] font-semibold text-foreground mb-1">
+                      <label className={LABEL_CLS}>
                         Email or Username
                       </label>
                       <Input
@@ -403,13 +347,13 @@ export const LoginPage: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-semibold text-foreground mb-1">
+                      <label className={LABEL_CLS}>
                         Password
                       </label>
                       <Input
                         type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
                         required
                         placeholder="••••••••"
                         autoComplete="current-password"
@@ -422,7 +366,7 @@ export const LoginPage: React.FC = () => {
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-2.5">
                       <div>
-                        <label className="block text-[11px] font-semibold text-foreground mb-1">
+                        <label className={LABEL_CLS}>
                           First Name <span className="text-rose-500">*</span>
                         </label>
                         <Input
@@ -434,11 +378,9 @@ export const LoginPage: React.FC = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] font-semibold text-foreground mb-1">
+                        <label className={LABEL_CLS}>
                           Middle Name{" "}
-                          <span className="text-muted-foreground text-[10px] font-normal">
-                            (Opt)
-                          </span>
+                          <span className={OPT_CLS}>(Opt)</span>
                         </label>
                         <Input
                           type="text"
@@ -451,7 +393,7 @@ export const LoginPage: React.FC = () => {
 
                     <div className="grid grid-cols-3 gap-2.5">
                       <div className="col-span-2">
-                        <label className="block text-[11px] font-semibold text-foreground mb-1">
+                        <label className={LABEL_CLS}>
                           Last Name <span className="text-rose-500">*</span>
                         </label>
                         <Input
@@ -463,11 +405,9 @@ export const LoginPage: React.FC = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] font-semibold text-foreground mb-1">
+                        <label className={LABEL_CLS}>
                           Suffix{" "}
-                          <span className="text-muted-foreground text-[10px] font-normal">
-                            (Opt)
-                          </span>
+                          <span className={OPT_CLS}>(Opt)</span>
                         </label>
                         <Input
                           type="text"
@@ -480,7 +420,7 @@ export const LoginPage: React.FC = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <div>
-                        <label className="block text-[11px] font-semibold text-foreground mb-1">
+                        <label className={LABEL_CLS}>
                           Username <span className="text-rose-500">*</span>
                         </label>
                         <Input
@@ -498,7 +438,7 @@ export const LoginPage: React.FC = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] font-semibold text-foreground mb-1">
+                        <label className={LABEL_CLS}>
                           Email Address <span className="text-rose-500">*</span>
                         </label>
                         <Input
@@ -513,20 +453,20 @@ export const LoginPage: React.FC = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <div>
-                        <label className="block text-[11px] font-semibold text-foreground mb-1">
+                        <label className={LABEL_CLS}>
                           Password <span className="text-rose-500">*</span>
                         </label>
                         <Input
                           type="password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
+                          value={registerPassword}
+                          onChange={(e) => setRegisterPassword(e.target.value)}
                           required
                           placeholder="Min 8 characters"
                           autoComplete="new-password"
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] font-semibold text-foreground mb-1">
+                        <label className={LABEL_CLS}>
                           Confirm Password{" "}
                           <span className="text-rose-500">*</span>
                         </label>
@@ -547,7 +487,10 @@ export const LoginPage: React.FC = () => {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full mt-2 h-9 flex items-center justify-center gap-2 font-semibold"
+                className={
+                  "w-full mt-2 h-9 flex items-center justify-center " +
+                  "gap-2 font-semibold"
+                }
               >
                 {isSubmitting ? (
                   "Processing..."
@@ -556,15 +499,10 @@ export const LoginPage: React.FC = () => {
                     <span>Sign In</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </>
-                ) : mode === "register" ? (
+                ) : (
                   <>
                     <UserPlus className="w-3.5 h-3.5" />
                     <span>Submit Application</span>
-                  </>
-                ) : (
-                  <>
-                    <KeyRound className="w-3.5 h-3.5" />
-                    <span>Activate & Sign In</span>
                   </>
                 )}
               </Button>
@@ -577,47 +515,27 @@ export const LoginPage: React.FC = () => {
                     Need an officer account?{" "}
                     <button
                       type="button"
-                      onClick={() => {
-                        setMode("register");
-                        setErrorMessage("");
-                        setInfoMessage("");
-                        setIsPendingVerification(false);
-                      }}
-                      className="text-foreground font-semibold underline underline-offset-4"
+                      onClick={() => switchMode("register")}
+                      className={
+                        "text-foreground font-semibold underline " +
+                        "underline-offset-4"
+                      }
                     >
                       Register here
                     </button>
                   </span>
-                ) : mode === "register" ? (
+                ) : (
                   <span>
                     Already registered?{" "}
                     <button
                       type="button"
-                      onClick={() => {
-                        setMode("login");
-                        setErrorMessage("");
-                        setInfoMessage("");
-                        setIsPendingVerification(false);
-                      }}
-                      className="text-foreground font-semibold underline underline-offset-4"
+                      onClick={() => switchMode("login")}
+                      className={
+                        "text-foreground font-semibold underline " +
+                        "underline-offset-4"
+                      }
                     >
                       Back to sign in
-                    </button>
-                  </span>
-                ) : (
-                  <span>
-                    Already activated?{" "}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMode("login");
-                        setErrorMessage("");
-                        setInfoMessage("");
-                        setIsPendingVerification(false);
-                      }}
-                      className="text-foreground font-semibold underline underline-offset-4"
-                    >
-                      Return to sign in
                     </button>
                   </span>
                 )}

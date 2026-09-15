@@ -24,6 +24,8 @@ const getInitialMode = (): VisualizerMode => {
 export const CyberVisualizer: React.FC = () => {
   const [mode, setMode] = useState<VisualizerMode>(getInitialMode);
   const [isRunning, setIsRunning] = useState(true);
+  const [isVisible, setIsVisible] = useState(true);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const fpsRef = useRef<HTMLSpanElement | null>(null);
   const [speed, setSpeed] = useState<number>(DEFAULT_ANIMATION_SPEED);
   const speedRef = useRef<number>(DEFAULT_ANIMATION_SPEED);
@@ -35,7 +37,38 @@ export const CyberVisualizer: React.FC = () => {
     speedRef.current = speed;
   }, [speed]);
 
-  // Rotation angles for 3D renderings
+  // Pause when offscreen or tab hidden to prevent mobile/laptop lag
+  useEffect(() => {
+    if (!containerRef.current || typeof IntersectionObserver === "undefined") {
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.05 },
+    );
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        setIsVisible(false);
+      } else if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const inView = rect.top < window.innerHeight && rect.bottom > 0;
+        setIsVisible(inView);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, []);
+
+  // Pre-allocated typed buffers to prevent 60fps GC nursery pressure
   const animStateRef = useRef({
     A: 0,
     B: 0,
@@ -45,6 +78,8 @@ export const CyberVisualizer: React.FC = () => {
     matrixDrops: [] as number[],
     lastFrameTime: performance.now(),
     frameCount: 0,
+    bBuffer: new Array(46 * 22).fill(" "),
+    zBuffer: new Float32Array(46 * 22),
   });
 
   // Mode Switcher Handler
@@ -65,6 +100,18 @@ export const CyberVisualizer: React.FC = () => {
 
   useEffect(() => {
     let animId: number;
+    const isMobile =
+      typeof window !== "undefined" &&
+      (window.innerWidth < 768 ||
+        Boolean(
+          navigator.hardwareConcurrency &&
+            navigator.hardwareConcurrency <= 4,
+        ));
+
+    // Throttled frame interval: 20 FPS mobile, 30 FPS desktop
+    const targetFps = isMobile ? 20 : 30;
+    const frameInterval = 1000 / targetFps;
+    let lastRenderTime = 0;
 
     // Initialize Matrix drops
     const numCols = 36;
@@ -73,31 +120,41 @@ export const CyberVisualizer: React.FC = () => {
     );
 
     const render = (time: number) => {
-      // Calculate real-time FPS directly on DOM to prevent React re-renders
+      if (!isRunning || !isVisible) {
+        animId = requestAnimationFrame(render);
+        return;
+      }
+
+      const elapsed = time - lastRenderTime;
+      if (elapsed < frameInterval) {
+        animId = requestAnimationFrame(render);
+        return;
+      }
+      lastRenderTime = time - (elapsed % frameInterval);
+
       animStateRef.current.frameCount++;
       if (time - animStateRef.current.lastFrameTime >= 1000) {
         if (fpsRef.current) {
-          fpsRef.current.textContent = `FPS: ${animStateRef.current.frameCount}`;
+          fpsRef.current.textContent =
+            `FPS: ${animStateRef.current.frameCount}`;
         }
         animStateRef.current.frameCount = 0;
         animStateRef.current.lastFrameTime = time;
       }
 
-      if (isRunning) {
-        if (mode === "donut") {
-          renderDonut();
-        } else if (mode === "cube") {
-          renderCube();
-        } else if (mode === "matrix") {
-          renderMatrix();
-        }
+      if (mode === "donut") {
+        renderDonut(isMobile);
+      } else if (mode === "cube") {
+        renderCube(isMobile);
+      } else if (mode === "matrix") {
+        renderMatrix();
       }
 
       animId = requestAnimationFrame(render);
     };
 
     // 1. LEGENDARY ANDY SLOANE DONUT.C ALGORITHM
-    const renderDonut = () => {
+    const renderDonut = (isLowPower: boolean) => {
       const state = animStateRef.current;
       const spd = speedRef.current;
       state.A += 0.04 * spd;
@@ -105,25 +162,26 @@ export const CyberVisualizer: React.FC = () => {
 
       const screenWidth = 46;
       const screenHeight = 22;
-      const b: string[] = [];
-      const z: number[] = [];
+      const b = state.bBuffer;
+      const z = state.zBuffer;
 
-      for (let k = 0; k < screenWidth * screenHeight; k++) {
-        b[k] = " ";
-        z[k] = 0;
-      }
+      b.fill(" ");
+      z.fill(0);
 
       const cosA = Math.cos(state.A);
       const sinA = Math.sin(state.A);
       const cosB = Math.cos(state.B);
       const sinB = Math.sin(state.B);
 
+      const jStep = isLowPower ? 0.12 : 0.08;
+      const iStep = isLowPower ? 0.055 : 0.035;
+
       // Theta: circle angle, Phi: torus revolution angle
-      for (let j = 0; j < 6.28; j += 0.08) {
+      for (let j = 0; j < 6.28; j += jStep) {
         const cosJ = Math.cos(j);
         const sinJ = Math.sin(j);
 
-        for (let i = 0; i < 6.28; i += 0.035) {
+        for (let i = 0; i < 6.28; i += iStep) {
           const sinI = Math.sin(i);
           const cosI = Math.cos(i);
 
@@ -165,14 +223,15 @@ export const CyberVisualizer: React.FC = () => {
       if (preRef.current) {
         let asciiStr = "";
         for (let k = 0; k < screenWidth * screenHeight; k++) {
-          asciiStr += k % screenWidth === screenWidth - 1 ? b[k] + "\n" : b[k];
+          asciiStr +=
+            k % screenWidth === screenWidth - 1 ? b[k] + "\n" : b[k];
         }
         preRef.current.textContent = asciiStr;
       }
     };
 
     // 2. 3D VECTOR WIREFRAME ROTATING CUBE
-    const renderCube = () => {
+    const renderCube = (isLowPower: boolean) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext("2d");
@@ -228,19 +287,19 @@ export const CyberVisualizer: React.FC = () => {
 
       for (const [x, y, z] of vertices) {
         // Rotate Y
-        let x1 = x * cy + z * sy;
-        let y1 = y;
-        let z1 = -x * sy + z * cy;
+        const x1 = x * cy + z * sy;
+        const y1 = y;
+        const z1 = -x * sy + z * cy;
 
         // Rotate X
-        let x2 = x1;
-        let y2 = y1 * cx - z1 * sx;
-        let z2 = y1 * sx + z1 * cx;
+        const x2 = x1;
+        const y2 = y1 * cx - z1 * sx;
+        const z2 = y1 * sx + z1 * cx;
 
         // Rotate Z
-        let x3 = x2 * cz - y2 * sz;
-        let y3 = x2 * sz + y2 * cz;
-        let z3 = z2;
+        const x3 = x2 * cz - y2 * sz;
+        const y3 = x2 * sz + y2 * cz;
+        const z3 = z2;
 
         // Perspective Projection
         const distance = 240;
@@ -251,11 +310,16 @@ export const CyberVisualizer: React.FC = () => {
         projected.push([px, py, z3]);
       }
 
-      // Draw Glowing Edges
+      // Draw Glowing Edges (Skip shadowBlur on low-power)
       ctx.lineWidth = 1.6;
       ctx.strokeStyle = "rgba(59, 130, 246, 0.85)"; // Neon Blue
-      ctx.shadowBlur = 8;
-      ctx.shadowColor = "rgba(59, 130, 246, 0.5)";
+      if (!isLowPower) {
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = "rgba(59, 130, 246, 0.5)";
+      } else {
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = "transparent";
+      }
 
       for (const [start, end] of edges) {
         ctx.beginPath();
@@ -275,8 +339,13 @@ export const CyberVisualizer: React.FC = () => {
       ctx.stroke();
 
       // Draw Vertices Nodes
-      ctx.shadowBlur = 12;
-      ctx.shadowColor = "rgba(99, 102, 241, 0.9)";
+      if (!isLowPower) {
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = "rgba(99, 102, 241, 0.9)";
+      } else {
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = "transparent";
+      }
       for (const [px, py] of projected) {
         ctx.fillStyle = "#38bdf8";
         ctx.beginPath();
@@ -350,10 +419,11 @@ export const CyberVisualizer: React.FC = () => {
 
     animId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animId);
-  }, [mode, isRunning]);
+  }, [mode, isRunning, isVisible]);
 
   return (
     <div
+      ref={containerRef}
       className={
         "flex flex-col h-full min-h-[313px] rounded-xl border " +
         "border-border/80 bg-card shadow-xs overflow-hidden " +
@@ -457,7 +527,12 @@ export const CyberVisualizer: React.FC = () => {
         {/* Subtle decorative grid background */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-[linear-gradient(to_right,rgba(120,120,120,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(120,120,120,0.08)_1px,transparent_1px)] bg-[size:14px_14px] pointer-events-none"
+          className={
+            "absolute inset-0 bg-[linear-gradient(to_right," +
+            "rgba(120,120,120,0.08)_1px,transparent_1px)," +
+            "linear-gradient(to_bottom,rgba(120,120,120,0.08)_1px," +
+            "transparent_1px)] bg-[size:14px_14px] pointer-events-none"
+          }
         />
         {mode === "donut" ? (
           <pre

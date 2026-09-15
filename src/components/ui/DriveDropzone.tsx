@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-import {
-  CheckCircle2,
-  ExternalLink,
-  FileText,
-  Upload,
-  X,
-} from "lucide-react";
+import { CheckCircle2, ExternalLink, FileText, Upload, X } from "lucide-react";
 import { api } from "@/api/client";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/context/ToastContext";
@@ -224,9 +218,7 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
   return (
     <div className={cn("space-y-1.5", className)}>
       {label && (
-        <label className="text-xs font-semibold text-foreground">
-          {label}
-        </label>
+        <label className="text-xs font-semibold text-foreground">{label}</label>
       )}
       <label
         onDragOver={(e) => {
