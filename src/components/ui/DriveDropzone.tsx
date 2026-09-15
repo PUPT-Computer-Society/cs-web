@@ -1,8 +1,15 @@
 import React, { useState } from "react";
-import { CheckCircle2, ExternalLink, FileText, Loader2, Upload, X } from "lucide-react";
+import {
+  CheckCircle2,
+  ExternalLink,
+  FileText,
+  Upload,
+  X,
+} from "lucide-react";
 import { api } from "@/api/client";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/context/ToastContext";
+import { LiquidSphereLoader } from "@/components/ui/LiquidSphereLoader";
 
 interface DriveUploadResponse {
   driveUrl: string;
@@ -51,11 +58,23 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
 }) => {
   const { error: toastError, success: toastSuccess } = useToast();
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(25);
+  const [currentUploadingName, setCurrentUploadingName] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
 
   const handleFile = async (file: File) => {
     setIsUploading(true);
+    setCurrentUploadingName(file.name);
+    setUploadProgress(20);
+
+    const progressTimer = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 85) return prev;
+        return prev + Math.floor(Math.random() * 12) + 5;
+      });
+    }, 350);
+
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -74,6 +93,7 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
         "/drive/upload",
         formData,
       );
+      setUploadProgress(100);
       setUploadedFileName(res.fileName || file.name);
       onUploaded(res.driveUrl, res.fileId, res.fileName);
       toastSuccess(`File uploaded to Google Drive as ${res.fileName}`);
@@ -82,7 +102,12 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
         err instanceof Error ? err.message : "Failed to upload to Drive";
       toastError(msg);
     } finally {
-      setIsUploading(false);
+      clearInterval(progressTimer);
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadProgress(0);
+        setCurrentUploadingName("");
+      }, 400);
     }
   };
 
@@ -98,6 +123,30 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
     const file = e.dataTransfer.files?.[0];
     if (file) handleFile(file);
   };
+
+  if (isUploading) {
+    return (
+      <div className={cn("space-y-1.5", className)}>
+        {label && (
+          <label className="text-xs font-semibold text-foreground">
+            {label}
+          </label>
+        )}
+        <div
+          className={cn(
+            "border-2 border-primary/40 rounded-xl p-5 flex flex-col",
+            "items-center justify-center bg-primary/5 text-center shadow-inner",
+          )}
+        >
+          <LiquidSphereLoader
+            progress={uploadProgress}
+            message="UPLOADING TO DRIVE"
+            subMessage={currentUploadingName || "STREAMING TO SOP FOLDER"}
+          />
+        </div>
+      </div>
+    );
+  }
 
   if (value) {
     return (
@@ -195,28 +244,17 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
           isUploading && "pointer-events-none opacity-70",
         )}
       >
-        {isUploading ? (
-          <>
-            <Loader2 className="w-5 h-5 text-primary animate-spin" />
-            <span className="text-xs font-semibold text-foreground">
-              Uploading & standardizing filename in Google Drive...
-            </span>
-          </>
-        ) : (
-          <>
-            <div className="p-2 rounded-xl bg-primary/10 text-primary">
-              <Upload className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-foreground">
-                Drop file or click to upload to Drive
-              </p>
-              <p className="text-[10px] text-muted-foreground">
-                Automatic Council SOP naming applied on upload
-              </p>
-            </div>
-          </>
-        )}
+        <div className="p-2 rounded-xl bg-primary/10 text-primary">
+          <Upload className="w-4 h-4" />
+        </div>
+        <div>
+          <p className="text-xs font-semibold text-foreground">
+            Drop file or click to upload to Drive
+          </p>
+          <p className="text-[10px] text-muted-foreground">
+            Automatic Council SOP naming applied on upload
+          </p>
+        </div>
         <input
           type="file"
           className="hidden"
