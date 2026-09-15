@@ -14,6 +14,8 @@ import {
   FolderOpen,
   MapPin,
   Plus,
+  RefreshCw,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -33,10 +35,10 @@ import { SearchBar } from "@/components/ui/SearchBar";
 import { Select } from "@/components/ui/Select";
 import { DriveLinkInput } from "@/components/ui/DriveLinkInput";
 import { DriveGuideModal } from "@/components/ui/DriveGuideModal";
+import { DriveDropzone } from "@/components/ui/DriveDropzone";
 import { buildGoogleCalendarUrl } from "@/lib/calendar";
 import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import type { GPOAEvent, GPOAEventStatus } from "@/types";
-import { type } from "os";
 
 const GPOA_STATUS_OPTIONS = [
   {
@@ -121,6 +123,7 @@ const formatForDateTimeLocal = (dateStr: string) => {
 interface EventDriveSectionProps {
   isOpen: boolean;
   onToggle: () => void;
+  eventTitle: string;
   driveFolderUrl: string;
   onDriveFolderChange: (v: string) => void;
   proposalDocUrl: string;
@@ -134,11 +137,14 @@ interface EventDriveSectionProps {
   terminalReportUrl: string;
   onTerminalReportChange: (v: string) => void;
   onOpenSopModal: () => void;
+  onProvisionDrive?: () => void;
+  isProvisioning?: boolean;
 }
 
 const EventDriveSection: React.FC<EventDriveSectionProps> = ({
   isOpen,
   onToggle,
+  eventTitle,
   driveFolderUrl,
   onDriveFolderChange,
   proposalDocUrl,
@@ -152,7 +158,10 @@ const EventDriveSection: React.FC<EventDriveSectionProps> = ({
   terminalReportUrl,
   onTerminalReportChange,
   onOpenSopModal,
+  onProvisionDrive,
+  isProvisioning,
 }) => {
+  const [showManualLinks, setShowManualLinks] = useState(false);
   const configuredCount = [
     driveFolderUrl,
     proposalDocUrl,
@@ -174,7 +183,7 @@ const EventDriveSection: React.FC<EventDriveSectionProps> = ({
       >
         <div className="flex items-center gap-2">
           <FolderOpen className="w-4 h-4 text-primary" />
-          <span>Google Drive Folders & Deliverables</span>
+          <span>Google Drive Deliverables & Folders</span>
           {configuredCount > 0 && (
             <Badge variant="outline" className="text-[10px] py-0 px-1.5">
               {configuredCount} Linked
@@ -191,62 +200,164 @@ const EventDriveSection: React.FC<EventDriveSectionProps> = ({
 
       {isOpen && (
         <div className="mt-3 pt-3 border-t border-border/60 space-y-3">
-          <DriveLinkInput
-            registryKey="eventFolderTemplate"
-            value={driveFolderUrl}
-            onChange={onDriveFolderChange}
-            label="Main Event Drive Folder"
-            placeholder="https://drive.google.com/drive/folders/..."
-            helperText="Root duplicated folder for this specific activity."
-            onOpenSopModal={onOpenSopModal}
-          />
+          {/* Main Folder Status Banner */}
+          <div
+            className={
+              "flex flex-col sm:flex-row items-start sm:items-center " +
+              "justify-between gap-2 p-2.5 rounded-lg border " +
+              (driveFolderUrl
+                ? "bg-primary/5 border-primary/20 text-foreground"
+                : "bg-muted/50 border-border text-muted-foreground")
+            }
+          >
+            <div className="flex items-center gap-2 text-xs">
+              <Folder className="w-4 h-4 text-primary shrink-0" />
+              <div>
+                <span className="font-semibold block text-foreground">
+                  {driveFolderUrl
+                    ? "Event Folder Ready"
+                    : "No Drive Folder Provisioned Yet"}
+                </span>
+                <span className="text-[11px] text-muted-foreground">
+                  {driveFolderUrl
+                    ? "Folder template & 5 SOP subfolders are linked."
+                    : "Auto-provision to create Google Drive folder structure."}
+                </span>
+              </div>
+            </div>
 
+            <div className="flex items-center gap-1.5 shrink-0">
+              {driveFolderUrl && (
+                <a
+                  href={driveFolderUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={
+                    "inline-flex items-center gap-1 px-2.5 py-1 text-xs " +
+                    "rounded font-semibold bg-secondary text-foreground " +
+                    "hover:text-primary transition-colors"
+                  }
+                >
+                  <span>Open Folder</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+              {onProvisionDrive && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={onProvisionDrive}
+                  disabled={isProvisioning}
+                  className="text-xs h-7 px-2.5 gap-1"
+                >
+                  {isProvisioning ? (
+                    <RefreshCw className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3 h-3 text-primary" />
+                  )}
+                  <span>
+                    {driveFolderUrl ? "Re-Sync Structure" : "Auto-Provision"}
+                  </span>
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Subfolder Direct Upload Dropzones */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <DriveLinkInput
-              registryKey="eventProposals"
-              value={proposalDocUrl}
-              onChange={onProposalDocChange}
+            <DriveDropzone
               label="01 Proposals & Permits"
-              placeholder="https://docs.google.com/document/d/..."
-              onOpenSopModal={onOpenSopModal}
+              moduleType="gpoa"
+              title={eventTitle}
+              docType="01_Proposals"
+              value={proposalDocUrl}
+              onUploaded={(url) => onProposalDocChange(url)}
+              onCleared={() => onProposalDocChange("")}
             />
-            <DriveLinkInput
-              registryKey="eventProgramMaterials"
-              value={materialsUrl}
-              onChange={onMaterialsChange}
+
+            <DriveDropzone
               label="02 Program & Materials"
-              placeholder="https://drive.google.com/drive/folders/..."
-              onOpenSopModal={onOpenSopModal}
+              moduleType="gpoa"
+              title={eventTitle}
+              docType="02_Program_Materials"
+              value={materialsUrl}
+              onUploaded={(url) => onMaterialsChange(url)}
+              onCleared={() => onMaterialsChange("")}
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <DriveLinkInput
-              registryKey="eventDocumentation"
-              value={documentationUrl}
-              onChange={onDocumentationChange}
+            <DriveDropzone
               label="03 Documentation"
-              placeholder="https://drive.google.com/drive/folders/..."
-              onOpenSopModal={onOpenSopModal}
+              moduleType="gpoa"
+              title={eventTitle}
+              docType="03_Documentation"
+              value={documentationUrl}
+              onUploaded={(url) => onDocumentationChange(url)}
+              onCleared={() => onDocumentationChange("")}
             />
-            <DriveLinkInput
-              registryKey="eventEvaluations"
-              value={evaluationsUrl}
-              onChange={onEvaluationsChange}
+
+            <DriveDropzone
               label="04 Evaluations"
-              placeholder="https://docs.google.com/spreadsheets/d/..."
-              onOpenSopModal={onOpenSopModal}
+              moduleType="gpoa"
+              title={eventTitle}
+              docType="04_Evaluations"
+              value={evaluationsUrl}
+              onUploaded={(url) => onEvaluationsChange(url)}
+              onCleared={() => onEvaluationsChange("")}
             />
           </div>
 
-          <DriveLinkInput
-            registryKey="eventTerminalReport"
-            value={terminalReportUrl}
-            onChange={onTerminalReportChange}
+          <DriveDropzone
             label="05 Terminal Report"
-            placeholder="https://docs.google.com/document/d/..."
-            onOpenSopModal={onOpenSopModal}
+            moduleType="gpoa"
+            title={eventTitle}
+            docType="05_Terminal_Report"
+            value={terminalReportUrl}
+            onUploaded={(url) => onTerminalReportChange(url)}
+            onCleared={() => onTerminalReportChange("")}
           />
+
+          {/* Manual Link Override Collapsible */}
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() => setShowManualLinks(!showManualLinks)}
+              className="text-[11px] text-muted-foreground hover:text-primary transition-colors underline"
+            >
+              {showManualLinks ? "Hide manual URL inputs" : "Manual Drive URL inputs / override"}
+            </button>
+
+            {showManualLinks && (
+              <div className="mt-2 space-y-2.5 p-2.5 bg-background/50 rounded border border-border/50">
+                <DriveLinkInput
+                  registryKey="eventFolderTemplate"
+                  value={driveFolderUrl}
+                  onChange={onDriveFolderChange}
+                  label="Root Drive Folder URL"
+                  placeholder="https://drive.google.com/drive/folders/..."
+                  onOpenSopModal={onOpenSopModal}
+                />
+                <DriveLinkInput
+                  registryKey="eventProposals"
+                  value={proposalDocUrl}
+                  onChange={onProposalDocChange}
+                  label="Proposal URL"
+                  placeholder="https://docs.google.com/document/d/..."
+                  onOpenSopModal={onOpenSopModal}
+                />
+                <DriveLinkInput
+                  registryKey="eventTerminalReport"
+                  value={terminalReportUrl}
+                  onChange={onTerminalReportChange}
+                  label="Terminal Report URL"
+                  placeholder="https://docs.google.com/document/d/..."
+                  onOpenSopModal={onOpenSopModal}
+                />
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -287,14 +398,7 @@ export const GPOAPage: React.FC = () => {
   const [endTime, setEndTime] = useState("");
   const [location, setLocation] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
-  const [driveFolderUrl, setDriveFolderUrl] = useState("");
-  const [proposalDocUrl, setProposalDocUrl] = useState("");
-  const [materialsUrl, setMaterialsUrl] = useState("");
-  const [documentationUrl, setDocumentationUrl] = useState("");
-  const [evaluationsUrl, setEvaluationsUrl] = useState("");
-  const [terminalReportUrl, setTerminalReportUrl] = useState("");
   const [syncToGoogle, setSyncToGoogle] = useState(false);
-  const [showDriveSection, setShowDriveSection] = useState(false);
 
   // Edit Form State
   const [editTitle, setEditTitle] = useState("");
@@ -320,15 +424,24 @@ export const GPOAPage: React.FC = () => {
     setEndTime("");
     setLocation("");
     setTargetAudience("");
-    setDriveFolderUrl("");
-    setProposalDocUrl("");
-    setMaterialsUrl("");
-    setDocumentationUrl("");
-    setEvaluationsUrl("");
-    setTerminalReportUrl("");
     setSyncToGoogle(false);
-    setShowDriveSection(false);
   };
+
+  // Provision Drive Mutation
+  const provisionDriveMutation = useMutation({
+    mutationFn: (eventId: string) =>
+      api.post<GPOAEvent>(`/gpoa/${eventId}/provision-drive`),
+    onSuccess: (updated) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.gpoa });
+      if (updated.driveFolderUrl) {
+        setEditDriveFolderUrl(updated.driveFolderUrl);
+      }
+      toastSuccess("Google Drive folders provisioned successfully.");
+    },
+    onError: (err: any) => {
+      toastError(err.message || "Failed to provision Drive folders");
+    },
+  });
 
   // Create Mutation
   const createEventMutation = useMutation({
@@ -416,12 +529,6 @@ export const GPOAPage: React.FC = () => {
       endTime: new Date(endTime).toISOString(),
       location,
       targetAudience: targetAudience || "All CS Students",
-      driveFolderUrl: driveFolderUrl.trim() || null,
-      proposalDocUrl: proposalDocUrl.trim() || null,
-      materialsUrl: materialsUrl.trim() || null,
-      documentationUrl: documentationUrl.trim() || null,
-      evaluationsUrl: evaluationsUrl.trim() || null,
-      terminalReportUrl: terminalReportUrl.trim() || null,
       syncToGoogle,
     });
   };
@@ -995,24 +1102,22 @@ export const GPOAPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Drive Section Accordion */}
-          <EventDriveSection
-            isOpen={showDriveSection}
-            onToggle={() => setShowDriveSection(!showDriveSection)}
-            driveFolderUrl={driveFolderUrl}
-            onDriveFolderChange={setDriveFolderUrl}
-            proposalDocUrl={proposalDocUrl}
-            onProposalDocChange={setProposalDocUrl}
-            materialsUrl={materialsUrl}
-            onMaterialsChange={setMaterialsUrl}
-            documentationUrl={documentationUrl}
-            onDocumentationChange={setDocumentationUrl}
-            evaluationsUrl={evaluationsUrl}
-            onEvaluationsChange={setEvaluationsUrl}
-            terminalReportUrl={terminalReportUrl}
-            onTerminalReportChange={setTerminalReportUrl}
-            onOpenSopModal={() => setDriveGuideOpen(true)}
-          />
+          {/* Auto-Provision Info Banner */}
+          <div
+            className={
+              "flex items-center gap-2 p-2.5 rounded-lg border " +
+              "border-dashed border-primary/30 bg-primary/5 text-foreground"
+            }
+          >
+            <Sparkles className="w-4 h-4 text-primary shrink-0" />
+            <p className="text-[11px] text-muted-foreground">
+              <strong className="text-foreground font-semibold">
+                Auto-Provision Active:
+              </strong>{" "}
+              Submitting will automatically create the Google Drive event folder
+              and 5 standard SOP subfolders.
+            </p>
+          </div>
 
           <div className="flex items-center gap-2 pt-1">
             <input
@@ -1175,6 +1280,7 @@ export const GPOAPage: React.FC = () => {
           <EventDriveSection
             isOpen={showEditDriveSection}
             onToggle={() => setShowEditDriveSection(!showEditDriveSection)}
+            eventTitle={editTitle}
             driveFolderUrl={editDriveFolderUrl}
             onDriveFolderChange={setEditDriveFolderUrl}
             proposalDocUrl={editProposalDocUrl}
@@ -1188,6 +1294,12 @@ export const GPOAPage: React.FC = () => {
             terminalReportUrl={editTerminalReportUrl}
             onTerminalReportChange={setEditTerminalReportUrl}
             onOpenSopModal={() => setDriveGuideOpen(true)}
+            onProvisionDrive={
+              editingEvent
+                ? () => provisionDriveMutation.mutate(editingEvent.id)
+                : undefined
+            }
+            isProvisioning={provisionDriveMutation.isPending}
           />
 
           <div className="flex justify-end gap-2 pt-4">

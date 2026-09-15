@@ -29,6 +29,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
 import { DriveGuideModal } from "@/components/ui/DriveGuideModal";
 import { DriveLinkInput } from "@/components/ui/DriveLinkInput";
+import { DriveDropzone } from "@/components/ui/DriveDropzone";
 import { getGooglePreviewUrl } from "@/lib/preview";
 import type { InternalDocumentType, Resolution } from "@/types";
 
@@ -125,6 +126,7 @@ export const ResolutionsPage: React.FC = () => {
   );
   const [body, setBody] = useState("");
   const [driveDocUrl, setDriveDocUrl] = useState("");
+  const [fileId, setFileId] = useState<string | null>(null);
   const [status, setStatus] = useState("");
 
   // Edit Form
@@ -134,6 +136,7 @@ export const ResolutionsPage: React.FC = () => {
     useState<InternalDocumentType>("resolution");
   const [editBody, setEditBody] = useState("");
   const [editDriveUrl, setEditDriveUrl] = useState("");
+  const [editFileId, setEditFileId] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState("Approved");
 
   const canEdit = (res: Resolution) =>
@@ -152,6 +155,7 @@ export const ResolutionsPage: React.FC = () => {
       setTitle("");
       setBody("");
       setDriveDocUrl("");
+      setFileId(null);
       setDocumentType("");
       setStatus("");
       toastSuccess("Document filed successfully.");
@@ -195,6 +199,7 @@ export const ResolutionsPage: React.FC = () => {
       status: status || "Approved",
       documentType: documentType || "resolution",
       driveDocUrl: driveDocUrl || null,
+      fileId: fileId || null,
     });
   };
 
@@ -205,6 +210,7 @@ export const ResolutionsPage: React.FC = () => {
     setEditDocType(res.documentType || "resolution");
     setEditBody(res.body);
     setEditDriveUrl(res.driveDocUrl || "");
+    setEditFileId(res.fileId || null);
     setEditStatus(res.status);
   };
 
@@ -220,6 +226,7 @@ export const ResolutionsPage: React.FC = () => {
         status: editStatus,
         documentType: editDocType,
         driveDocUrl: editDriveUrl || null,
+        fileId: editFileId || null,
       },
     });
   };
@@ -645,7 +652,11 @@ export const ResolutionsPage: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2 sm:col-span-1">
-              <label className="block text-[11px] font-semibold text-foreground mb-1">
+              <label
+                className={
+                  "block text-[11px] font-semibold text-foreground mb-1"
+                }
+              >
                 Status
               </label>
               <Select
@@ -656,16 +667,22 @@ export const ResolutionsPage: React.FC = () => {
               />
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <DriveLinkInput
-                registryKey={
-                  (documentType && DOC_TYPE_TO_REGISTRY_KEY[documentType]) ||
-                  "resolutions"
-                }
+              <DriveDropzone
+                label="Google Drive Document Upload"
+                moduleType="resolution"
+                title={title}
+                docNumber={resolutionNo}
+                docType={documentType || "resolution"}
                 value={driveDocUrl}
-                onChange={setDriveDocUrl}
-                label="Google Docs URL (Optional)"
-                placeholder="https://docs.google.com/document/d/..."
-                onOpenSopModal={() => setDriveGuideOpen(true)}
+                fileId={fileId}
+                onUploaded={(url, fid) => {
+                  setDriveDocUrl(url);
+                  if (fid) setFileId(fid);
+                }}
+                onCleared={() => {
+                  setDriveDocUrl("");
+                  setFileId(null);
+                }}
               />
             </div>
           </div>
@@ -757,16 +774,22 @@ export const ResolutionsPage: React.FC = () => {
               />
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <DriveLinkInput
-                registryKey={
-                  (editDocType && DOC_TYPE_TO_REGISTRY_KEY[editDocType]) ||
-                  "resolutions"
-                }
+              <DriveDropzone
+                label="Google Drive Document Upload"
+                moduleType="resolution"
+                title={editTitle}
+                docNumber={editNo}
+                docType={editDocType || "resolution"}
                 value={editDriveUrl}
-                onChange={setEditDriveUrl}
-                label="Google Docs URL (Optional)"
-                placeholder="https://docs.google.com/document/d/..."
-                onOpenSopModal={() => setDriveGuideOpen(true)}
+                fileId={editFileId}
+                onUploaded={(url, fid) => {
+                  setEditDriveUrl(url);
+                  if (fid) setEditFileId(fid);
+                }}
+                onCleared={() => {
+                  setEditDriveUrl("");
+                  setEditFileId(null);
+                }}
               />
             </div>
           </div>

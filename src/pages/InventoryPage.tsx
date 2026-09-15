@@ -18,6 +18,7 @@ import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
 import { DriveLinkInput } from "@/components/ui/DriveLinkInput";
+import { DriveDropzone } from "@/components/ui/DriveDropzone";
 import type { InventoryItem } from "@/types";
 
 const PAGE_SIZE = 10;
@@ -72,6 +73,7 @@ export const InventoryPage: React.FC = () => {
   const [location, setLocation] = useState("");
   const [remarks, setRemarks] = useState("");
   const [proofUrl, setProofUrl] = useState("");
+  const [proofFileId, setProofFileId] = useState<string | null>(null);
 
   // Edit Form
   const [editName, setEditName] = useState("");
@@ -80,6 +82,7 @@ export const InventoryPage: React.FC = () => {
   const [editLocation, setEditLocation] = useState("");
   const [editRemarks, setEditRemarks] = useState("");
   const [editProofUrl, setEditProofUrl] = useState("");
+  const [editProofFileId, setEditProofFileId] = useState<string | null>(null);
 
   // Mutations
   const createItemMutation = useMutation({
@@ -94,6 +97,7 @@ export const InventoryPage: React.FC = () => {
       setLocation("");
       setRemarks("");
       setProofUrl("");
+      setProofFileId(null);
       toastSuccess("Inventory asset and proof recorded.");
     },
     onError: (err: any) => {
@@ -135,6 +139,7 @@ export const InventoryPage: React.FC = () => {
       location: location || "Org Room",
       remarks,
       proofUrl: proofUrl || null,
+      proofFileId: proofFileId || null,
     });
   };
 
@@ -146,6 +151,7 @@ export const InventoryPage: React.FC = () => {
     setEditLocation(item.location);
     setEditRemarks(item.remarks || "");
     setEditProofUrl(item.proofUrl || "");
+    setEditProofFileId(item.proofFileId || null);
   };
 
   const handleUpdateItem = (e: React.FormEvent) => {
@@ -160,6 +166,7 @@ export const InventoryPage: React.FC = () => {
         location: editLocation,
         remarks: editRemarks,
         proofUrl: editProofUrl || null,
+        proofFileId: editProofFileId || null,
       },
     });
   };
@@ -407,12 +414,21 @@ export const InventoryPage: React.FC = () => {
               />
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <DriveLinkInput
-                registryKey="inventoryCustody"
+              <DriveDropzone
+                label="Upload Custody / Condition Proof"
+                moduleType="inventory"
+                title={itemName}
+                condition={condition || "Good"}
                 value={proofUrl}
-                onChange={setProofUrl}
-                label="Proof Material URL (Optional)"
-                placeholder="https://drive.google.com/..."
+                fileId={proofFileId}
+                onUploaded={(url, fid) => {
+                  setProofUrl(url);
+                  if (fid) setProofFileId(fid);
+                }}
+                onCleared={() => {
+                  setProofUrl("");
+                  setProofFileId(null);
+                }}
               />
             </div>
           </div>
@@ -501,12 +517,21 @@ export const InventoryPage: React.FC = () => {
               />
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <DriveLinkInput
-                registryKey="inventoryCustody"
+              <DriveDropzone
+                label="Upload Custody / Condition Proof"
+                moduleType="inventory"
+                title={editName}
+                condition={editCondition}
                 value={editProofUrl}
-                onChange={setEditProofUrl}
-                label="Proof Material URL (Optional)"
-                placeholder="https://drive.google.com/..."
+                fileId={editProofFileId}
+                onUploaded={(url, fid) => {
+                  setEditProofUrl(url);
+                  if (fid) setEditProofFileId(fid);
+                }}
+                onCleared={() => {
+                  setEditProofUrl("");
+                  setEditProofFileId(null);
+                }}
               />
             </div>
           </div>

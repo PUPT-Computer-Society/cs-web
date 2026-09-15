@@ -27,6 +27,7 @@ import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
 import { DriveLinkInput } from "@/components/ui/DriveLinkInput";
+import { DriveDropzone } from "@/components/ui/DriveDropzone";
 import type { FinanceSummary, FinanceTransaction } from "@/types";
 
 const PAGE_SIZE = 10;
@@ -94,6 +95,7 @@ export const FinancePage: React.FC = () => {
   const [category, setCategory] = useState("");
   const [referenceNo, setReferenceNo] = useState("");
   const [receiptUrl, setReceiptUrl] = useState("");
+  const [proofFileId, setProofFileId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
 
   // Edit Form
@@ -103,6 +105,7 @@ export const FinancePage: React.FC = () => {
   const [editCategory, setEditCategory] = useState("Logistics & Supplies");
   const [editRefNo, setEditRefNo] = useState("");
   const [editReceiptUrl, setEditReceiptUrl] = useState("");
+  const [editProofFileId, setEditProofFileId] = useState<string | null>(null);
   const [editNotes, setEditNotes] = useState("");
 
   // Mutations
@@ -118,6 +121,7 @@ export const FinancePage: React.FC = () => {
       setCategory("");
       setReferenceNo("");
       setReceiptUrl("");
+      setProofFileId(null);
       setNotes("");
       toastSuccess("Financial transaction recorded.");
     },
@@ -162,6 +166,7 @@ export const FinancePage: React.FC = () => {
       category: category || "Logistics & Supplies",
       referenceNo: referenceNo || null,
       receiptUrl: receiptUrl || null,
+      proofFileId: proofFileId || null,
       notes,
     });
   };
@@ -174,6 +179,7 @@ export const FinancePage: React.FC = () => {
     setEditCategory(tx.category);
     setEditRefNo(tx.referenceNo || "");
     setEditReceiptUrl(tx.receiptUrl || "");
+    setEditProofFileId(tx.proofFileId || null);
     setEditNotes(tx.notes || "");
   };
 
@@ -189,6 +195,7 @@ export const FinancePage: React.FC = () => {
         category: editCategory,
         referenceNo: editRefNo || null,
         receiptUrl: editReceiptUrl || null,
+        proofFileId: editProofFileId || null,
         notes: editNotes,
       },
     });
@@ -541,12 +548,24 @@ export const FinancePage: React.FC = () => {
             </div>
           </div>
 
-          <DriveLinkInput
-            registryKey="financeReceipts"
+          <DriveDropzone
+            label="Upload Proof of Receipt / Attachment"
+            moduleType="finance"
+            title={title}
+            merchant={title}
+            amount={typeof amount === "number" ? amount : undefined}
+            orNumber={referenceNo}
+            category={category}
             value={receiptUrl}
-            onChange={setReceiptUrl}
-            label="Proof of Receipt / Attachment URL (Optional)"
-            placeholder="https://drive.google.com/..."
+            fileId={proofFileId}
+            onUploaded={(url, fid) => {
+              setReceiptUrl(url);
+              if (fid) setProofFileId(fid);
+            }}
+            onCleared={() => {
+              setReceiptUrl("");
+              setProofFileId(null);
+            }}
           />
 
           <MarkdownTextarea
@@ -648,12 +667,24 @@ export const FinancePage: React.FC = () => {
             </div>
           </div>
 
-          <DriveLinkInput
-            registryKey="financeReceipts"
+          <DriveDropzone
+            label="Upload Proof of Receipt / Attachment"
+            moduleType="finance"
+            title={editTitle}
+            merchant={editTitle}
+            amount={editAmount}
+            orNumber={editRefNo}
+            category={editCategory}
             value={editReceiptUrl}
-            onChange={setEditReceiptUrl}
-            label="Proof of Receipt / Attachment URL (Optional)"
-            placeholder="https://drive.google.com/..."
+            fileId={editProofFileId}
+            onUploaded={(url, fid) => {
+              setEditReceiptUrl(url);
+              if (fid) setEditProofFileId(fid);
+            }}
+            onCleared={() => {
+              setEditReceiptUrl("");
+              setEditProofFileId(null);
+            }}
           />
 
           <MarkdownTextarea

@@ -28,6 +28,7 @@ import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
 import { DriveLinkInput } from "@/components/ui/DriveLinkInput";
+import { DriveDropzone } from "@/components/ui/DriveDropzone";
 import { getGooglePreviewUrl } from "@/lib/preview";
 import type { Material, MaterialCategory } from "@/types";
 
@@ -87,6 +88,7 @@ export const MaterialsPage: React.FC = () => {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<MaterialCategory | "">("");
   const [driveUrl, setDriveUrl] = useState("");
+  const [fileId, setFileId] = useState<string | null>(null);
   const [fileType, setFileType] = useState("");
 
   // Edit Form
@@ -95,6 +97,7 @@ export const MaterialsPage: React.FC = () => {
   const [editCategory, setEditCategory] =
     useState<MaterialCategory>("academic");
   const [editDriveUrl, setEditDriveUrl] = useState("");
+  const [editFileId, setEditFileId] = useState<string | null>(null);
   const [editFileType, setEditFileType] = useState("Google Drive Document");
 
   const canEdit = (mat: Material) =>
@@ -110,6 +113,7 @@ export const MaterialsPage: React.FC = () => {
       setTitle("");
       setDescription("");
       setDriveUrl("");
+      setFileId(null);
       setCategory("");
       setFileType("");
       toastSuccess("Material uploaded successfully.");
@@ -151,6 +155,7 @@ export const MaterialsPage: React.FC = () => {
       description,
       category: category || "academic",
       driveUrl,
+      fileId: fileId || null,
       fileType: fileType || "Google Drive Document",
     });
   };
@@ -161,6 +166,7 @@ export const MaterialsPage: React.FC = () => {
     setEditDescription(mat.description || "");
     setEditCategory(mat.category);
     setEditDriveUrl(mat.driveUrl);
+    setEditFileId(mat.fileId || null);
     setEditFileType(mat.fileType || "Google Drive Document");
   };
 
@@ -174,6 +180,7 @@ export const MaterialsPage: React.FC = () => {
         description: editDescription,
         category: editCategory,
         driveUrl: editDriveUrl,
+        fileId: editFileId || null,
         fileType: editFileType,
       },
     });
@@ -600,16 +607,25 @@ export const MaterialsPage: React.FC = () => {
             </div>
           </div>
 
-          <DriveLinkInput
-            registryKey={
-              (category && MATERIAL_CATEGORY_TO_REGISTRY_KEY[category]) ||
-              "courseReviewers"
-            }
+          <DriveDropzone
+            label="Upload Resource to Google Drive"
+            moduleType="material"
+            title={title}
+            category={category || "academic"}
             value={driveUrl}
-            onChange={setDriveUrl}
-            label="Google Drive URL"
-            placeholder="https://drive.google.com/..."
-            required
+            fileId={fileId}
+            onUploaded={(url, fid, fileName) => {
+              setDriveUrl(url);
+              if (fid) setFileId(fid);
+              if (fileName && !fileType) {
+                const ext = fileName.split(".").pop()?.toUpperCase() || "FILE";
+                setFileType(`${ext} Document`);
+              }
+            }}
+            onCleared={() => {
+              setDriveUrl("");
+              setFileId(null);
+            }}
           />
 
           <MarkdownTextarea
@@ -684,17 +700,25 @@ export const MaterialsPage: React.FC = () => {
             </div>
           </div>
 
-          <DriveLinkInput
-            registryKey={
-              (editCategory &&
-                MATERIAL_CATEGORY_TO_REGISTRY_KEY[editCategory]) ||
-              "courseReviewers"
-            }
+          <DriveDropzone
+            label="Upload Resource to Google Drive"
+            moduleType="material"
+            title={editTitle}
+            category={editCategory}
             value={editDriveUrl}
-            onChange={setEditDriveUrl}
-            label="Google Drive URL"
-            placeholder="https://drive.google.com/..."
-            required
+            fileId={editFileId}
+            onUploaded={(url, fid, fileName) => {
+              setEditDriveUrl(url);
+              if (fid) setEditFileId(fid);
+              if (fileName && !editFileType) {
+                const ext = fileName.split(".").pop()?.toUpperCase() || "FILE";
+                setEditFileType(`${ext} Document`);
+              }
+            }}
+            onCleared={() => {
+              setEditDriveUrl("");
+              setEditFileId(null);
+            }}
           />
 
           <MarkdownTextarea

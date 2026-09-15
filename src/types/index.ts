@@ -102,6 +102,7 @@ export interface GPOAEvent {
   targetAudience: string;
   googleEventId: string | null;
   driveFolderUrl?: string | null;
+  driveFolderId?: string | null;
   proposalDocUrl?: string | null;
   materialsUrl?: string | null;
   documentationUrl?: string | null;
@@ -120,6 +121,7 @@ export interface FinanceTransaction {
   category: string;
   referenceNo: string | null;
   receiptUrl: string | null;
+  proofFileId?: string | null;
   notes: string;
   recordedById: string | null;
   createdAt: string;
@@ -140,6 +142,7 @@ export interface InventoryItem {
   location: string;
   remarks: string;
   proofUrl?: string | null;
+  proofFileId?: string | null;
   updatedById: string | null;
   updatedAt: string;
 }
@@ -152,6 +155,7 @@ export interface Material {
   description: string;
   category: MaterialCategory;
   driveUrl: string;
+  fileId?: string | null;
   fileType: string;
   uploadedById: string | null;
   createdAt: string;
@@ -187,6 +191,7 @@ export interface Resolution {
   status: string;
   documentType: InternalDocumentType;
   driveDocUrl: string | null;
+  fileId?: string | null;
   passedDate: string;
   authoredById: string | null;
   createdAt: string;
