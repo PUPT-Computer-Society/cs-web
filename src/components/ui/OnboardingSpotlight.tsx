@@ -1,11 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  ArrowRight,
-  Check,
-  ChevronLeft,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { ArrowRight, Check, ChevronLeft, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useTour } from "@/context/TourContext";
 import { cn } from "@/lib/utils";

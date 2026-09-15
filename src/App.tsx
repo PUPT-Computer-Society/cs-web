@@ -49,10 +49,7 @@ export const App: React.FC = () => {
                   <Route path="/resolutions" element={<ResolutionsPage />} />
                   <Route path="/tasks" element={<TasksPage />} />
                   <Route path="/admin" element={<AdminPage />} />
-                  <Route
-                    path="/admin/audit-logs"
-                    element={<AuditLogsPage />}
-                  />
+                  <Route path="/admin/audit-logs" element={<AuditLogsPage />} />
                   <Route path="/profile" element={<ProfilePage />} />
                   <Route
                     path="*"

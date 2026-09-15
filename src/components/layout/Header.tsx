@@ -87,11 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
         <ThemeToggle />
 
         {/* Executive Officer Identity Capsule & Dropdown (Jakob's Law) */}
-        <div
-          className="relative"
-          ref={dropdownRef}
-          data-tour="header-user"
-        >
+        <div className="relative" ref={dropdownRef} data-tour="header-user">
           <button
             type="button"
             onClick={() => setIsOpen((prev) => !prev)}
