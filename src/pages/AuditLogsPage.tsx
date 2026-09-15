@@ -27,6 +27,7 @@ import { Select } from "@/components/ui/Select";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Pagination } from "@/components/ui/Pagination";
 import { cn } from "@/lib/utils";
+import { formatDateTimeUTC8 } from "@/lib/dateUtils";
 import type {
   AuditLogEntry,
   AuditLogsResponse,
@@ -41,22 +42,6 @@ const SEVERITY_OPTIONS = [
   { value: "error", label: "Error" },
   { value: "critical", label: "Critical" },
 ];
-
-function formatLogDate(iso: string): string {
-  try {
-    const d = new Date(iso);
-    return d.toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true,
-    });
-  } catch {
-    return iso;
-  }
-}
 
 function getCategoryBadge(category: LogCategory) {
   switch (category) {
@@ -148,24 +133,20 @@ export const AuditLogsPage: React.FC = () => {
     pageSize: 15,
   };
 
-  const {
-    data,
-    isLoading,
-    isRefetching,
-    refetch,
-  } = useQuery<AuditLogsResponse>({
-    queryKey: queryKeys.auditLogs(queryParams),
-    queryFn: () => {
-      const sp = new URLSearchParams();
-      if (categoryFilter) sp.append("category", categoryFilter);
-      if (severityFilter) sp.append("severity", severityFilter);
-      if (activeSearch) sp.append("search", activeSearch);
-      sp.append("page", String(currentPage));
-      sp.append("page_size", "15");
-      return api.get<AuditLogsResponse>(`/audit-logs?${sp.toString()}`);
-    },
-    enabled: !!isPresident,
-  });
+  const { data, isLoading, isRefetching, refetch } =
+    useQuery<AuditLogsResponse>({
+      queryKey: queryKeys.auditLogs(queryParams),
+      queryFn: () => {
+        const sp = new URLSearchParams();
+        if (categoryFilter) sp.append("category", categoryFilter);
+        if (severityFilter) sp.append("severity", severityFilter);
+        if (activeSearch) sp.append("search", activeSearch);
+        sp.append("page", String(currentPage));
+        sp.append("page_size", "15");
+        return api.get<AuditLogsResponse>(`/audit-logs?${sp.toString()}`);
+      },
+      enabled: !!isPresident,
+    });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,7 +221,7 @@ export const AuditLogsPage: React.FC = () => {
                   Total Telemetry
                 </p>
                 <p className="text-xl font-black text-foreground">
-                  {isLoading ? "..." : summary?.total ?? 0}
+                  {isLoading ? "..." : (summary?.total ?? 0)}
                 </p>
               </div>
             </CardContent>
@@ -261,7 +242,7 @@ export const AuditLogsPage: React.FC = () => {
                   Audit Actions
                 </p>
                 <p className="text-xl font-black text-foreground">
-                  {isLoading ? "..." : summary?.audit ?? 0}
+                  {isLoading ? "..." : (summary?.audit ?? 0)}
                 </p>
               </div>
             </CardContent>
@@ -282,7 +263,7 @@ export const AuditLogsPage: React.FC = () => {
                   Security Events
                 </p>
                 <p className="text-xl font-black text-foreground">
-                  {isLoading ? "..." : summary?.security ?? 0}
+                  {isLoading ? "..." : (summary?.security ?? 0)}
                 </p>
               </div>
             </CardContent>
@@ -303,7 +284,7 @@ export const AuditLogsPage: React.FC = () => {
                   Errors / Alerts
                 </p>
                 <p className="text-xl font-black text-foreground">
-                  {isLoading ? "..." : summary?.errors ?? 0}
+                  {isLoading ? "..." : (summary?.errors ?? 0)}
                 </p>
               </div>
             </CardContent>
@@ -420,7 +401,7 @@ export const AuditLogsPage: React.FC = () => {
                 )}
               >
                 <tr>
-                  <th className="py-3 px-4">Timestamp</th>
+                  <th className="py-3 px-4">Timestamp (UTC+8)</th>
                   <th className="py-3 px-4">Category</th>
                   <th className="py-3 px-4">Severity</th>
                   <th className="py-3 px-4">Action / Resource</th>
@@ -487,7 +468,7 @@ export const AuditLogsPage: React.FC = () => {
                             "text-muted-foreground",
                           )}
                         >
-                          {formatLogDate(log.createdAt)}
+                          {formatDateTimeUTC8(log.createdAt)}
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
                           {getCategoryBadge(log.category)}
@@ -606,10 +587,10 @@ export const AuditLogsPage: React.FC = () => {
                   )}
                 >
                   <span className="text-muted-foreground font-medium block">
-                    Timestamp
+                    Timestamp (UTC+8)
                   </span>
                   <span className="font-mono font-semibold text-foreground">
-                    {selectedLog.createdAt}
+                    {formatDateTimeUTC8(selectedLog.createdAt)}
                   </span>
                 </div>
                 <div
