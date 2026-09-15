@@ -168,6 +168,20 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({
       showLoader("CONNECTING TO SERVER CORE...", DEFAULT_INITIAL_PROGRESS);
     }, PING_DEBOUNCE_MS);
 
+    const isProd =
+      typeof window !== "undefined" &&
+      window.location.hostname !== "localhost" &&
+      window.location.hostname !== "127.0.0.1";
+
+    if (isProd && !BASE_SERVER_URL) {
+      console.error(
+        "[wakeBackend] CRITICAL: VITE_API_URL is missing in production!",
+      );
+      clearTimeout(coldStartTimer);
+      setIsConnectionErrorOpen(true);
+      return false;
+    }
+
     while (Date.now() - startTime < MAX_COLD_START_TIMEOUT_MS) {
       const elapsed = Date.now() - startTime;
 
@@ -200,6 +214,18 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({
           });
         } finally {
           clearTimeout(pingTimer);
+        }
+
+        if (res && res.status === 404) {
+          console.error(
+            `[wakeBackend] 404 on ${res.url}. Verify VITE_API_URL config.`,
+          );
+          clearTimeout(coldStartTimer);
+          if (hasShownLoader) {
+            await hideLoader(false, "BACKEND NOT FOUND // 404");
+          }
+          setIsConnectionErrorOpen(true);
+          return false;
         }
 
         if (res && res.ok) {
