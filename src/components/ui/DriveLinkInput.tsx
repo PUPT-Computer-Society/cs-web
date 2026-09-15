@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Check,
   Copy,
@@ -6,6 +7,7 @@ import {
   FolderOpen,
   HelpCircle,
   Sparkles,
+  X,
 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -51,6 +53,18 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
   const targetDriveUrl =
     entry?.driveUrl || entry?.defaultDriveUrl || ROOT_DRIVE_URL;
 
+  // Dismiss focus modal when user hits Escape
+  useEffect(() => {
+    if (!tooltipOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setTooltipOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [tooltipOpen]);
+
   const handleCopyNaming = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -74,133 +88,20 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
           </label>
 
           {entry && (
-            <div
-              className="relative inline-flex items-center"
-              onMouseEnter={() => setTooltipOpen(true)}
-              onMouseLeave={() => setTooltipOpen(false)}
-            >
-              <button
-                type="button"
-                onClick={() => setTooltipOpen((prev) => !prev)}
-                className={cn(
-                  "text-muted-foreground hover:text-primary",
-                  "transition-colors focus:outline-none",
-                )}
-                aria-label="View Storage SOP Guidance"
-              >
-                <HelpCircle className="w-3.5 h-3.5 text-primary/80" />
-              </button>
-
-              {/* Interactive Tooltip Card */}
-              {tooltipOpen && (
-                <div
-                  role="tooltip"
-                  className={cn(
-                    "absolute left-0 bottom-full mb-2 z-50 w-72 sm:w-80",
-                    "rounded-md border border-border bg-popover p-3 shadow-xl",
-                    "text-popover-foreground text-left",
-                    "animate-in fade-in-50 zoom-in-95",
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "flex items-center justify-between border-b",
-                      "border-border/60 pb-1.5 mb-2",
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "flex items-center gap-1",
-                        "text-[11px] font-bold text-primary",
-                      )}
-                    >
-                      <FolderOpen className="w-3.5 h-3.5" />
-                      <span className="truncate">{entry.folderName}</span>
-                    </div>
-                    <Badge variant="outline" className="text-[9px] px-1 py-0">
-                      Wing {entry.wingNumber}
-                    </Badge>
-                  </div>
-
-                  <div className="space-y-2 text-[10px]">
-                    <div>
-                      <span className="text-muted-foreground font-medium block">
-                        Target Folder Path:
-                      </span>
-                      <code
-                        className={cn(
-                          "text-[10px] text-foreground font-mono bg-muted/60",
-                          "px-1 py-0.5 rounded block truncate",
-                        )}
-                      >
-                        {entry.path}
-                      </code>
-                    </div>
-
-                    <div>
-                      <span className="text-muted-foreground font-medium block">
-                        SOP Instruction:
-                      </span>
-                      <p className="text-foreground leading-tight">
-                        {entry.instructions}
-                      </p>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground font-medium">
-                          Prescribed Naming:
-                        </span>
-                        <button
-                          type="button"
-                          onClick={handleCopyNaming}
-                          className={cn(
-                            "text-[9px] text-primary hover:underline",
-                            "flex items-center gap-0.5",
-                          )}
-                        >
-                          {copied ? (
-                            <>
-                              <Check className="w-2.5 h-2.5 text-green-500" />
-                              Copied
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-2.5 h-2.5" />
-                              Copy
-                            </>
-                          )}
-                        </button>
-                      </div>
-                      <code
-                        className={cn(
-                          "text-[10px] text-primary font-mono bg-primary/10",
-                          "px-1 py-0.5 rounded block truncate mt-0.5",
-                        )}
-                      >
-                        {entry.namingConvention}
-                      </code>
-                    </div>
-
-                    <div
-                      className={cn(
-                        "flex items-center justify-between pt-1 border-t",
-                        "border-border/50 text-[9px]",
-                      )}
-                    >
-                      <span className="text-muted-foreground">
-                        Formats: <strong>{entry.acceptedFormats}</strong>
-                      </span>
-                      <span
-                        className="text-muted-foreground truncate max-w-[120px]"
-                      >
-                        Owner: {entry.responsibleRoles[0] || "Council"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+            <button
+              type="button"
+              onClick={() => setTooltipOpen(true)}
+              className={cn(
+                "text-muted-foreground hover:text-primary",
+                "transition-colors focus:outline-none p-0.5 rounded",
+                "hover:bg-primary/10 cursor-pointer inline-flex",
+                "items-center",
               )}
-            </div>
+              aria-label={`View SOP guidance for ${entry.folderName}`}
+              title="Click to view SOP folder and naming guide"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-primary/80" />
+            </button>
           )}
         </div>
 
@@ -210,7 +111,7 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
             onClick={onOpenSopModal}
             className={cn(
               "text-[10px] text-primary hover:underline font-medium",
-              "inline-flex items-center gap-0.5",
+              "inline-flex items-center gap-0.5 cursor-pointer",
             )}
           >
             <Sparkles className="w-2.5 h-2.5" />
@@ -266,6 +167,230 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
           </a>
         )}
       </div>
+
+      {/* Full-DOM Overlay Dim and Focused Spotlight SOP Card via Portal */}
+      {entry && tooltipOpen && typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className={cn(
+              "fixed inset-0 z-[100] flex items-center",
+              "justify-center p-4",
+            )}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Storage SOP Guidance: ${entry.folderName}`}
+          >
+            {/* Overlay Dim on the whole DOM */}
+            <div
+              className={cn(
+                "fixed inset-0 bg-black/65 backdrop-blur-xs",
+                "animate-in fade-in-0 duration-150",
+              )}
+              onClick={() => setTooltipOpen(false)}
+              aria-hidden="true"
+            />
+
+            {/* Focused SOP Guidance Card sitting strictly on top */}
+            <div
+              className={cn(
+                "relative z-10 w-full max-w-sm sm:max-w-md",
+                "rounded-xl border border-border bg-card p-4 sm:p-5",
+                "shadow-2xl text-card-foreground text-left",
+                "animate-in fade-in-0 zoom-in-95 duration-150 space-y-3.5",
+              )}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div
+                className={cn(
+                  "flex items-center justify-between border-b",
+                  "border-border/70 pb-2.5",
+                )}
+              >
+                <div
+                  className={cn(
+                    "flex items-center gap-2",
+                    "text-xs sm:text-sm font-bold text-primary truncate",
+                  )}
+                >
+                  <FolderOpen className="w-4 h-4 shrink-0" />
+                  <span className="truncate">{entry.folderName}</span>
+                  <Badge
+                    variant="outline"
+                    className="text-[9px] px-1.5 py-0 shrink-0"
+                  >
+                    Wing {entry.wingNumber}
+                  </Badge>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTooltipOpen(false)}
+                  className={cn(
+                    "rounded-md p-1 text-muted-foreground",
+                    "hover:text-foreground hover:bg-secondary",
+                    "transition-colors shrink-0 cursor-pointer",
+                  )}
+                  aria-label="Close SOP Guidance"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Body Properties */}
+              <div className="space-y-2.5 text-xs">
+                <div>
+                  <span
+                    className={cn(
+                      "text-muted-foreground font-semibold block",
+                      "text-[11px]",
+                    )}
+                  >
+                    Target Drive Path:
+                  </span>
+                  <code
+                    className={cn(
+                      "text-[11px] text-foreground font-mono bg-muted/60",
+                      "px-2 py-1 rounded block truncate mt-0.5 border",
+                      "border-border/50",
+                    )}
+                  >
+                    {entry.path}
+                  </code>
+                </div>
+
+                <div>
+                  <span
+                    className={cn(
+                      "text-muted-foreground font-semibold block",
+                      "text-[11px]",
+                    )}
+                  >
+                    SOP Instruction:
+                  </span>
+                  <p className="text-foreground leading-relaxed text-xs mt-0.5">
+                    {entry.instructions}
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={cn(
+                        "text-muted-foreground font-semibold text-[11px]",
+                      )}
+                    >
+                      Prescribed Naming Convention:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleCopyNaming}
+                      className={cn(
+                        "text-[11px] text-primary hover:underline",
+                        "flex items-center gap-1 font-medium cursor-pointer",
+                      )}
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="w-3 h-3 text-green-500" />
+                          <span>Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span>Copy format</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <code
+                    className={cn(
+                      "text-[11px] text-primary font-mono bg-primary/10",
+                      "px-2 py-1 rounded block truncate mt-1 border",
+                      "border-primary/20",
+                    )}
+                  >
+                    {entry.namingConvention}
+                  </code>
+                </div>
+
+                <div
+                  className={cn(
+                    "grid grid-cols-2 gap-2 pt-1 border-t",
+                    "border-border/60 text-[11px]",
+                  )}
+                >
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">
+                      Accepted Formats:
+                    </span>
+                    <strong
+                      className={cn(
+                        "text-foreground font-semibold truncate block",
+                      )}
+                    >
+                      {entry.acceptedFormats}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">
+                      Responsible Role:
+                    </span>
+                    <strong
+                      className={cn(
+                        "text-foreground font-semibold truncate block",
+                      )}
+                    >
+                      {entry.responsibleRoles[0] || "Council"}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div
+                className={cn(
+                  "flex items-center justify-between gap-2 pt-2 border-t",
+                  "border-border/60",
+                )}
+              >
+                <a
+                  href={targetDriveUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-3 py-1.5",
+                    "rounded-md bg-primary text-primary-foreground",
+                    "text-xs font-semibold hover:bg-primary/90",
+                    "transition-colors shadow-xs",
+                  )}
+                >
+                  <FolderOpen className="w-3.5 h-3.5" />
+                  <span>Open Target Folder</span>
+                  <ExternalLink className="w-3 h-3 ml-0.5" />
+                </a>
+
+                {onOpenSopModal && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTooltipOpen(false);
+                      onOpenSopModal();
+                    }}
+                    className={cn(
+                      "text-xs text-primary hover:underline",
+                      "inline-flex items-center gap-1",
+                      "font-medium cursor-pointer",
+                    )}
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    <span>View All SOPs &rarr;</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 };
