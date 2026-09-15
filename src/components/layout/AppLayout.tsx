@@ -2,14 +2,24 @@ import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { OnboardingSpotlight } from "@/components/ui/OnboardingSpotlight";
 
 export const AppLayout: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-6 h-6 border-2 border-foreground border-t-transparent rounded-full animate-spin"></div>
+      <div
+        className={
+          "min-h-screen flex items-center justify-center bg-background"
+        }
+      >
+        <div
+          className={
+            "w-6 h-6 border-2 border-foreground border-t-transparent " +
+            "rounded-full animate-spin"
+          }
+        />
       </div>
     );
   }
@@ -20,12 +30,17 @@ export const AppLayout: React.FC = () => {
 
   return (
     <div className="relative min-h-screen flex bg-background text-foreground">
-      {/* Background ambient container (contained to prevent sticky obstruction) */}
+      <OnboardingSpotlight />
+      {/* Background ambient container (contained to avoid obstruction) */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         {/* Light mode ambient gradient depth mesh */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-background to-amber-50/30 dark:from-transparent dark:via-transparent dark:to-transparent"
+          className={
+            "absolute inset-0 bg-gradient-to-br from-blue-50/50 " +
+            "via-background to-amber-50/30 dark:from-transparent " +
+            "dark:via-transparent dark:to-transparent"
+          }
         />
 
         {/* Ambient tech dot grid texture without maskImage composition */}

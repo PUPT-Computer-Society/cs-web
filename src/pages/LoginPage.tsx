@@ -1,11 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ArrowRight,
-  CheckCircle2,
-  Clock,
-  UserPlus,
-} from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, UserPlus } from "lucide-react";
 import { api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
@@ -333,9 +328,7 @@ export const LoginPage: React.FC = () => {
                 {mode === "login" && (
                   <>
                     <div>
-                      <label className={LABEL_CLS}>
-                        Email or Username
-                      </label>
+                      <label className={LABEL_CLS}>Email or Username</label>
                       <Input
                         type="text"
                         value={loginIdentifier}
@@ -347,9 +340,7 @@ export const LoginPage: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className={LABEL_CLS}>
-                        Password
-                      </label>
+                      <label className={LABEL_CLS}>Password</label>
                       <Input
                         type="password"
                         value={loginPassword}
@@ -379,8 +370,7 @@ export const LoginPage: React.FC = () => {
                       </div>
                       <div>
                         <label className={LABEL_CLS}>
-                          Middle Name{" "}
-                          <span className={OPT_CLS}>(Opt)</span>
+                          Middle Name <span className={OPT_CLS}>(Opt)</span>
                         </label>
                         <Input
                           type="text"
@@ -406,8 +396,7 @@ export const LoginPage: React.FC = () => {
                       </div>
                       <div>
                         <label className={LABEL_CLS}>
-                          Suffix{" "}
-                          <span className={OPT_CLS}>(Opt)</span>
+                          Suffix <span className={OPT_CLS}>(Opt)</span>
                         </label>
                         <Input
                           type="text"

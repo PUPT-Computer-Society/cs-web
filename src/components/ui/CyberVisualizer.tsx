@@ -104,8 +104,7 @@ export const CyberVisualizer: React.FC = () => {
       typeof window !== "undefined" &&
       (window.innerWidth < 768 ||
         Boolean(
-          navigator.hardwareConcurrency &&
-            navigator.hardwareConcurrency <= 4,
+          navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4,
         ));
 
     // Throttled frame interval: 20 FPS mobile, 30 FPS desktop
@@ -135,8 +134,8 @@ export const CyberVisualizer: React.FC = () => {
       animStateRef.current.frameCount++;
       if (time - animStateRef.current.lastFrameTime >= 1000) {
         if (fpsRef.current) {
-          fpsRef.current.textContent =
-            `FPS: ${animStateRef.current.frameCount}`;
+          const count = animStateRef.current.frameCount;
+          fpsRef.current.textContent = `FPS: ${count}`;
         }
         animStateRef.current.frameCount = 0;
         animStateRef.current.lastFrameTime = time;
@@ -223,8 +222,7 @@ export const CyberVisualizer: React.FC = () => {
       if (preRef.current) {
         let asciiStr = "";
         for (let k = 0; k < screenWidth * screenHeight; k++) {
-          asciiStr +=
-            k % screenWidth === screenWidth - 1 ? b[k] + "\n" : b[k];
+          asciiStr += k % screenWidth === screenWidth - 1 ? b[k] + "\n" : b[k];
         }
         preRef.current.textContent = asciiStr;
       }
