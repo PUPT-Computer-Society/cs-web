@@ -492,8 +492,8 @@ export const DRIVE_REGISTRY: Record<string, DriveFolderEntry> = {
     key: "eventProposals",
     wingNumber: "08",
     wingName: "08_GPOA_EVENTS_&_PROJECTS",
-    folderName: "01_Proposals_&_Approvals",
-    path: "08_GPOA_EVENTS_&_PROJECTS/[Event]/01_Proposals_&_Approvals",
+    folderName: "01_Proposals_&_Permits",
+    path: "08_GPOA_EVENTS_&_PROJECTS/[Event]/01_Proposals_&_Permits",
     responsibleRoles: ["Project Head", "VP for Internal Affairs"],
     namingConvention: "PROPOSAL_2026_[Event]_Approved.pdf",
     acceptedFormats: "PDF, Signed Scans",
@@ -547,20 +547,20 @@ export const DRIVE_REGISTRY: Record<string, DriveFolderEntry> = {
     driveUrl:
       "https://drive.google.com/drive/folders/1HEXWa2idRXnKloZRR4OgkPLCugwC4DB9?usp=drive_link",
   },
-  eventAccomplishment: {
-    key: "eventAccomplishment",
+  eventTerminalReport: {
+    key: "eventTerminalReport",
     wingNumber: "08",
     wingName: "08_GPOA_EVENTS_&_PROJECTS",
-    folderName: "05_Accomplishment_Report",
-    path: "08_GPOA_EVENTS_&_PROJECTS/[Event]/05_Accomplishment_Report",
+    folderName: "05_Terminal_Report",
+    path: "08_GPOA_EVENTS_&_PROJECTS/[Event]/05_Terminal_Report",
     responsibleRoles: [
       "Project Head",
       "VP for Research and Docs",
       "VP for Internal Affairs",
     ],
-    namingConvention: "AR_2026_[Event]_Final_Signed.pdf",
+    namingConvention: "TR_2026_[Event]_Final_Signed.pdf",
     acceptedFormats: "Signed PDF",
-    instructions: "Comprehensive accomplishment report for OSA/Dean.",
+    instructions: "Comprehensive terminal report for OSA/Dean.",
     driveUrl:
       "https://drive.google.com/drive/folders/1tNt41dUXbYerG1eIkOHHil8MSy1y2vMR?usp=drive_link",
   },

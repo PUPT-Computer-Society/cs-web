@@ -38,6 +38,14 @@ import type { GPOAEvent, Task, TaskStatus, User } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryClient";
 
+const TASK_SORT_OPTIONS = [
+  { value: "created_at:desc", label: "Date (Newest first)" },
+  { value: "created_at:asc", label: "Date (Oldest first)" },
+  { value: "due_date:asc", label: "Due Date (Earliest first)" },
+  { value: "due_date:desc", label: "Due Date (Latest first)" },
+  { value: "title:asc", label: "Title (A-Z)" },
+];
+
 interface KanbanColumnDef {
   status: TaskStatus;
   label: string;
@@ -398,10 +406,19 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
 export const TasksPage: React.FC = () => {
   const queryClient = useQueryClient();
 
+  const [sortBy, setSortBy] = useState<string>("created_at:desc");
+  const [sortField, sortOrder] = sortBy.split(":");
+
+  const currentTasksKey = useMemo(
+    () => queryKeys.tasksFiltered({ sort_by: sortField, order: sortOrder }),
+    [sortField, sortOrder],
+  );
+
   // 1. TanStack Query: instant cached retrieval without DOM destruction
   const { data: tasks = [], isLoading: isTasksLoading } = useQuery<Task[]>({
-    queryKey: queryKeys.tasks,
-    queryFn: () => api.get<Task[]>("/tasks"),
+    queryKey: currentTasksKey,
+    queryFn: () =>
+      api.get<Task[]>(`/tasks?sort_by=${sortField}&order=${sortOrder}`),
   });
 
   const { data: users = [], isLoading: isUsersLoading } = useQuery<User[]>({
@@ -570,9 +587,11 @@ export const TasksPage: React.FC = () => {
     }) => api.patch<Task>(`/tasks/${taskId}/status`, { status: newStatus }),
     onMutate: async ({ taskId, newStatus }) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.tasks });
-      const previousTasks = queryClient.getQueryData<Task[]>(queryKeys.tasks);
-      queryClient.setQueryData<Task[]>(queryKeys.tasks, (old = []) =>
-        old.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)),
+      const previousTasks = queryClient.getQueryData<Task[]>(currentTasksKey);
+      queryClient.setQueriesData<Task[]>(
+        { queryKey: queryKeys.tasks },
+        (old = []) =>
+          old.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)),
       );
       if (selectedTask && selectedTask.id === taskId) {
         setSelectedTask((prev) =>
@@ -583,7 +602,7 @@ export const TasksPage: React.FC = () => {
     },
     onError: (err: any, _vars, context) => {
       if (context?.previousTasks) {
-        queryClient.setQueryData(queryKeys.tasks, context.previousTasks);
+        queryClient.setQueryData(currentTasksKey, context.previousTasks);
       }
       toastError(err.message || "Failed to update task status");
     },
@@ -646,8 +665,10 @@ export const TasksPage: React.FC = () => {
       };
     }) => api.patch<Task>(`/tasks/${taskId}`, payload),
     onSuccess: (updatedTask) => {
-      queryClient.setQueryData<Task[]>(queryKeys.tasks, (old = []) =>
-        old.map((t) => (t.id === updatedTask.id ? updatedTask : t)),
+      queryClient.setQueriesData<Task[]>(
+        { queryKey: queryKeys.tasks },
+        (old = []) =>
+          old.map((t) => (t.id === updatedTask.id ? updatedTask : t)),
       );
       if (selectedTask && selectedTask.id === updatedTask.id) {
         setSelectedTask(updatedTask);
@@ -729,8 +750,10 @@ export const TasksPage: React.FC = () => {
       subtaskId: string;
     }) => api.patch<Task>(`/tasks/${taskId}/subtasks/${subtaskId}/toggle`, {}),
     onSuccess: (updatedTask) => {
-      queryClient.setQueryData<Task[]>(queryKeys.tasks, (old = []) =>
-        old.map((t) => (t.id === updatedTask.id ? updatedTask : t)),
+      queryClient.setQueriesData<Task[]>(
+        { queryKey: queryKeys.tasks },
+        (old = []) =>
+          old.map((t) => (t.id === updatedTask.id ? updatedTask : t)),
       );
       if (selectedTask && selectedTask.id === updatedTask.id) {
         setSelectedTask(updatedTask);
@@ -761,8 +784,10 @@ export const TasksPage: React.FC = () => {
         assignedToId: subAssigneeId,
       }),
     onSuccess: (updatedTask) => {
-      queryClient.setQueryData<Task[]>(queryKeys.tasks, (old = []) =>
-        old.map((t) => (t.id === updatedTask.id ? updatedTask : t)),
+      queryClient.setQueriesData<Task[]>(
+        { queryKey: queryKeys.tasks },
+        (old = []) =>
+          old.map((t) => (t.id === updatedTask.id ? updatedTask : t)),
       );
       setSelectedTask(updatedTask);
       setNewSubtaskTitle("");
@@ -793,8 +818,9 @@ export const TasksPage: React.FC = () => {
       subtaskId: string;
     }) => api.delete<Task>(`/tasks/${taskId}/subtasks/${subtaskId}`),
     onSuccess: (updatedTask, vars) => {
-      queryClient.setQueryData<Task[]>(queryKeys.tasks, (old = []) =>
-        old.map((t) => (t.id === vars.taskId ? updatedTask : t)),
+      queryClient.setQueriesData<Task[]>(
+        { queryKey: queryKeys.tasks },
+        (old = []) => old.map((t) => (t.id === vars.taskId ? updatedTask : t)),
       );
       if (selectedTask && selectedTask.id === vars.taskId) {
         setSelectedTask(updatedTask);
@@ -1102,6 +1128,17 @@ export const TasksPage: React.FC = () => {
                 value={filterEventId}
                 onValueChange={setFilterEventId}
                 options={eventFilterOptions}
+                triggerClassName="bg-background/50"
+              />
+            </div>
+
+            {/* Sort by */}
+            <div className="flex items-center gap-1.5 sm:w-48">
+              <Select
+                size="sm"
+                value={sortBy}
+                onValueChange={setSortBy}
+                options={TASK_SORT_OPTIONS}
                 triggerClassName="bg-background/50"
               />
             </div>

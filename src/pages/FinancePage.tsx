@@ -35,6 +35,14 @@ const FLOW_OPTIONS = [
   { value: "income", label: "Collection (Income)" },
 ];
 
+const FINANCE_SORT_OPTIONS = [
+  { value: "created_at:desc", label: "Date (Newest)" },
+  { value: "created_at:asc", label: "Date (Oldest)" },
+  { value: "amount:desc", label: "Amount (Highest)" },
+  { value: "amount:asc", label: "Amount (Lowest)" },
+  { value: "title:asc", label: "Title (A to Z)" },
+];
+
 export const FinancePage: React.FC = () => {
   const { success: toastSuccess, error: toastError } = useToast();
   const { isPresident, hasPermission } = useAuth();
@@ -44,13 +52,22 @@ export const FinancePage: React.FC = () => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState("created_at:desc");
 
-  // TanStack Query for ledger & summary
+  const [sortField, sortOrder] = sortBy.split(":");
+
+  // TanStack Query for ledger & summary with backend-level sorting
   const { data: transactions = [], isLoading: isTxLoading } = useQuery<
     FinanceTransaction[]
   >({
-    queryKey: queryKeys.finance,
-    queryFn: () => api.get<FinanceTransaction[]>("/finance"),
+    queryKey: queryKeys.financeFiltered({
+      sort_by: sortField,
+      order: sortOrder,
+    }),
+    queryFn: () =>
+      api.get<FinanceTransaction[]>(
+        `/finance?sort_by=${sortField}&order=${sortOrder}`,
+      ),
   });
 
   const { data: summary, isLoading: isSummaryLoading } =
@@ -284,10 +301,23 @@ export const FinancePage: React.FC = () => {
         </div>
 
         {/* Ledger Header */}
-        <div className="flex justify-between items-center">
-          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
-            Treasury Ledger
-          </h3>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div className="flex items-center gap-3">
+            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
+              Treasury Ledger
+            </h3>
+            <div className="w-48 shrink-0">
+              <Select
+                value={sortBy}
+                onValueChange={(val) => {
+                  setSortBy(val);
+                  setCurrentPage(1);
+                }}
+                options={FINANCE_SORT_OPTIONS}
+                size="sm"
+              />
+            </div>
+          </div>
 
           {canManage && (
             <Button

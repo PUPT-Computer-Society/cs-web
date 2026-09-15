@@ -43,6 +43,13 @@ const SEVERITY_OPTIONS = [
   { value: "critical", label: "Critical" },
 ];
 
+const AUDIT_LOG_SORT_OPTIONS = [
+  { value: "created_at:desc", label: "Date (Newest first)" },
+  { value: "created_at:asc", label: "Date (Oldest first)" },
+  { value: "severity:desc", label: "Severity (Critical first)" },
+  { value: "action:asc", label: "Action (A-Z)" },
+];
+
 function getCategoryBadge(category: LogCategory) {
   switch (category) {
     case "security":
@@ -119,16 +126,21 @@ export const AuditLogsPage: React.FC = () => {
 
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [severityFilter, setSeverityFilter] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("created_at:desc");
   const [searchInput, setSearchInput] = useState<string>("");
   const [activeSearch, setActiveSearch] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
 
+  const [sortField, sortOrder] = sortBy.split(":");
+
   const queryParams = {
     category: categoryFilter || undefined,
     severity: severityFilter || undefined,
     search: activeSearch || undefined,
+    sort_by: sortField,
+    order: sortOrder,
     page: currentPage,
     pageSize: 15,
   };
@@ -141,6 +153,8 @@ export const AuditLogsPage: React.FC = () => {
         if (categoryFilter) sp.append("category", categoryFilter);
         if (severityFilter) sp.append("severity", severityFilter);
         if (activeSearch) sp.append("search", activeSearch);
+        sp.append("sort_by", sortField);
+        sp.append("order", sortOrder);
         sp.append("page", String(currentPage));
         sp.append("page_size", "15");
         return api.get<AuditLogsResponse>(`/audit-logs?${sp.toString()}`);
@@ -346,7 +360,12 @@ export const AuditLogsPage: React.FC = () => {
             </div>
 
             {/* Search and Severity Filter */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div
+              className={cn(
+                "grid grid-cols-1 sm:grid-cols-2",
+                "lg:grid-cols-4 gap-3",
+              )}
+            >
               <form
                 onSubmit={handleSearchSubmit}
                 className="sm:col-span-2 relative flex items-center"
@@ -379,6 +398,18 @@ export const AuditLogsPage: React.FC = () => {
                   value={severityFilter}
                   onValueChange={handleSeverityChange}
                   placeholder="All Severities"
+                  className="h-10 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <Select
+                  options={AUDIT_LOG_SORT_OPTIONS}
+                  value={sortBy}
+                  onValueChange={(val) => {
+                    setSortBy(val);
+                    setCurrentPage(1);
+                  }}
                   className="h-10 rounded-xl"
                 />
               </div>

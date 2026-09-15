@@ -44,6 +44,13 @@ const MATERIAL_CATEGORY_TO_REGISTRY_KEY: Record<MaterialCategory, string> = {
   sports: "sportsTournaments",
 };
 
+const MATERIAL_SORT_OPTIONS = [
+  { value: "created_at:desc", label: "Newest Uploads" },
+  { value: "created_at:asc", label: "Oldest Uploads" },
+  { value: "title:asc", label: "Title (A to Z)" },
+  { value: "title:desc", label: "Title (Z to A)" },
+];
+
 export const MaterialsPage: React.FC = () => {
   const { success: toastSuccess, error: toastError } = useToast();
   const { user, isPresident, hasPermission } = useAuth();
@@ -52,12 +59,18 @@ export const MaterialsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"all" | MaterialCategory>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState("created_at:desc");
 
-  // TanStack Query
+  const [sortField, sortOrder] = sortBy.split(":");
+
+  // TanStack Query with backend-level sorting
   const endpoint =
-    activeTab === "all" ? "/materials" : `/materials?category=${activeTab}`;
+    activeTab === "all"
+      ? `/materials?sort_by=${sortField}&order=${sortOrder}`
+      : `/materials?category=${activeTab}&sort_by=${sortField}&order=${sortOrder}`;
+
   const { data: materials = [], isLoading } = useQuery<Material[]>({
-    queryKey: queryKeys.materials(activeTab),
+    queryKey: queryKeys.materials(activeTab, sortField, sortOrder),
     queryFn: () => api.get<Material[]>(endpoint),
   });
 
@@ -247,6 +260,19 @@ export const MaterialsPage: React.FC = () => {
               >
                 <List className="w-4 h-4" />
               </button>
+            </div>
+
+            {/* Sort Dropdown */}
+            <div className="w-44 shrink-0">
+              <Select
+                value={sortBy}
+                onValueChange={(val) => {
+                  setSortBy(val);
+                  setCurrentPage(1);
+                }}
+                options={MATERIAL_SORT_OPTIONS}
+                size="sm"
+              />
             </div>
           </div>
 

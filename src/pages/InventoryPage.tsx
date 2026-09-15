@@ -28,6 +28,14 @@ const CONDITION_OPTIONS = [
   { value: "Decommissioned", label: "Decommissioned" },
 ];
 
+const INVENTORY_SORT_OPTIONS = [
+  { value: "item_name:asc", label: "Item Name (A to Z)" },
+  { value: "item_name:desc", label: "Item Name (Z to A)" },
+  { value: "quantity:desc", label: "Quantity (Highest)" },
+  { value: "quantity:asc", label: "Quantity (Lowest)" },
+  { value: "last_updated:desc", label: "Recently Updated" },
+];
+
 export const InventoryPage: React.FC = () => {
   const { success: toastSuccess, error: toastError } = useToast();
   const { isPresident, hasPermission } = useAuth();
@@ -36,10 +44,19 @@ export const InventoryPage: React.FC = () => {
     hasPermission("audit_finance") ||
     isPresident;
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState("item_name:asc");
+
+  const [sortField, sortOrder] = sortBy.split(":");
 
   const { data: items = [], isLoading } = useQuery<InventoryItem[]>({
-    queryKey: queryKeys.inventory,
-    queryFn: () => api.get<InventoryItem[]>("/inventory"),
+    queryKey: queryKeys.inventoryFiltered({
+      sort_by: sortField,
+      order: sortOrder,
+    }),
+    queryFn: () =>
+      api.get<InventoryItem[]>(
+        `/inventory?sort_by=${sortField}&order=${sortOrder}`,
+      ),
   });
 
   // Modals
@@ -163,14 +180,27 @@ export const InventoryPage: React.FC = () => {
       />
 
       <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <span className="text-xs font-mono font-semibold text-muted-foreground">
-              TRACKED ASSETS:
-            </span>{" "}
-            <span className="text-xs font-mono font-bold text-foreground">
-              {items.length} Units Total
-            </span>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div className="flex items-center gap-3">
+            <div>
+              <span className="text-xs font-mono font-semibold text-muted-foreground">
+                TRACKED ASSETS:
+              </span>{" "}
+              <span className="text-xs font-mono font-bold text-foreground">
+                {items.length} Units Total
+              </span>
+            </div>
+            <div className="w-48 shrink-0">
+              <Select
+                value={sortBy}
+                onValueChange={(val) => {
+                  setSortBy(val);
+                  setCurrentPage(1);
+                }}
+                options={INVENTORY_SORT_OPTIONS}
+                size="sm"
+              />
+            </div>
           </div>
 
           {canManage && (
@@ -522,9 +552,7 @@ export const InventoryPage: React.FC = () => {
       <DocumentPreviewModal
         open={Boolean(previewProof)}
         onClose={() => setPreviewProof(null)}
-        title={
-          previewProof ? `Proof of Receipt: ${previewProof.itemName}` : ""
-        }
+        title={previewProof ? `Proof of Receipt: ${previewProof.itemName}` : ""}
         subtitle={
           previewProof
             ? "Property Acknowledgment Receipt / Delivery Confirmation Document"

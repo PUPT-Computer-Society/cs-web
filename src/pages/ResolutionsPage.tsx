@@ -30,7 +30,7 @@ import { Select } from "@/components/ui/Select";
 import { DriveGuideModal } from "@/components/ui/DriveGuideModal";
 import { DriveLinkInput } from "@/components/ui/DriveLinkInput";
 import { getGooglePreviewUrl } from "@/lib/preview";
-import type { Resolution, InternalDocumentType } from "@/types";
+import type { InternalDocumentType, Resolution } from "@/types";
 
 const PAGE_SIZE = 8;
 
@@ -73,24 +73,35 @@ const DOCUMENT_TYPE_LABELS: Record<InternalDocumentType, string> = {
   constitution: "Constitution",
 };
 
+const RESOLUTION_SORT_OPTIONS = [
+  { value: "passed_date:desc", label: "Date Passed (Newest)" },
+  { value: "passed_date:asc", label: "Date Passed (Oldest)" },
+  { value: "title:asc", label: "Title (A to Z)" },
+  { value: "resolution_no:asc", label: "Resolution No." },
+];
+
 export const ResolutionsPage: React.FC = () => {
   const { success: toastSuccess, error: toastError } = useToast();
   const { user, isPresident, hasPermission } = useAuth();
-  const canResolve = hasPermission("resolve_affairs");
+  const canManage = hasPermission("resolve_affairs");
+  const canResolve = canManage;
 
   const [activeTab, setActiveTab] = useState<"all" | InternalDocumentType>(
     "all",
   );
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState("passed_date:desc");
 
-  // TanStack Query
+  const [sortField, sortOrder] = sortBy.split(":");
+
+  // TanStack Query with backend-level sorting
   const endpoint =
     activeTab === "all"
-      ? "/resolutions"
-      : `/resolutions?document_type=${activeTab}`;
+      ? `/resolutions?sort_by=${sortField}&order=${sortOrder}`
+      : `/resolutions?document_type=${activeTab}&sort_by=${sortField}&order=${sortOrder}`;
   const { data: resolutions = [], isLoading } = useQuery<Resolution[]>({
-    queryKey: queryKeys.resolutions(activeTab),
+    queryKey: queryKeys.resolutions(activeTab, sortField, sortOrder),
     queryFn: () => api.get<Resolution[]>(endpoint),
   });
 
@@ -283,6 +294,19 @@ export const ResolutionsPage: React.FC = () => {
               >
                 <List className="w-4 h-4" />
               </button>
+            </div>
+
+            {/* Sort Dropdown */}
+            <div className="w-48 shrink-0">
+              <Select
+                value={sortBy}
+                onValueChange={(val) => {
+                  setSortBy(val);
+                  setCurrentPage(1);
+                }}
+                options={RESOLUTION_SORT_OPTIONS}
+                size="sm"
+              />
             </div>
           </div>
 
@@ -634,8 +658,7 @@ export const ResolutionsPage: React.FC = () => {
             <div className="col-span-2 sm:col-span-1">
               <DriveLinkInput
                 registryKey={
-                  (documentType &&
-                    DOC_TYPE_TO_REGISTRY_KEY[documentType]) ||
+                  (documentType && DOC_TYPE_TO_REGISTRY_KEY[documentType]) ||
                   "resolutions"
                 }
                 value={driveDocUrl}
@@ -736,8 +759,7 @@ export const ResolutionsPage: React.FC = () => {
             <div className="col-span-2 sm:col-span-1">
               <DriveLinkInput
                 registryKey={
-                  (editDocType &&
-                    DOC_TYPE_TO_REGISTRY_KEY[editDocType]) ||
+                  (editDocType && DOC_TYPE_TO_REGISTRY_KEY[editDocType]) ||
                   "resolutions"
                 }
                 value={editDriveUrl}

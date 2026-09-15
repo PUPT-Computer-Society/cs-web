@@ -84,15 +84,29 @@ export interface DashboardStats {
   resolutionsCount: number;
 }
 
+export type GPOAEventStatus =
+  | "proposal"
+  | "in_review"
+  | "approved"
+  | "completed"
+  | "cancelled";
+
 export interface GPOAEvent {
   id: string;
   title: string;
   description: string;
+  status: GPOAEventStatus;
   startTime: string;
   endTime: string;
   location: string;
   targetAudience: string;
   googleEventId: string | null;
+  driveFolderUrl?: string | null;
+  proposalDocUrl?: string | null;
+  materialsUrl?: string | null;
+  documentationUrl?: string | null;
+  evaluationsUrl?: string | null;
+  terminalReportUrl?: string | null;
   createdAt: string;
 }
 

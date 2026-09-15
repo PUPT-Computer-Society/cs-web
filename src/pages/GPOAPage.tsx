@@ -1,9 +1,17 @@
 import React, { useMemo, useState } from "react";
 import {
+  BarChart2,
   Calendar as CalendarIcon,
+  Camera,
+  CheckCircle2,
+  ChevronDown,
   Clock,
   Edit3,
   ExternalLink,
+  FileSpreadsheet,
+  FileText,
+  Folder,
+  FolderOpen,
   MapPin,
   Plus,
   Trash2,
@@ -22,9 +30,80 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Dialog } from "@/components/ui/Dialog";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { SearchBar } from "@/components/ui/SearchBar";
+import { Select } from "@/components/ui/Select";
+import { DriveLinkInput } from "@/components/ui/DriveLinkInput";
+import { DriveGuideModal } from "@/components/ui/DriveGuideModal";
 import { buildGoogleCalendarUrl } from "@/lib/calendar";
 import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
-import type { GPOAEvent } from "@/types";
+import type { GPOAEvent, GPOAEventStatus } from "@/types";
+import { type } from "os";
+
+const GPOA_STATUS_OPTIONS = [
+  {
+    value: "proposal",
+    label: "Proposal",
+    description: "Concept drafting & internal permit routing",
+  },
+  {
+    value: "in_review",
+    label: "In Review",
+    description: "Pending executive board or faculty adviser approval",
+  },
+  {
+    value: "approved",
+    label: "Approved",
+    description: "Officially confirmed and scheduled activity",
+  },
+  {
+    value: "completed",
+    label: "Completed",
+    description: "Concluded with documentation and terminal report",
+  },
+  {
+    value: "cancelled",
+    label: "Cancelled",
+    description: "Discontinued or shelved activity",
+  },
+];
+
+const GPOA_SORT_OPTIONS = [
+  { value: "start_time:asc", label: "Event Soonest" },
+  { value: "start_time:desc", label: "Event Furthest" },
+  { value: "title:asc", label: "Title (A to Z)" },
+  { value: "title:desc", label: "Title (Z to A)" },
+  { value: "created_at:desc", label: "Newest Created" },
+];
+
+const GPOA_STATUS_BADGES: Record<
+  GPOAEventStatus,
+  { label: string; className: string }
+> = {
+  proposal: {
+    label: "Proposal",
+    className:
+      "bg-amber-500/10 text-amber-500 border-amber-500/20 dark:bg-amber-500/15",
+  },
+  in_review: {
+    label: "In Review",
+    className:
+      "bg-sky-500/10 text-sky-500 border-sky-500/20 dark:bg-sky-500/15",
+  },
+  approved: {
+    label: "Approved",
+    className:
+      "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 dark:bg-emerald-500/15",
+  },
+  completed: {
+    label: "Completed",
+    className:
+      "bg-purple-500/10 text-purple-500 border-purple-500/20 dark:bg-purple-500/15",
+  },
+  cancelled: {
+    label: "Cancelled",
+    className:
+      "bg-rose-500/10 text-rose-500 border-rose-500/20 dark:bg-rose-500/15",
+  },
+};
 
 const formatForDateTimeLocal = (dateStr: string) => {
   if (!dateStr) return "";
@@ -39,39 +118,217 @@ const formatForDateTimeLocal = (dateStr: string) => {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
+interface EventDriveSectionProps {
+  isOpen: boolean;
+  onToggle: () => void;
+  driveFolderUrl: string;
+  onDriveFolderChange: (v: string) => void;
+  proposalDocUrl: string;
+  onProposalDocChange: (v: string) => void;
+  materialsUrl: string;
+  onMaterialsChange: (v: string) => void;
+  documentationUrl: string;
+  onDocumentationChange: (v: string) => void;
+  evaluationsUrl: string;
+  onEvaluationsChange: (v: string) => void;
+  terminalReportUrl: string;
+  onTerminalReportChange: (v: string) => void;
+  onOpenSopModal: () => void;
+}
+
+const EventDriveSection: React.FC<EventDriveSectionProps> = ({
+  isOpen,
+  onToggle,
+  driveFolderUrl,
+  onDriveFolderChange,
+  proposalDocUrl,
+  onProposalDocChange,
+  materialsUrl,
+  onMaterialsChange,
+  documentationUrl,
+  onDocumentationChange,
+  evaluationsUrl,
+  onEvaluationsChange,
+  terminalReportUrl,
+  onTerminalReportChange,
+  onOpenSopModal,
+}) => {
+  const configuredCount = [
+    driveFolderUrl,
+    proposalDocUrl,
+    materialsUrl,
+    documentationUrl,
+    evaluationsUrl,
+    terminalReportUrl,
+  ].filter(Boolean).length;
+
+  return (
+    <div className="border border-border/80 rounded-lg p-3 bg-secondary/20">
+      <button
+        type="button"
+        onClick={onToggle}
+        className={
+          "w-full flex items-center justify-between text-xs font-semibold " +
+          "text-foreground hover:text-primary transition-colors py-0.5"
+        }
+      >
+        <div className="flex items-center gap-2">
+          <FolderOpen className="w-4 h-4 text-primary" />
+          <span>Google Drive Folders & Deliverables</span>
+          {configuredCount > 0 && (
+            <Badge variant="outline" className="text-[10px] py-0 px-1.5">
+              {configuredCount} Linked
+            </Badge>
+          )}
+        </div>
+        <ChevronDown
+          className={
+            "w-4 h-4 text-muted-foreground transition-transform " +
+            (isOpen ? "rotate-180" : "")
+          }
+        />
+      </button>
+
+      {isOpen && (
+        <div className="mt-3 pt-3 border-t border-border/60 space-y-3">
+          <DriveLinkInput
+            registryKey="eventFolderTemplate"
+            value={driveFolderUrl}
+            onChange={onDriveFolderChange}
+            label="Main Event Drive Folder"
+            placeholder="https://drive.google.com/drive/folders/..."
+            helperText="Root duplicated folder for this specific activity."
+            onOpenSopModal={onOpenSopModal}
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <DriveLinkInput
+              registryKey="eventProposals"
+              value={proposalDocUrl}
+              onChange={onProposalDocChange}
+              label="01 Proposals & Permits"
+              placeholder="https://docs.google.com/document/d/..."
+              onOpenSopModal={onOpenSopModal}
+            />
+            <DriveLinkInput
+              registryKey="eventProgramMaterials"
+              value={materialsUrl}
+              onChange={onMaterialsChange}
+              label="02 Program & Materials"
+              placeholder="https://drive.google.com/drive/folders/..."
+              onOpenSopModal={onOpenSopModal}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <DriveLinkInput
+              registryKey="eventDocumentation"
+              value={documentationUrl}
+              onChange={onDocumentationChange}
+              label="03 Documentation"
+              placeholder="https://drive.google.com/drive/folders/..."
+              onOpenSopModal={onOpenSopModal}
+            />
+            <DriveLinkInput
+              registryKey="eventEvaluations"
+              value={evaluationsUrl}
+              onChange={onEvaluationsChange}
+              label="04 Evaluations"
+              placeholder="https://docs.google.com/spreadsheets/d/..."
+              onOpenSopModal={onOpenSopModal}
+            />
+          </div>
+
+          <DriveLinkInput
+            registryKey="eventTerminalReport"
+            value={terminalReportUrl}
+            onChange={onTerminalReportChange}
+            label="05 Terminal Report"
+            placeholder="https://docs.google.com/document/d/..."
+            onOpenSopModal={onOpenSopModal}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const GPOAPage: React.FC = () => {
   const { success: toastSuccess, error: toastError } = useToast();
   const { hasPermission } = useAuth();
   const canManage = hasPermission("manage_gpoa");
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("start_time:asc");
+  const [driveGuideOpen, setDriveGuideOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<GPOAEvent | null>(null);
   const [eventToDelete, setEventToDelete] = useState<GPOAEvent | null>(null);
 
+  const [sortField, sortOrder] = sortBy.split(":");
+
+  // TanStack Query with backend-level sorting
+  const { data: events = [], isLoading } = useQuery<GPOAEvent[]>({
+    queryKey: queryKeys.gpoaFiltered({
+      sort_by: sortField,
+      order: sortOrder,
+    }),
+    queryFn: () =>
+      api.get<GPOAEvent[]>(`/gpoa?sort_by=${sortField}&order=${sortOrder}`),
+  });
+
   // Create Form State
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [status, setStatus] = useState<GPOAEventStatus>("proposal");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [location, setLocation] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
-  const [syncToGoogle, setSyncToGoogle] = useState(true);
+  const [driveFolderUrl, setDriveFolderUrl] = useState("");
+  const [proposalDocUrl, setProposalDocUrl] = useState("");
+  const [materialsUrl, setMaterialsUrl] = useState("");
+  const [documentationUrl, setDocumentationUrl] = useState("");
+  const [evaluationsUrl, setEvaluationsUrl] = useState("");
+  const [terminalReportUrl, setTerminalReportUrl] = useState("");
+  const [syncToGoogle, setSyncToGoogle] = useState(false);
+  const [showDriveSection, setShowDriveSection] = useState(false);
 
   // Edit Form State
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editStatus, setEditStatus] = useState<GPOAEventStatus>("proposal");
   const [editStartTime, setEditStartTime] = useState("");
   const [editEndTime, setEditEndTime] = useState("");
   const [editLocation, setEditLocation] = useState("");
   const [editTargetAudience, setEditTargetAudience] = useState("");
+  const [editDriveFolderUrl, setEditDriveFolderUrl] = useState("");
+  const [editProposalDocUrl, setEditProposalDocUrl] = useState("");
+  const [editMaterialsUrl, setEditMaterialsUrl] = useState("");
+  const [editDocumentationUrl, setEditDocumentationUrl] = useState("");
+  const [editEvaluationsUrl, setEditEvaluationsUrl] = useState("");
+  const [editTerminalReportUrl, setEditTerminalReportUrl] = useState("");
+  const [showEditDriveSection, setShowEditDriveSection] = useState(false);
 
-  // TanStack Query
-  const { data: events = [], isLoading } = useQuery<GPOAEvent[]>({
-    queryKey: queryKeys.gpoa,
-    queryFn: () => api.get<GPOAEvent[]>("/gpoa"),
-  });
+  const resetCreateForm = () => {
+    setTitle("");
+    setDescription("");
+    setStatus("proposal");
+    setStartTime("");
+    setEndTime("");
+    setLocation("");
+    setTargetAudience("");
+    setDriveFolderUrl("");
+    setProposalDocUrl("");
+    setMaterialsUrl("");
+    setDocumentationUrl("");
+    setEvaluationsUrl("");
+    setTerminalReportUrl("");
+    setSyncToGoogle(false);
+    setShowDriveSection(false);
+  };
 
   // Create Mutation
   const createEventMutation = useMutation({
@@ -80,13 +337,7 @@ export const GPOAPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.gpoa });
       setCreateDialogOpen(false);
-      setTitle("");
-      setDescription("");
-      setStartTime("");
-      setEndTime("");
-      setLocation("");
-      setTargetAudience("");
-      setSyncToGoogle(true);
+      resetCreateForm();
       toastSuccess("GPOA activity created successfully.");
     },
     onError: (err: any) => {
@@ -131,10 +382,27 @@ export const GPOAPage: React.FC = () => {
     setEditingEvent(event);
     setEditTitle(event.title);
     setEditDescription(event.description || "");
+    setEditStatus(event.status || "proposal");
     setEditStartTime(formatForDateTimeLocal(event.startTime));
     setEditEndTime(formatForDateTimeLocal(event.endTime));
     setEditLocation(event.location || "");
     setEditTargetAudience(event.targetAudience || "");
+    setEditDriveFolderUrl(event.driveFolderUrl || "");
+    setEditProposalDocUrl(event.proposalDocUrl || "");
+    setEditMaterialsUrl(event.materialsUrl || "");
+    setEditDocumentationUrl(event.documentationUrl || "");
+    setEditEvaluationsUrl(event.evaluationsUrl || "");
+    setEditTerminalReportUrl(event.terminalReportUrl || "");
+    setShowEditDriveSection(
+      Boolean(
+        event.driveFolderUrl ||
+          event.proposalDocUrl ||
+          event.materialsUrl ||
+          event.documentationUrl ||
+          event.evaluationsUrl ||
+          event.terminalReportUrl,
+      ),
+    );
     setEditDialogOpen(true);
   };
 
@@ -143,10 +411,17 @@ export const GPOAPage: React.FC = () => {
     createEventMutation.mutate({
       title,
       description,
+      status,
       startTime: new Date(startTime).toISOString(),
       endTime: new Date(endTime).toISOString(),
       location,
       targetAudience: targetAudience || "All CS Students",
+      driveFolderUrl: driveFolderUrl.trim() || null,
+      proposalDocUrl: proposalDocUrl.trim() || null,
+      materialsUrl: materialsUrl.trim() || null,
+      documentationUrl: documentationUrl.trim() || null,
+      evaluationsUrl: evaluationsUrl.trim() || null,
+      terminalReportUrl: terminalReportUrl.trim() || null,
       syncToGoogle,
     });
   };
@@ -159,31 +434,52 @@ export const GPOAPage: React.FC = () => {
       payload: {
         title: editTitle,
         description: editDescription,
+        status: editStatus,
         startTime: new Date(editStartTime).toISOString(),
         endTime: new Date(editEndTime).toISOString(),
         location: editLocation,
         targetAudience: editTargetAudience || "All CS Students",
+        driveFolderUrl: editDriveFolderUrl.trim() || null,
+        proposalDocUrl: editProposalDocUrl.trim() || null,
+        materialsUrl: editMaterialsUrl.trim() || null,
+        documentationUrl: editDocumentationUrl.trim() || null,
+        evaluationsUrl: editEvaluationsUrl.trim() || null,
+        terminalReportUrl: editTerminalReportUrl.trim() || null,
       },
     });
   };
 
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: events.length };
+    for (const ev of events) {
+      const s = ev.status || "proposal";
+      counts[s] = (counts[s] || 0) + 1;
+    }
+    return counts;
+  }, [events]);
+
   const filteredEvents = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    if (!q) return events;
-    return events.filter(
-      (ev) =>
+    return events.filter((ev) => {
+      const currentStatus = ev.status || "proposal";
+      const matchesStatus =
+        statusFilter === "all" || currentStatus === statusFilter;
+      if (!matchesStatus) return false;
+      if (!q) return true;
+      return (
         ev.title.toLowerCase().includes(q) ||
         (ev.description && ev.description.toLowerCase().includes(q)) ||
         (ev.location && ev.location.toLowerCase().includes(q)) ||
-        (ev.targetAudience && ev.targetAudience.toLowerCase().includes(q)),
-    );
-  }, [events, searchQuery]);
+        (ev.targetAudience && ev.targetAudience.toLowerCase().includes(q))
+      );
+    });
+  }, [events, searchQuery, statusFilter]);
 
   return (
     <>
       <Header
         title="General Plan of Activities (GPOA)"
-        subtitle="Annual timeline and 1-click Google Calendar integration"
+        subtitle="Annual timeline, lifecycle review, and Drive integration"
       />
 
       <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
@@ -217,11 +513,34 @@ export const GPOAPage: React.FC = () => {
               size="sm"
             />
 
+            <div className="w-44 shrink-0">
+              <Select
+                value={sortBy}
+                onValueChange={setSortBy}
+                options={GPOA_SORT_OPTIONS}
+                size="sm"
+              />
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setDriveGuideOpen(true)}
+              className="text-xs font-semibold shrink-0 gap-1.5"
+            >
+              <FolderOpen className="w-3.5 h-3.5 text-primary" />
+              <span>Event SOPs</span>
+            </Button>
+
             {canManage && (
               <Button
                 type="button"
                 size="sm"
-                onClick={() => setCreateDialogOpen(true)}
+                onClick={() => {
+                  resetCreateForm();
+                  setCreateDialogOpen(true);
+                }}
                 className="text-xs font-semibold shrink-0"
               >
                 <Plus className="w-3.5 h-3.5 mr-1" />
@@ -229,6 +548,53 @@ export const GPOAPage: React.FC = () => {
               </Button>
             )}
           </div>
+        </div>
+
+        {/* Status Lifecycle Filter Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <button
+            type="button"
+            onClick={() => setStatusFilter("all")}
+            className={
+              "px-3 py-1.5 rounded-lg text-xs font-semibold " +
+              "transition-colors shrink-0 " +
+              (statusFilter === "all"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "bg-secondary/60 text-muted-foreground hover:text-foreground")
+            }
+          >
+            All Activities ({statusCounts["all"] || 0})
+          </button>
+          {GPOA_STATUS_OPTIONS.map((opt) => {
+            const count = statusCounts[opt.value] || 0;
+            const isSelected = statusFilter === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setStatusFilter(opt.value)}
+                className={
+                  "px-3 py-1.5 rounded-lg text-xs font-semibold " +
+                  "transition-colors shrink-0 flex items-center gap-1.5 " +
+                  (isSelected
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "bg-secondary/60 text-muted-foreground hover:text-foreground")
+                }
+              >
+                <span>{opt.label}</span>
+                <span
+                  className={
+                    "text-[10px] px-1.5 py-0.2 rounded-full " +
+                    (isSelected
+                      ? "bg-primary-foreground/20 text-primary-foreground"
+                      : "bg-background/80 text-muted-foreground")
+                  }
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Schedule Grid */}
@@ -245,120 +611,259 @@ export const GPOAPage: React.FC = () => {
             }
           >
             <p className="text-xs text-muted-foreground">
-              {searchQuery
-                ? `No GPOA activities match "${searchQuery}".`
+              {searchQuery || statusFilter !== "all"
+                ? "No GPOA activities match current filters."
                 : "No GPOA activities scheduled yet."}
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredEvents.map((event) => (
-              <Card key={event.id} className="flex flex-col justify-between">
-                <CardContent className="p-5">
-                  <div className="flex justify-between items-start mb-2">
-                    <Badge
-                      variant="outline"
-                      className="text-[9px] uppercase font-semibold"
-                    >
-                      {event.targetAudience}
-                    </Badge>
+            {filteredEvents.map((event) => {
+              const currentStatus = event.status || "proposal";
+              const badgeMeta =
+                GPOA_STATUS_BADGES[currentStatus] ||
+                GPOA_STATUS_BADGES["proposal"];
 
-                    {canManage && (
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEdit(event)}
-                          title="Edit Activity"
+              const hasDriveAssets = Boolean(
+                event.driveFolderUrl ||
+                  event.proposalDocUrl ||
+                  event.materialsUrl ||
+                  event.documentationUrl ||
+                  event.evaluationsUrl ||
+                  event.terminalReportUrl,
+              );
+
+              return (
+                <Card key={event.id} className="flex flex-col justify-between">
+                  <CardContent className="p-5 flex flex-col h-full justify-between gap-4">
+                    <div>
+                      <div className="flex justify-between items-start mb-2 gap-2">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <Badge
+                            variant="outline"
+                            className={
+                              "text-[9px] uppercase font-bold " +
+                              badgeMeta.className
+                            }
+                          >
+                            {badgeMeta.label}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="text-[9px] uppercase font-semibold"
+                          >
+                            {event.targetAudience}
+                          </Badge>
+                        </div>
+
+                        {canManage && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(event)}
+                              title="Edit Activity"
+                              className={
+                                "p-1 rounded-md text-muted-foreground " +
+                                "hover:text-foreground hover:bg-secondary " +
+                                "transition-colors"
+                              }
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEventToDelete(event)}
+                              title="Delete Activity"
+                              className={
+                                "p-1 rounded-md text-muted-foreground " +
+                                "hover:text-rose-500 hover:bg-rose-500/10 " +
+                                "transition-colors"
+                              }
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <h4 className="text-sm font-bold text-foreground">
+                        {event.title}
+                      </h4>
+                      <p
+                        className={
+                          "text-xs text-muted-foreground mt-1 line-clamp-2"
+                        }
+                      >
+                        {event.description}
+                      </p>
+
+                      {/* Drive Deliverables Quick Links */}
+                      {hasDriveAssets && (
+                        <div
                           className={
-                            "p-1 rounded-md text-muted-foreground " +
-                            "hover:text-foreground hover:bg-secondary " +
-                            "transition-colors"
+                            "flex flex-wrap items-center gap-1.5 mt-3 pt-2.5 " +
+                            "border-t border-border/50 text-[10px]"
                           }
                         >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEventToDelete(event)}
-                          title="Delete Activity"
-                          className={
-                            "p-1 rounded-md text-muted-foreground " +
-                            "hover:text-rose-500 hover:bg-rose-500/10 " +
-                            "transition-colors"
-                          }
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  <h4 className="text-sm font-bold text-foreground">
-                    {event.title}
-                  </h4>
-                  <p
-                    className={
-                      "text-xs text-muted-foreground mt-1 line-clamp-2"
-                    }
-                  >
-                    {event.description}
-                  </p>
-
-                  <div
-                    className={
-                      "mt-4 pt-3 border-t border-border flex flex-col " +
-                      "sm:flex-row sm:items-center justify-between " +
-                      "gap-3 text-[11px] text-muted-foreground"
-                    }
-                  >
-                    <div className="space-y-1.5 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-3.5 h-3.5 shrink-0 text-primary" />
-                        <span>
-                          {new Date(event.startTime).toLocaleDateString()} (
-                          {new Date(event.startTime).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                          )
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-3.5 h-3.5 shrink-0 text-primary" />
-                        <span className="truncate">
-                          {event.location || "Online / Discord"}
-                        </span>
-                      </div>
+                          <span className="font-semibold text-muted-foreground mr-0.5">
+                            Drive:
+                          </span>
+                          {event.driveFolderUrl && (
+                            <a
+                              href={event.driveFolderUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Open Main Event Folder"
+                              className={
+                                "inline-flex items-center gap-1 px-1.5 py-0.5 " +
+                                "rounded bg-secondary text-foreground " +
+                                "hover:text-primary transition-colors"
+                              }
+                            >
+                              <Folder className="w-3 h-3 text-primary" />
+                              <span>Folder</span>
+                            </a>
+                          )}
+                          {event.proposalDocUrl && (
+                            <a
+                              href={event.proposalDocUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="01 Proposals & Permits"
+                              className={
+                                "inline-flex items-center gap-1 px-1.5 py-0.5 " +
+                                "rounded bg-secondary text-foreground " +
+                                "hover:text-amber-500 transition-colors"
+                              }
+                            >
+                              <FileText className="w-3 h-3 text-amber-500" />
+                              <span>Proposal</span>
+                            </a>
+                          )}
+                          {event.materialsUrl && (
+                            <a
+                              href={event.materialsUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="02 Program & Materials"
+                              className={
+                                "inline-flex items-center gap-1 px-1.5 py-0.5 " +
+                                "rounded bg-secondary text-foreground " +
+                                "hover:text-blue-500 transition-colors"
+                              }
+                            >
+                              <FileSpreadsheet className="w-3 h-3 text-blue-500" />
+                              <span>Materials</span>
+                            </a>
+                          )}
+                          {event.documentationUrl && (
+                            <a
+                              href={event.documentationUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="03 Documentation"
+                              className={
+                                "inline-flex items-center gap-1 px-1.5 py-0.5 " +
+                                "rounded bg-secondary text-foreground " +
+                                "hover:text-emerald-500 transition-colors"
+                              }
+                            >
+                              <Camera className="w-3 h-3 text-emerald-500" />
+                              <span>Docs</span>
+                            </a>
+                          )}
+                          {event.evaluationsUrl && (
+                            <a
+                              href={event.evaluationsUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="04 Evaluations"
+                              className={
+                                "inline-flex items-center gap-1 px-1.5 py-0.5 " +
+                                "rounded bg-secondary text-foreground " +
+                                "hover:text-purple-500 transition-colors"
+                              }
+                            >
+                              <BarChart2 className="w-3 h-3 text-purple-500" />
+                              <span>Eval</span>
+                            </a>
+                          )}
+                          {event.terminalReportUrl && (
+                            <a
+                              href={event.terminalReportUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="05 Terminal Report"
+                              className={
+                                "inline-flex items-center gap-1 px-1.5 py-0.5 " +
+                                "rounded bg-secondary text-foreground " +
+                                "hover:text-teal-500 transition-colors"
+                              }
+                            >
+                              <CheckCircle2 className="w-3 h-3 text-teal-500" />
+                              <span>Terminal</span>
+                            </a>
+                          )}
+                        </div>
+                      )}
                     </div>
 
-                    <a
-                      href={buildGoogleCalendarUrl({
-                        title: event.title,
-                        description: event.description,
-                        location: event.location,
-                        startTime: event.startTime,
-                        endTime: event.endTime,
-                      })}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <div
                       className={
-                        "inline-flex items-center justify-center gap-1.5 " +
-                        "px-2.5 py-1.5 rounded-lg border border-border/70 " +
-                        "hover:border-primary/50 bg-secondary/40 " +
-                        "hover:bg-primary/10 text-[11px] font-semibold " +
-                        "text-foreground transition-all duration-150 " +
-                        "hover:-translate-y-0.5 shrink-0"
+                        "pt-3 border-t border-border flex flex-col " +
+                        "sm:flex-row sm:items-center justify-between " +
+                        "gap-3 text-[11px] text-muted-foreground"
                       }
-                      title="Sync to Google Calendar"
                     >
-                      <CalendarIcon className="w-3.5 h-3.5 text-primary" />
-                      <span>Sync to GCal</span>
-                      <ExternalLink className="w-3 h-3 text-muted-foreground" />
-                    </a>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                      <div className="space-y-1.5 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-3.5 h-3.5 shrink-0 text-primary" />
+                          <span>
+                            {new Date(event.startTime).toLocaleDateString()} (
+                            {new Date(event.startTime).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                            )
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-3.5 h-3.5 shrink-0 text-primary" />
+                          <span className="truncate">
+                            {event.location || "Online / Discord"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <a
+                        href={buildGoogleCalendarUrl({
+                          title: event.title,
+                          description: event.description,
+                          location: event.location,
+                          startTime: event.startTime,
+                          endTime: event.endTime,
+                        })}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={
+                          "inline-flex items-center justify-center gap-1.5 " +
+                          "px-2.5 py-1.5 rounded-lg border border-border/70 " +
+                          "hover:border-primary/50 bg-secondary/40 " +
+                          "hover:bg-primary/10 text-[11px] font-semibold " +
+                          "text-foreground transition-all duration-150 " +
+                          "hover:-translate-y-0.5 shrink-0"
+                        }
+                        title="Sync to Google Calendar"
+                      >
+                        <CalendarIcon className="w-3.5 h-3.5 text-primary" />
+                        <span>Sync to GCal</span>
+                        <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                      </a>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
@@ -366,26 +871,53 @@ export const GPOAPage: React.FC = () => {
       {/* Create Activity Dialog */}
       <Dialog
         open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
+        onOpenChange={(open) => {
+          setCreateDialogOpen(open);
+          if (!open) resetCreateForm();
+        }}
         title="Schedule GPOA Activity"
         description={
-          "Event will be saved to Postgres and synced to " + "Google Calendar."
+          "Set activity status lifecycle, Google Drive folders, and timeline."
         }
       >
         <form onSubmit={handleCreateEvent} className="space-y-3">
-          <div>
-            <label
-              className={"block text-[11px] font-semibold text-foreground mb-1"}
-            >
-              Activity Title
-            </label>
-            <Input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              placeholder="e.g. CS General Assembly 2026"
-            />
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-3 sm:col-span-2">
+              <label
+                className={
+                  "block text-[11px] font-semibold text-foreground mb-1"
+                }
+              >
+                Activity Title
+              </label>
+              <Input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                placeholder="e.g. CS General Assembly 2026"
+              />
+            </div>
+            <div className="col-span-3 sm:col-span-1">
+              <label
+                className={
+                  "block text-[11px] font-semibold text-foreground mb-1"
+                }
+              >
+                Status
+              </label>
+              <Select
+                value={status}
+                onValueChange={(val) => {
+                  const newStatus = val as GPOAEventStatus;
+                  setStatus(newStatus);
+                  if (newStatus === "approved") {
+                    setSyncToGoogle(true);
+                  }
+                }}
+                options={GPOA_STATUS_OPTIONS}
+              />
+            </div>
           </div>
 
           <MarkdownTextarea
@@ -393,8 +925,8 @@ export const GPOAPage: React.FC = () => {
             value={description}
             onChange={setDescription}
             placeholder="Agenda flow, deliverables, and objectives..."
-            minHeight="min-h-[85px]"
-            maxHeight="max-h-[200px]"
+            minHeight="min-h-[75px]"
+            maxHeight="max-h-[160px]"
           />
 
           <div className="grid grid-cols-2 gap-3">
@@ -463,6 +995,25 @@ export const GPOAPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Drive Section Accordion */}
+          <EventDriveSection
+            isOpen={showDriveSection}
+            onToggle={() => setShowDriveSection(!showDriveSection)}
+            driveFolderUrl={driveFolderUrl}
+            onDriveFolderChange={setDriveFolderUrl}
+            proposalDocUrl={proposalDocUrl}
+            onProposalDocChange={setProposalDocUrl}
+            materialsUrl={materialsUrl}
+            onMaterialsChange={setMaterialsUrl}
+            documentationUrl={documentationUrl}
+            onDocumentationChange={setDocumentationUrl}
+            evaluationsUrl={evaluationsUrl}
+            onEvaluationsChange={setEvaluationsUrl}
+            terminalReportUrl={terminalReportUrl}
+            onTerminalReportChange={setTerminalReportUrl}
+            onOpenSopModal={() => setDriveGuideOpen(true)}
+          />
+
           <div className="flex items-center gap-2 pt-1">
             <input
               id="sync-gcal"
@@ -508,23 +1059,41 @@ export const GPOAPage: React.FC = () => {
         }}
         title="Edit GPOA Activity"
         description={
-          "Update scheduled activity timeline, location, " + "or objectives."
+          "Update scheduled activity lifecycle, timeline, and Drive links."
         }
       >
         <form onSubmit={handleUpdateEvent} className="space-y-3">
-          <div>
-            <label
-              className={"block text-[11px] font-semibold text-foreground mb-1"}
-            >
-              Activity Title
-            </label>
-            <Input
-              type="text"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              required
-              placeholder="e.g. CS General Assembly 2026"
-            />
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-3 sm:col-span-2">
+              <label
+                className={
+                  "block text-[11px] font-semibold text-foreground mb-1"
+                }
+              >
+                Activity Title
+              </label>
+              <Input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                required
+                placeholder="e.g. CS General Assembly 2026"
+              />
+            </div>
+            <div className="col-span-3 sm:col-span-1">
+              <label
+                className={
+                  "block text-[11px] font-semibold text-foreground mb-1"
+                }
+              >
+                Status
+              </label>
+              <Select
+                value={editStatus}
+                onValueChange={(val) => setEditStatus(val as GPOAEventStatus)}
+                options={GPOA_STATUS_OPTIONS}
+              />
+            </div>
           </div>
 
           <MarkdownTextarea
@@ -532,8 +1101,8 @@ export const GPOAPage: React.FC = () => {
             value={editDescription}
             onChange={setEditDescription}
             placeholder="Agenda flow, deliverables, and objectives..."
-            minHeight="min-h-[85px]"
-            maxHeight="max-h-[200px]"
+            minHeight="min-h-[75px]"
+            maxHeight="max-h-[160px]"
           />
 
           <div className="grid grid-cols-2 gap-3">
@@ -602,6 +1171,25 @@ export const GPOAPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Edit Drive Section Accordion */}
+          <EventDriveSection
+            isOpen={showEditDriveSection}
+            onToggle={() => setShowEditDriveSection(!showEditDriveSection)}
+            driveFolderUrl={editDriveFolderUrl}
+            onDriveFolderChange={setEditDriveFolderUrl}
+            proposalDocUrl={editProposalDocUrl}
+            onProposalDocChange={setEditProposalDocUrl}
+            materialsUrl={editMaterialsUrl}
+            onMaterialsChange={setEditMaterialsUrl}
+            documentationUrl={editDocumentationUrl}
+            onDocumentationChange={setEditDocumentationUrl}
+            evaluationsUrl={editEvaluationsUrl}
+            onEvaluationsChange={setEditEvaluationsUrl}
+            terminalReportUrl={editTerminalReportUrl}
+            onTerminalReportChange={setEditTerminalReportUrl}
+            onOpenSopModal={() => setDriveGuideOpen(true)}
+          />
+
           <div className="flex justify-end gap-2 pt-4">
             <Button
               type="button"
@@ -643,6 +1231,13 @@ export const GPOAPage: React.FC = () => {
           }
         }}
         onClose={() => setEventToDelete(null)}
+      />
+
+      {/* Drive Guide Modal pre-filtered to Wing 08 GPOA Events */}
+      <DriveGuideModal
+        open={driveGuideOpen}
+        onOpenChange={setDriveGuideOpen}
+        initialWing="08"
       />
     </>
   );

@@ -12,15 +12,23 @@ import { SearchBar } from "@/components/ui/SearchBar";
 interface DriveGuideModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialWing?: string;
 }
 
 export const DriveGuideModal: React.FC<DriveGuideModalProps> = ({
   open,
   onOpenChange,
+  initialWing = "all",
 }) => {
   const [search, setSearch] = useState("");
-  const [activeWing, setActiveWing] = useState("all");
+  const [activeWing, setActiveWing] = useState(initialWing);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (open) {
+      setActiveWing(initialWing);
+    }
+  }, [open, initialWing]);
 
   const entries = useMemo(() => {
     return Object.values(DRIVE_REGISTRY);

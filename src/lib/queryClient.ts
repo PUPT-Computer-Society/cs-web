@@ -16,12 +16,32 @@ export const queryKeys = {
   users: ["users"] as const,
   roles: ["roles"] as const,
   gpoa: ["gpoa"] as const,
+  gpoaFiltered: (params?: Record<string, unknown>) =>
+    ["gpoa", params || {}] as const,
   tasks: ["tasks"] as const,
+  tasksFiltered: (params?: Record<string, unknown>) =>
+    ["tasks", params || {}] as const,
   finance: ["finance"] as const,
+  financeFiltered: (params?: Record<string, unknown>) =>
+    ["finance", params || {}] as const,
   financeSummary: ["finance", "summary"] as const,
   inventory: ["inventory"] as const,
-  materials: (category?: string) => ["materials", category || "all"] as const,
-  resolutions: (docType?: string) => ["resolutions", docType || "all"] as const,
+  inventoryFiltered: (params?: Record<string, unknown>) =>
+    ["inventory", params || {}] as const,
+  materials: (category?: string, sortBy?: string, order?: string) =>
+    [
+      "materials",
+      category || "all",
+      sortBy || "created_at",
+      order || "desc",
+    ] as const,
+  resolutions: (docType?: string, sortBy?: string, order?: string) =>
+    [
+      "resolutions",
+      docType || "all",
+      sortBy || "passed_date",
+      order || "desc",
+    ] as const,
   announcements: (scope?: string) => ["announcements", scope || "all"] as const,
   auditLogs: (params?: Record<string, unknown>) =>
     ["audit-logs", params || {}] as const,
