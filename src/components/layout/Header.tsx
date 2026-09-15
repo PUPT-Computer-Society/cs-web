@@ -214,7 +214,7 @@ export const Header: React.FC<HeaderProps> = ({
                   }
                 >
                   <Compass className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                  <span>Take Product Tour</span>
+                  <span>Tour Again</span>
                 </button>
 
                 <button

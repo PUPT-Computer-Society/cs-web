@@ -43,6 +43,8 @@ export const queryKeys = {
       order || "desc",
     ] as const,
   announcements: (scope?: string) => ["announcements", scope || "all"] as const,
+  templates: (wing?: string, search?: string) =>
+    ["templates", wing || "all", search || ""] as const,
   auditLogs: (params?: Record<string, unknown>) =>
     ["audit-logs", params || {}] as const,
 };

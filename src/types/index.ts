@@ -161,6 +161,24 @@ export interface Material {
   createdAt: string;
 }
 
+export interface DocumentTemplate {
+  id: string;
+  title: string;
+  wingNumber: string;
+  wingName: string;
+  folderName: string;
+  category: string;
+  responsibleRoles: string;
+  namingConvention: string;
+  acceptedFormats: string;
+  instructions?: string | null;
+  templateUrl: string;
+  fileType: string;
+  fileId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type AnnouncementScope =
   | "general"
   | "communications"

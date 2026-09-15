@@ -131,6 +131,18 @@ export const DRIVE_REGISTRY: Record<string, DriveFolderEntry> = {
   // ==========================================
   // WING 01: RECORDS & INTERNAL AFFAIRS
   // ==========================================
+  documentTemplates: {
+    key: "documentTemplates",
+    wingNumber: "01",
+    wingName: "01_RECORDS_&_INTERNAL_AFFAIRS",
+    folderName: "00_Document_Templates",
+    path: "01_RECORDS_&_INTERNAL_AFFAIRS/00_Document_Templates",
+    responsibleRoles: ["All Council Officers", "VP for Records"],
+    namingConvention: "TEMPLATE_[Title] / SOP_[Title]",
+    acceptedFormats: "Google Docs, Sheets, Slides, PDF",
+    instructions:
+      "Central repository of official council templates and SOP masters.",
+  },
   resolutions: {
     key: "resolutions",
     wingNumber: "01",

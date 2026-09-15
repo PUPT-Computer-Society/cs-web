@@ -9,6 +9,7 @@ import {
   ChevronRight,
   DollarSign,
   FileArchive,
+  FileText,
   LayoutDashboard,
   LogOut,
   Megaphone,
@@ -152,6 +153,12 @@ export const Sidebar: React.FC = () => {
           label: "Materials Vault",
           shortLabel: "Vault",
           icon: FileArchive,
+        },
+        {
+          to: "/templates",
+          label: "Doc Templates",
+          shortLabel: "Templates",
+          icon: FileText,
         },
         {
           to: "/announcements",

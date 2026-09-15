@@ -20,7 +20,13 @@ interface DriveUploadResponse {
 
 interface DriveDropzoneProps {
   label?: string;
-  moduleType: "finance" | "resolution" | "inventory" | "material" | "gpoa";
+  moduleType:
+    | "finance"
+    | "resolution"
+    | "inventory"
+    | "material"
+    | "gpoa"
+    | "template";
   targetFolderId?: string;
   title?: string;
   docType?: string;
@@ -277,7 +283,7 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
                 <span
                   className={cn(
                     "text-[9px] px-1.5 py-0.5 rounded-full border " +
-                    "font-semibold",
+                      "font-semibold",
                     detected.color,
                   )}
                 >
@@ -344,16 +350,14 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
           </label>
         )}
         <div
-          className={
-            "flex items-center gap-1 bg-secondary/50 p-0.5 rounded-lg"
-          }
+          className={"flex items-center gap-1 bg-secondary/50 p-0.5 rounded-lg"}
         >
           <button
             type="button"
             onClick={() => setMode("file")}
             className={cn(
               "px-2 py-0.5 rounded-md text-[10px] font-medium " +
-              "transition-colors",
+                "transition-colors",
               mode === "file"
                 ? "bg-background text-foreground font-semibold shadow-2xs"
                 : "text-muted-foreground hover:text-foreground",
@@ -366,7 +370,7 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
             onClick={() => setMode("collaborative")}
             className={cn(
               "px-2 py-0.5 rounded-md text-[10px] font-medium " +
-              "transition-colors",
+                "transition-colors",
               mode === "collaborative"
                 ? "bg-background text-foreground font-semibold shadow-2xs"
                 : "text-muted-foreground hover:text-foreground",
@@ -387,8 +391,8 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
           onDrop={handleDrop}
           className={cn(
             "border-2 border-dashed rounded-xl p-4 flex flex-col " +
-            "items-center justify-center gap-1.5 cursor-pointer " +
-            "transition-colors text-center",
+              "items-center justify-center gap-1.5 cursor-pointer " +
+              "transition-colors text-center",
             dragOver
               ? "border-primary bg-primary/5"
               : "border-border/80 hover:border-primary/50 bg-secondary/15",
@@ -435,7 +439,7 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
               <span
                 className={cn(
                   "text-[9px] px-1.5 py-0.5 rounded-full border " +
-                  "font-semibold",
+                    "font-semibold",
                   detectGoogleDocType(collabUrl).color,
                 )}
               >
@@ -457,9 +461,9 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
               placeholder="https://docs.google.com/document/d/... or sheets"
               className={cn(
                 "flex-1 h-8 px-2.5 rounded-lg border border-border " +
-                "bg-background text-xs text-foreground " +
-                "placeholder:text-muted-foreground/60 focus:outline-hidden " +
-                "focus:ring-1 focus:ring-primary font-mono",
+                  "bg-background text-xs text-foreground " +
+                  "placeholder:text-muted-foreground/60 focus:outline-hidden " +
+                  "focus:ring-1 focus:ring-primary font-mono",
               )}
             />
             <button
@@ -470,7 +474,7 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
                 "h-8 px-3 rounded-lg bg-primary text-primary-foreground",
                 "text-xs font-semibold hover:bg-primary/90 transition-colors",
                 "disabled:opacity-50 disabled:pointer-events-none " +
-                "shadow-xs shrink-0",
+                  "shadow-xs shrink-0",
               )}
             >
               Copy to Drive
