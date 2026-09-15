@@ -203,42 +203,38 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
       />
 
       {/* Subtext and Direct Google Drive Redirection */}
-      <div
-        className={cn(
-          "flex flex-col sm:flex-row sm:items-center",
-          "justify-between gap-1 pt-0.5",
-        )}
-      >
-        <p className="text-[10px] text-muted-foreground leading-tight">
-          {helperText || (
-            <>
-              Set General Access to{" "}
-              <strong className="text-foreground">
-                "Anyone with the link"
-              </strong>{" "}
-              on Drive for live preview.
-            </>
+      {(helperText || (targetDriveUrl && entry)) && (
+        <div
+          className={cn(
+            "flex flex-col sm:flex-row sm:items-center",
+            "justify-between gap-1 pt-0.5",
           )}
-        </p>
+        >
+          {helperText && (
+            <p className="text-[10px] text-muted-foreground leading-tight">
+              {helperText}
+            </p>
+          )}
 
-        {targetDriveUrl && entry && (
-          <a
-            href={targetDriveUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(
-              "inline-flex items-center gap-1 text-[10px] font-semibold",
-              "text-primary hover:text-primary/80 hover:underline",
-              "shrink-0 transition-colors",
-            )}
-            title={`Open ${entry.folderName} in Google Drive in a new tab`}
-          >
-            <FolderOpen className="w-3 h-3 text-amber-500" />
-            <span>Open {entry.folderName}</span>
-            <ExternalLink className="w-2.5 h-2.5 ml-0.5" />
-          </a>
-        )}
-      </div>
+          {targetDriveUrl && entry && (
+            <a
+              href={targetDriveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                "ml-auto inline-flex items-center gap-1 text-[10px]",
+                "font-semibold text-primary hover:text-primary/80",
+                "hover:underline shrink-0 transition-colors",
+              )}
+              title={`Open ${entry.folderName} in Google Drive in a new tab`}
+            >
+              <FolderOpen className="w-3 h-3 text-amber-500" />
+              <span>Open {entry.folderName}</span>
+              <ExternalLink className="w-2.5 h-2.5 ml-0.5" />
+            </a>
+          )}
+        </div>
+      )}
 
       {/* Tutorial SOP Tooltip Anchored to Trigger with DOM Overlay Dim */}
       {entry && tooltipOpen && typeof document !== "undefined" &&
