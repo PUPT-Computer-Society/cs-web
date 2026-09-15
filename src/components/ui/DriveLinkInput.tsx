@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
   Check,
@@ -31,6 +31,13 @@ export interface DriveLinkInputProps {
   onOpenSopModal?: () => void;
 }
 
+interface TooltipPosition {
+  top: number;
+  left: number;
+  placement: "top" | "bottom";
+  arrowLeft: number;
+}
+
 export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
   registryKey,
   value,
@@ -45,6 +52,14 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [tooltipOpen, setTooltipOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const [pos, setPos] = useState<TooltipPosition>({
+    top: 0,
+    left: 0,
+    placement: "bottom",
+    arrowLeft: 20,
+  });
 
   const entry: DriveFolderEntry | undefined = registryKey
     ? DRIVE_REGISTRY[registryKey]
@@ -53,17 +68,66 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
   const targetDriveUrl =
     entry?.driveUrl || entry?.defaultDriveUrl || ROOT_DRIVE_URL;
 
-  // Dismiss focus modal when user hits Escape
+  const updatePosition = () => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const tooltipWidth = Math.min(360, window.innerWidth - 32);
+    const margin = 16;
+    const buttonCenter = rect.left + rect.width / 2;
+
+    let left = buttonCenter - 36;
+    if (left + tooltipWidth > window.innerWidth - margin) {
+      left = window.innerWidth - tooltipWidth - margin;
+    }
+    if (left < margin) {
+      left = margin;
+    }
+
+    const arrowLeft = Math.max(
+      16,
+      Math.min(buttonCenter - left - 6, tooltipWidth - 28),
+    );
+
+    let top = rect.bottom + 8;
+    let placement: "top" | "bottom" = "bottom";
+    if (top + 280 > window.innerHeight && rect.top > 280) {
+      top = rect.top - 8;
+      placement = "top";
+    }
+
+    setPos({ top, left, placement, arrowLeft });
+  };
+
   useEffect(() => {
     if (!tooltipOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setTooltipOpen(false);
-      }
+      if (e.key === "Escape") setTooltipOpen(false);
     };
+    const handleScrollOrResize = () => {
+      updatePosition();
+    };
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", handleScrollOrResize);
+    window.addEventListener("scroll", handleScrollOrResize, true);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", handleScrollOrResize);
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+    };
   }, [tooltipOpen]);
+
+  const handleTriggerClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (tooltipOpen) {
+      setTooltipOpen(false);
+    } else {
+      updatePosition();
+      setTooltipOpen(true);
+    }
+  };
 
   const handleCopyNaming = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -89,16 +153,24 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
 
           {entry && (
             <button
+              ref={buttonRef}
               type="button"
-              onClick={() => setTooltipOpen(true)}
+              onClick={handleTriggerClick}
               className={cn(
-                "text-muted-foreground hover:text-primary",
                 "transition-colors focus:outline-none p-0.5 rounded",
-                "hover:bg-primary/10 cursor-pointer inline-flex",
-                "items-center",
+                "cursor-pointer inline-flex items-center",
+                tooltipOpen
+                  ? cn(
+                      "relative z-[102] ring-2 ring-primary ring-offset-2",
+                      "ring-offset-background bg-primary/20 text-primary",
+                    )
+                  : cn(
+                      "text-muted-foreground hover:text-primary",
+                      "hover:bg-primary/10",
+                    ),
               )}
               aria-label={`View SOP guidance for ${entry.folderName}`}
-              title="Click to view SOP folder and naming guide"
+              title="Click for SOP tutorial and naming guide"
             >
               <HelpCircle className="w-3.5 h-3.5 text-primary/80" />
             </button>
@@ -168,56 +240,68 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
         )}
       </div>
 
-      {/* Full-DOM Overlay Dim and Focused Spotlight SOP Card via Portal */}
+      {/* Tutorial SOP Tooltip Anchored to Trigger with DOM Overlay Dim */}
       {entry && tooltipOpen && typeof document !== "undefined" &&
         createPortal(
-          <div
-            className={cn(
-              "fixed inset-0 z-[100] flex items-center",
-              "justify-center p-4",
-            )}
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Storage SOP Guidance: ${entry.folderName}`}
-          >
-            {/* Overlay Dim on the whole DOM */}
+          <>
+            {/* Full DOM Overlay Dim */}
             <div
               className={cn(
-                "fixed inset-0 bg-black/65 backdrop-blur-xs",
-                "animate-in fade-in-0 duration-150",
+                "fixed inset-0 bg-black/60 backdrop-blur-xs z-[100]",
+                "animate-in fade-in-0 duration-150 cursor-pointer",
               )}
               onClick={() => setTooltipOpen(false)}
               aria-hidden="true"
             />
 
-            {/* Focused SOP Guidance Card sitting strictly on top */}
+            {/* Anchored Tutorial Tooltip Card */}
             <div
+              style={{
+                top: `${pos.top}px`,
+                left: `${pos.left}px`,
+                transform:
+                  pos.placement === "top" ? "translateY(-100%)" : "none",
+                maxWidth: "calc(100vw - 32px)",
+              }}
               className={cn(
-                "relative z-10 w-full max-w-sm sm:max-w-md",
-                "rounded-xl border border-border bg-card p-4 sm:p-5",
-                "shadow-2xl text-card-foreground text-left",
-                "animate-in fade-in-0 zoom-in-95 duration-150 space-y-3.5",
+                "fixed z-[101] w-80 sm:w-[350px]",
+                "rounded-xl border border-border bg-popover p-3.5 sm:p-4",
+                "shadow-2xl text-popover-foreground text-left",
+                "animate-in fade-in-0 zoom-in-95 duration-150 space-y-3",
               )}
               onClick={(e) => e.stopPropagation()}
+              role="tooltip"
             >
-              {/* Header */}
+              {/* Pointer Beak / Arrow */}
+              <div
+                style={{ left: `${pos.arrowLeft}px` }}
+                className={cn(
+                  "absolute w-2.5 h-2.5 bg-popover rotate-45",
+                  "pointer-events-none",
+                  pos.placement === "bottom"
+                    ? "-top-1.5 border-t border-l border-border"
+                    : "-bottom-1.5 border-b border-r border-border",
+                )}
+              />
+
+              {/* Tutorial Header */}
               <div
                 className={cn(
                   "flex items-center justify-between border-b",
-                  "border-border/70 pb-2.5",
+                  "border-border/70 pb-2",
                 )}
               >
                 <div
                   className={cn(
-                    "flex items-center gap-2",
-                    "text-xs sm:text-sm font-bold text-primary truncate",
+                    "flex items-center gap-1.5",
+                    "text-xs font-bold text-primary truncate",
                   )}
                 >
-                  <FolderOpen className="w-4 h-4 shrink-0" />
+                  <FolderOpen className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                   <span className="truncate">{entry.folderName}</span>
                   <Badge
                     variant="outline"
-                    className="text-[9px] px-1.5 py-0 shrink-0"
+                    className="text-[9px] px-1 py-0 shrink-0 font-mono"
                   >
                     Wing {entry.wingNumber}
                   </Badge>
@@ -230,27 +314,27 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
                     "hover:text-foreground hover:bg-secondary",
                     "transition-colors shrink-0 cursor-pointer",
                   )}
-                  aria-label="Close SOP Guidance"
+                  aria-label="Close guide"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-              {/* Body Properties */}
-              <div className="space-y-2.5 text-xs">
+              {/* Tutorial Body Details */}
+              <div className="space-y-2 text-xs">
                 <div>
                   <span
                     className={cn(
                       "text-muted-foreground font-semibold block",
-                      "text-[11px]",
+                      "text-[10px] uppercase tracking-wider",
                     )}
                   >
-                    Target Drive Path:
+                    Target Drive Path
                   </span>
                   <code
                     className={cn(
-                      "text-[11px] text-foreground font-mono bg-muted/60",
-                      "px-2 py-1 rounded block truncate mt-0.5 border",
+                      "text-[10px] text-foreground font-mono bg-muted/60",
+                      "px-1.5 py-0.5 rounded block truncate mt-0.5 border",
                       "border-border/50",
                     )}
                   >
@@ -262,12 +346,16 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
                   <span
                     className={cn(
                       "text-muted-foreground font-semibold block",
-                      "text-[11px]",
+                      "text-[10px] uppercase tracking-wider",
                     )}
                   >
-                    SOP Instruction:
+                    SOP Instruction
                   </span>
-                  <p className="text-foreground leading-relaxed text-xs mt-0.5">
+                  <p
+                    className={cn(
+                      "text-foreground leading-relaxed text-[11px] mt-0.5",
+                    )}
+                  >
                     {entry.instructions}
                   </p>
                 </div>
@@ -276,16 +364,17 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
                   <div className="flex items-center justify-between">
                     <span
                       className={cn(
-                        "text-muted-foreground font-semibold text-[11px]",
+                        "text-muted-foreground font-semibold",
+                        "text-[10px] uppercase tracking-wider",
                       )}
                     >
-                      Prescribed Naming Convention:
+                      Prescribed Naming
                     </span>
                     <button
                       type="button"
                       onClick={handleCopyNaming}
                       className={cn(
-                        "text-[11px] text-primary hover:underline",
+                        "text-[10px] text-primary hover:underline",
                         "flex items-center gap-1 font-medium cursor-pointer",
                       )}
                     >
@@ -304,8 +393,8 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
                   </div>
                   <code
                     className={cn(
-                      "text-[11px] text-primary font-mono bg-primary/10",
-                      "px-2 py-1 rounded block truncate mt-1 border",
+                      "text-[10px] text-primary font-mono bg-primary/10",
+                      "px-1.5 py-0.5 rounded block truncate mt-0.5 border",
                       "border-primary/20",
                     )}
                   >
@@ -316,12 +405,12 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
                 <div
                   className={cn(
                     "grid grid-cols-2 gap-2 pt-1 border-t",
-                    "border-border/60 text-[11px]",
+                    "border-border/60 text-[10px]",
                   )}
                 >
                   <div>
-                    <span className="text-muted-foreground block text-[10px]">
-                      Accepted Formats:
+                    <span className="text-muted-foreground block">
+                      Formats:
                     </span>
                     <strong
                       className={cn(
@@ -332,8 +421,8 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
                     </strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground block text-[10px]">
-                      Responsible Role:
+                    <span className="text-muted-foreground block">
+                      Owner:
                     </span>
                     <strong
                       className={cn(
@@ -358,15 +447,15 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   className={cn(
-                    "inline-flex items-center gap-1.5 px-3 py-1.5",
+                    "inline-flex items-center gap-1 px-2.5 py-1",
                     "rounded-md bg-primary text-primary-foreground",
-                    "text-xs font-semibold hover:bg-primary/90",
+                    "text-[11px] font-semibold hover:bg-primary/90",
                     "transition-colors shadow-xs",
                   )}
                 >
-                  <FolderOpen className="w-3.5 h-3.5" />
-                  <span>Open Target Folder</span>
-                  <ExternalLink className="w-3 h-3 ml-0.5" />
+                  <FolderOpen className="w-3 h-3" />
+                  <span>Open Folder</span>
+                  <ExternalLink className="w-2.5 h-2.5 ml-0.5" />
                 </a>
 
                 {onOpenSopModal && (
@@ -377,18 +466,18 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
                       onOpenSopModal();
                     }}
                     className={cn(
-                      "text-xs text-primary hover:underline",
+                      "text-[11px] text-primary hover:underline",
                       "inline-flex items-center gap-1",
                       "font-medium cursor-pointer",
                     )}
                   >
                     <Sparkles className="w-3 h-3" />
-                    <span>View All SOPs &rarr;</span>
+                    <span>All SOPs &rarr;</span>
                   </button>
                 )}
               </div>
             </div>
-          </div>,
+          </>,
           document.body,
         )}
     </div>
