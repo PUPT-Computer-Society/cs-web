@@ -187,16 +187,13 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
                 onDragEnd={onDragEnd}
                 onClick={() => onSelectTask(task)}
                 className={
-                  "p-3.5 transition-[border-color,box-shadow,transform] " +
-                  "duration-150 shadow-xs cursor-pointer border-border/80 " +
-                  "hover:border-primary/40 hover:shadow-md " +
-                  "hover:-translate-y-0.5 select-none touch-pan-y group " +
-                  `relative bg-card ${
-                    isDragged
-                      ? "opacity-30 scale-95 border-dashed border-primary " +
-                        "ring-2 ring-primary/40"
-                      : ""
-                  }`
+                  "p-3.5 shadow-xs cursor-pointer border-border/80 " +
+                  "hover:border-primary/40 hover:shadow-md select-none " +
+                  "touch-pan-y group relative bg-card " +
+                  (isDragged
+                    ? "opacity-40 border-dashed border-primary " +
+                      "ring-2 ring-primary/40"
+                    : "transition-[border-color,box-shadow] duration-150")
                 }
               >
                 <div className="flex items-start justify-between gap-2">
@@ -242,6 +239,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
                       })}
                       target="_blank"
                       rel="noopener noreferrer"
+                      draggable={false}
                       onClick={(e) => e.stopPropagation()}
                       className={
                         "inline-flex items-center gap-1 " +
@@ -1037,7 +1035,9 @@ export const TasksPage: React.FC = () => {
   const handleDragStart = useCallback((e: React.DragEvent, taskId: string) => {
     e.dataTransfer.setData("text/plain", taskId);
     e.dataTransfer.effectAllowed = "move";
-    setDraggedTaskId(taskId);
+    window.requestAnimationFrame(() => {
+      setDraggedTaskId(taskId);
+    });
   }, []);
 
   const handleDragEnd = useCallback(() => {
@@ -1475,7 +1475,9 @@ export const TasksPage: React.FC = () => {
                     title="Add deadline to Google Calendar"
                   >
                     <Calendar className="w-3 h-3 text-primary" />
-                    <ExternalLink className="w-2.5 h-2.5 text-muted-foreground" />
+                    <ExternalLink
+                      className="w-2.5 h-2.5 text-muted-foreground"
+                    />
                   </a>
                 </div>
               )}
@@ -1493,7 +1495,8 @@ export const TasksPage: React.FC = () => {
               <div
                 className={
                   "p-3 rounded-lg border border-border bg-card/60 " +
-                  "text-xs text-foreground min-h-[80px] max-h-56 overflow-y-auto"
+                  "text-xs text-foreground min-h-[80px] max-h-56 " +
+                  "overflow-y-auto"
                 }
               >
                 <MarkdownRenderer content={selectedTask.description} />
