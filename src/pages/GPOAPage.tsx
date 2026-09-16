@@ -45,6 +45,7 @@ import {
 } from "@/lib/dateUtils";
 import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import { DateTimePicker } from "@/components/ui/DateTimePicker";
+import { cn } from "@/lib/utils";
 import type { GPOAEvent, GPOAEventStatus } from "@/types";
 
 const GPOA_STATUS_OPTIONS = [
@@ -820,13 +821,14 @@ export const GPOAPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setStatusFilter("all")}
-            className={
-              "px-3 py-1.5 rounded-lg text-xs font-semibold " +
-              "transition-colors shrink-0 " +
-              (statusFilter === "all"
+            className={cn(
+              "px-3 py-2 sm:py-1.5 min-h-[36px] sm:min-h-0 rounded-lg " +
+                "text-xs font-semibold transition-colors shrink-0 " +
+                "whitespace-nowrap flex items-center",
+              statusFilter === "all"
                 ? "bg-primary text-primary-foreground shadow-xs"
-                : "bg-secondary/60 text-muted-foreground hover:text-foreground")
-            }
+                : "bg-secondary/60 text-muted-foreground hover:text-foreground",
+            )}
           >
             All Activities ({statusCounts["all"] || 0})
           </button>
@@ -838,13 +840,15 @@ export const GPOAPage: React.FC = () => {
                 key={opt.value}
                 type="button"
                 onClick={() => setStatusFilter(opt.value)}
-                className={
-                  "px-3 py-1.5 rounded-lg text-xs font-semibold " +
-                  "transition-colors shrink-0 flex items-center gap-1.5 " +
-                  (isSelected
+                className={cn(
+                  "px-3 py-2 sm:py-1.5 min-h-[36px] sm:min-h-0 rounded-lg " +
+                    "text-xs font-semibold transition-colors shrink-0 " +
+                    "whitespace-nowrap flex items-center gap-1.5",
+                  isSelected
                     ? "bg-primary text-primary-foreground shadow-xs"
-                    : "bg-secondary/60 text-muted-foreground hover:text-foreground")
-                }
+                    : "bg-secondary/60 text-muted-foreground " +
+                        "hover:text-foreground",
+                )}
               >
                 <span>{opt.label}</span>
                 <span

@@ -108,7 +108,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           className={cn(
             "flex items-center justify-center h-8 px-2.5 rounded-lg " +
               "border border-border bg-card text-foreground " +
-              "transition-all duration-150",
+              "transition-all duration-150 whitespace-nowrap shrink-0",
             currentPage <= 1
               ? "opacity-40 cursor-not-allowed"
               : "hover:bg-secondary hover:border-primary/40 active:scale-95",
@@ -125,7 +125,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         <span
           className={
             "sm:hidden px-2 font-mono text-xs font-semibold " +
-            "text-muted-foreground select-none"
+            "text-muted-foreground select-none whitespace-nowrap shrink-0"
           }
         >
           {currentPage} / {totalPages}
@@ -158,7 +158,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                 onClick={() => onPageChange(pageNum)}
                 className={cn(
                   "h-8 min-w-[2rem] px-2 rounded-lg text-xs font-semibold " +
-                    "transition-all duration-150",
+                    "transition-all duration-150 whitespace-nowrap shrink-0",
                   isActive
                     ? "bg-primary text-primary-foreground shadow-xs"
                     : "border border-border bg-card text-foreground " +
@@ -180,7 +180,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           className={cn(
             "flex items-center justify-center h-8 px-2.5 rounded-lg " +
               "border border-border bg-card text-foreground " +
-              "transition-all duration-150",
+              "transition-all duration-150 whitespace-nowrap shrink-0",
             currentPage >= totalPages
               ? "opacity-40 cursor-not-allowed"
               : "hover:bg-secondary hover:border-primary/40 active:scale-95",

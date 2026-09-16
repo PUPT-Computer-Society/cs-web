@@ -193,7 +193,7 @@ export const NotificationBell: React.FC = () => {
           {/* Mobile ambient backdrop dismissal */}
           <div
             className={cn(
-              "fixed inset-0 bg-background/50 z-40 sm:hidden",
+              "fixed inset-0 bg-background/80 z-40 sm:hidden",
               isDropdownClosing
                 ? "animate-out fade-out-0 duration-150"
                 : "animate-in fade-in-0 duration-200",

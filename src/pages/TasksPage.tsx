@@ -1172,10 +1172,15 @@ export const TasksPage: React.FC = () => {
       />
 
       <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
-        <div className="flex justify-between items-center">
+        <div
+          className={
+            "flex flex-col sm:flex-row justify-between items-start " +
+            "sm:items-center gap-3"
+          }
+        >
           <div
             className={
-              "flex items-center gap-2 text-xs " + "text-muted-foreground"
+              "flex items-center gap-2 text-xs text-muted-foreground"
             }
           >
             <span>Coordinated Action Items</span>
@@ -1185,7 +1190,11 @@ export const TasksPage: React.FC = () => {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div
+            className={
+              "flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap"
+            }
+          >
             <Button
               type="button"
               variant="outline"
