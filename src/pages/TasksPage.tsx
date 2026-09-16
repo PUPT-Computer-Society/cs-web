@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Archive,
   Calendar,
   CheckCircle2,
   Clock,
@@ -123,7 +124,8 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
         onDragLeave={(e) => onDragLeave(e, col.status)}
         onDrop={(e) => onDrop(e, col.status)}
         className={
-          "rounded-xl border p-3.5 min-h-[460px] flex flex-col " +
+          "rounded-xl border p-3.5 flex flex-col " +
+          "max-h-[calc(100vh-270px)] min-h-[460px] " +
           `transition-colors duration-150 ${
             isOver
               ? "border-primary ring-2 ring-primary/30 bg-primary/10"
@@ -134,7 +136,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
         <div
           className={
             "flex justify-between items-center pb-3 border-b " +
-            "border-border/80 mb-3"
+            "border-border/80 mb-3 shrink-0"
           }
         >
           <div className="flex items-center gap-2">
@@ -155,7 +157,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
           </Badge>
         </div>
 
-        <div className="space-y-2.5 flex-1">
+        <div className="space-y-2.5 flex-1 overflow-y-auto pr-1">
           {tasks.map((task) => {
             const assignee = task.assignedToId
               ? usersMap.get(task.assignedToId)
@@ -473,6 +475,7 @@ export const TasksPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterAssigneeId, setFilterAssigneeId] = useState<string>("all");
   const [filterEventId, setFilterEventId] = useState<string>("all");
+  const [showConcludedEvents, setShowConcludedEvents] = useState(false);
 
   // Subtask management in Detail Modal
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
@@ -850,6 +853,27 @@ export const TasksPage: React.FC = () => {
     deleteTaskMutation.isPending || deleteSubtaskMutation.isPending;
   const isSubmittingSubtask = addSubtaskMutation.isPending;
 
+  const eventStatusMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const ev of events) {
+      map.set(ev.id, ev.status);
+    }
+    return map;
+  }, [events]);
+
+  const concludedTasksCount = useMemo(() => {
+    let count = 0;
+    for (const t of tasks) {
+      if (t.gpoaEventId) {
+        const s = eventStatusMap.get(t.gpoaEventId);
+        if (s === "completed" || s === "cancelled") {
+          count++;
+        }
+      }
+    }
+    return count;
+  }, [tasks, eventStatusMap]);
+
   const filteredTasks = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     return tasks.filter((t) => {
@@ -875,11 +899,24 @@ export const TasksPage: React.FC = () => {
         } else {
           if (t.gpoaEventId !== filterEventId) return false;
         }
+      } else if (!showConcludedEvents && t.gpoaEventId) {
+        const evStatus = eventStatusMap.get(t.gpoaEventId);
+        if (evStatus === "completed" || evStatus === "cancelled") {
+          return false;
+        }
       }
 
       return true;
     });
-  }, [tasks, searchQuery, filterAssigneeId, filterEventId, user]);
+  }, [
+    tasks,
+    searchQuery,
+    filterAssigneeId,
+    filterEventId,
+    showConcludedEvents,
+    eventStatusMap,
+    user,
+  ]);
 
   const tasksByStatus = useMemo(() => {
     const map: Record<TaskStatus, Task[]> = {
@@ -899,12 +936,14 @@ export const TasksPage: React.FC = () => {
   const isFiltered =
     Boolean(searchQuery.trim()) ||
     filterAssigneeId !== "all" ||
-    filterEventId !== "all";
+    filterEventId !== "all" ||
+    showConcludedEvents;
 
   const handleClearFilters = () => {
     setSearchQuery("");
     setFilterAssigneeId("all");
     setFilterEventId("all");
+    setShowConcludedEvents(false);
   };
 
   const usersMap = useMemo(() => {
@@ -1183,6 +1222,55 @@ export const TasksPage: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Concluded Events Lifecycle Notice */}
+        {concludedTasksCount > 0 && filterEventId === "all" && (
+          <div
+            className={
+              "flex flex-col sm:flex-row sm:items-center " +
+              "justify-between gap-2 px-3.5 py-2.5 rounded-xl border " +
+              "border-border/80 bg-card/60 text-xs shadow-2xs"
+            }
+          >
+            <div
+              className={
+                "flex items-center gap-2 text-muted-foreground min-w-0"
+              }
+            >
+              <Archive className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span className="truncate">
+                {showConcludedEvents
+                  ? `Showing all tasks, including ${concludedTasksCount} ` +
+                    "from concluded GPOA events."
+                  : `${concludedTasksCount} action item` +
+                    `${concludedTasksCount > 1 ? "s" : ""} from ` +
+                    "concluded GPOA events archived from active board."}
+              </span>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const next = !showConcludedEvents;
+                setShowConcludedEvents(next);
+                if (next) {
+                  toastSuccess("Showing tasks from concluded GPOA events.");
+                } else {
+                  toastSuccess(
+                    "Active board restored. Concluded tasks archived.",
+                  );
+                }
+              }}
+              className={
+                "h-7 px-2.5 text-[11px] font-semibold text-primary " +
+                "hover:bg-primary/10 shrink-0 self-start sm:self-auto"
+              }
+            >
+              {showConcludedEvents ? "Hide Concluded" : "View Concluded"}
+            </Button>
+          </div>
+        )}
 
         {/* Drag and Drop Kanban Board */}
         {isLoading ? (

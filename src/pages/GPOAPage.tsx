@@ -617,11 +617,19 @@ export const GPOAPage: React.FC = () => {
       id: string;
       payload: Record<string, unknown>;
     }) => api.put<GPOAEvent>(`/gpoa/${id}`, payload),
-    onSuccess: () => {
+    onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.gpoa });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks });
       setEditDialogOpen(false);
       setEditingEvent(null);
-      toastSuccess("GPOA activity updated successfully.");
+      if (vars.payload.status === "completed") {
+        toastSuccess(
+          "Activity marked completed! Associated tasks archived from " +
+            "the active Kanban board.",
+        );
+      } else {
+        toastSuccess("GPOA activity updated successfully.");
+      }
     },
     onError: (err: any) => {
       toastError(err.message || "Failed to update GPOA activity");
