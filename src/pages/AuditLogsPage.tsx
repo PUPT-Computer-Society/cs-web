@@ -217,7 +217,7 @@ export const AuditLogsPage: React.FC = () => {
         }
       />
 
-      <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
+      <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto w-full min-w-0">
         {/* Metric Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
           <Card className="rounded-2xl border border-border/80 shadow-xs">
@@ -309,12 +309,17 @@ export const AuditLogsPage: React.FC = () => {
         <Card className="rounded-2xl border border-border/80 shadow-xs">
           <CardContent className="p-4 space-y-4">
             {/* Category Tabs */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div
+              className={
+                "flex flex-col sm:flex-row items-stretch sm:items-center " +
+                "justify-between gap-3"
+              }
+            >
               <div
                 className={cn(
-                  "flex flex-wrap items-center gap-1.5 p-1",
+                  "flex items-center gap-1.5 p-1 overflow-x-auto",
                   "rounded-xl bg-secondary/50 border border-border/50",
-                  "text-xs",
+                  "text-xs no-scrollbar",
                 )}
               >
                 {[
@@ -330,7 +335,8 @@ export const AuditLogsPage: React.FC = () => {
                       type="button"
                       onClick={() => handleCategoryChange(tab.key)}
                       className={cn(
-                        "px-3 py-1.5 rounded-lg font-semibold transition-all",
+                        "px-3 py-1.5 rounded-lg font-semibold " +
+                          "transition-all whitespace-nowrap shrink-0",
                         active
                           ? "bg-background text-foreground shadow-xs"
                           : "text-muted-foreground hover:text-foreground",
@@ -347,7 +353,7 @@ export const AuditLogsPage: React.FC = () => {
                 size="sm"
                 onClick={() => refetch()}
                 disabled={isLoading || isRefetching}
-                className="gap-2 rounded-xl text-xs h-9"
+                className="gap-2 rounded-xl text-xs h-9 shrink-0"
               >
                 <RefreshCw
                   className={cn(
@@ -423,7 +429,128 @@ export const AuditLogsPage: React.FC = () => {
             "rounded-2xl border border-border/80 shadow-xs overflow-hidden",
           )}
         >
-          <div className="overflow-x-auto">
+          {/* Mobile Feed (< sm) */}
+          <div
+            className={"sm:hidden divide-y divide-border/40 font-mono text-xs"}
+          >
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, idx) => (
+                <div key={idx} className="p-4 space-y-2.5 animate-pulse">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-24 rounded-md" />
+                    <Skeleton className="h-4 w-20 rounded-md" />
+                  </div>
+                  <Skeleton className="h-4 w-3/4 rounded-md" />
+                  <div className="flex items-center justify-between pt-1">
+                    <Skeleton className="h-4 w-28 rounded-md" />
+                    <Skeleton className="h-7 w-16 rounded-md" />
+                  </div>
+                </div>
+              ))
+            ) : items.length === 0 ? (
+              <div
+                className={"py-12 text-center text-muted-foreground font-sans"}
+              >
+                <Terminal className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                <p className="font-semibold text-sm">No telemetry records</p>
+                <p className="text-xs">
+                  No logs match your selected filter criteria.
+                </p>
+              </div>
+            ) : (
+              items.map((log) => {
+                const isErrorStatus = log.statusCode >= 400;
+                return (
+                  <div
+                    key={log.id}
+                    className={
+                      "p-3.5 space-y-2 hover:bg-secondary/30 " +
+                      "transition-colors"
+                    }
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {getSeverityBadge(log.severity)}
+                        {getCategoryBadge(log.category)}
+                      </div>
+                      <span
+                        className={
+                          "text-[10px] font-sans text-muted-foreground " +
+                          "whitespace-nowrap"
+                        }
+                      >
+                        {formatDateTimeUTC8(log.createdAt)}
+                      </span>
+                    </div>
+
+                    <div className="min-w-0">
+                      <p
+                        className={
+                          "font-semibold text-foreground truncate text-xs"
+                        }
+                      >
+                        {log.action}
+                      </p>
+                      {log.resourceType && (
+                        <p
+                          className={
+                            "text-[10px] text-muted-foreground truncate " +
+                            "mt-0.5 font-sans"
+                          }
+                        >
+                          target: {log.resourceType}
+                          {log.resourceId ? ` / ${log.resourceId}` : ""}
+                        </p>
+                      )}
+                    </div>
+
+                    <div
+                      className={
+                        "flex items-center justify-between gap-2 pt-0.5"
+                      }
+                    >
+                      <div
+                        className={
+                          "flex items-center gap-1.5 min-w-0 font-sans " +
+                          "text-xs"
+                        }
+                      >
+                        <span
+                          className={
+                            "font-semibold text-foreground truncate " +
+                            "max-w-[140px]"
+                          }
+                        >
+                          {log.actorName || "System / Anon"}
+                        </span>
+                        <Badge
+                          variant={isErrorStatus ? "destructive" : "outline"}
+                          className="font-mono text-[10px] px-1 py-0 shrink-0"
+                        >
+                          {log.statusCode}
+                        </Badge>
+                      </div>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedLog(log)}
+                        className={
+                          "h-7 px-2 text-xs gap-1 shrink-0 cursor-pointer"
+                        }
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Inspect</span>
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Desktop Table View (>= sm) */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead
                 className={cn(
@@ -432,44 +559,38 @@ export const AuditLogsPage: React.FC = () => {
                 )}
               >
                 <tr>
-                  <th className="py-3 px-3 sm:px-4 hidden sm:table-cell">
-                    Timestamp
-                  </th>
-                  <th className="py-3 px-3 sm:px-4 hidden md:table-cell">
-                    Category
-                  </th>
-                  <th className="py-3 px-3 sm:px-4">Severity</th>
-                  <th className="py-3 px-3 sm:px-4">Action / Resource</th>
-                  <th className="py-3 px-3 sm:px-4">Actor</th>
-                  <th className="py-3 px-3 sm:px-4 hidden md:table-cell">
-                    Status
-                  </th>
-                  <th className="py-3 px-3 sm:px-4 text-right">Details</th>
+                  <th className="py-3 px-4">Timestamp</th>
+                  <th className="py-3 px-4">Category</th>
+                  <th className="py-3 px-4">Severity</th>
+                  <th className="py-3 px-4">Action / Resource</th>
+                  <th className="py-3 px-4">Actor</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40 font-mono text-xs">
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, idx) => (
                     <tr key={idx} className="animate-pulse">
-                      <td className="py-4 px-4 hidden sm:table-cell">
+                      <td className="py-4 px-4">
                         <Skeleton className="h-4 w-28 rounded-md" />
                       </td>
-                      <td className="py-4 px-4 hidden md:table-cell">
+                      <td className="py-4 px-4">
                         <Skeleton className="h-4 w-16 rounded-md" />
                       </td>
-                      <td className="py-4 px-3 sm:px-4">
+                      <td className="py-4 px-4">
                         <Skeleton className="h-4 w-14 rounded-md" />
                       </td>
-                      <td className="py-4 px-3 sm:px-4">
-                        <Skeleton className="h-4 w-32 sm:w-40 rounded-md" />
+                      <td className="py-4 px-4">
+                        <Skeleton className="h-4 w-40 rounded-md" />
                       </td>
-                      <td className="py-4 px-3 sm:px-4">
-                        <Skeleton className="h-4 w-20 sm:w-24 rounded-md" />
+                      <td className="py-4 px-4">
+                        <Skeleton className="h-4 w-24 rounded-md" />
                       </td>
-                      <td className="py-4 px-4 hidden md:table-cell">
+                      <td className="py-4 px-4">
                         <Skeleton className="h-4 w-10 rounded-md" />
                       </td>
-                      <td className="py-4 px-3 sm:px-4 text-right">
+                      <td className="py-4 px-4 text-right">
                         <Skeleton className="h-8 w-16 ml-auto rounded-md" />
                       </td>
                     </tr>
@@ -500,48 +621,32 @@ export const AuditLogsPage: React.FC = () => {
                         className="hover:bg-secondary/30 transition-colors"
                       >
                         <td
-                          className={cn(
-                            "py-3 px-4 whitespace-nowrap",
-                            "text-muted-foreground hidden sm:table-cell",
-                          )}
+                          className={
+                            "py-3 px-4 whitespace-nowrap text-muted-foreground"
+                          }
                         >
                           {formatDateTimeUTC8(log.createdAt)}
                         </td>
-                        <td
-                          className={
-                            "py-3 px-4 whitespace-nowrap hidden md:table-cell"
-                          }
-                        >
+                        <td className="py-3 px-4 whitespace-nowrap">
                           {getCategoryBadge(log.category)}
                         </td>
-                        <td className="py-3 px-3 sm:px-4 whitespace-nowrap">
+                        <td className="py-3 px-4 whitespace-nowrap">
                           {getSeverityBadge(log.severity)}
                         </td>
-                        <td className="py-3 px-3 sm:px-4">
+                        <td className="py-3 px-4">
                           <div
                             className={cn(
                               "font-semibold text-foreground truncate",
-                              "max-w-[140px] sm:max-w-md",
+                              "max-w-md",
                             )}
                           >
                             {log.action}
                           </div>
-                          <div
-                            className={
-                              "sm:hidden flex items-center gap-1.5 mt-0.5 " +
-                              "text-[10px] text-muted-foreground font-sans"
-                            }
-                          >
-                            <span>{formatDateTimeUTC8(log.createdAt)}</span>
-                            <span>•</span>
-                            <span className="truncate">{log.category}</span>
-                          </div>
                           {log.resourceType && (
                             <div
-                              className={cn(
-                                "text-[11px] text-muted-foreground truncate",
-                                "hidden sm:block",
-                              )}
+                              className={
+                                "text-[11px] text-muted-foreground truncate"
+                              }
                             >
                               target: {log.resourceType}
                               {log.resourceId ? ` / ${log.resourceId}` : ""}
@@ -549,11 +654,9 @@ export const AuditLogsPage: React.FC = () => {
                           )}
                         </td>
                         <td
-                          className={cn(
-                            "py-3 px-3 sm:px-4 whitespace-nowrap " +
-                              "font-sans text-xs",
-                            "max-w-[100px] truncate sm:max-w-none",
-                          )}
+                          className={
+                            "py-3 px-4 whitespace-nowrap font-sans text-xs"
+                          }
                         >
                           {log.actorName ? (
                             <span className="font-semibold text-foreground">
@@ -565,11 +668,7 @@ export const AuditLogsPage: React.FC = () => {
                             </span>
                           )}
                         </td>
-                        <td
-                          className={
-                            "py-3 px-4 whitespace-nowrap hidden md:table-cell"
-                          }
-                        >
+                        <td className="py-3 px-4 whitespace-nowrap">
                           <Badge
                             variant={isErrorStatus ? "destructive" : "outline"}
                             className="font-mono text-[11px] px-1.5 py-0.5"
@@ -577,22 +676,18 @@ export const AuditLogsPage: React.FC = () => {
                             {log.statusCode}
                           </Badge>
                         </td>
-                        <td
-                          className={
-                            "py-3 px-3 sm:px-4 text-right whitespace-nowrap"
-                          }
-                        >
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => setSelectedLog(log)}
                             className={
-                              "min-h-[36px] px-2 sm:px-2.5 rounded-lg " +
-                              "text-xs gap-1 cursor-pointer"
+                              "min-h-[36px] px-2.5 rounded-lg text-xs gap-1 " +
+                              "cursor-pointer"
                             }
                           >
                             <Eye className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">Inspect</span>
+                            <span>Inspect</span>
                           </Button>
                         </td>
                       </tr>
@@ -605,12 +700,18 @@ export const AuditLogsPage: React.FC = () => {
 
           {/* Pagination Controls */}
           {totalItems > 15 && (
-            <div className="p-4 border-t border-border/60 flex justify-center">
+            <div
+              className={
+                "p-4 border-t border-border/60 flex justify-center " +
+                "w-full min-w-0"
+              }
+            >
               <Pagination
                 currentPage={currentPage}
                 totalItems={totalItems}
                 pageSize={15}
                 onPageChange={(p) => setCurrentPage(p)}
+                className="w-full border-t-0 pt-0"
               />
             </div>
           )}

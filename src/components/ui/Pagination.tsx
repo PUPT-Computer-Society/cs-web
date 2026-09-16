@@ -61,7 +61,8 @@ export const Pagination: React.FC<PaginationProps> = ({
   return (
     <div
       className={cn(
-        "flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-border/70 text-xs select-none",
+        "flex flex-col sm:flex-row items-center justify-between gap-3 " +
+          "pt-4 border-t border-border/70 text-xs select-none",
         className,
       )}
     >
@@ -74,7 +75,12 @@ export const Pagination: React.FC<PaginationProps> = ({
         </span>
 
         {onPageSizeChange && (
-          <div className="flex items-center gap-1.5 ml-2 border-l border-border/70 pl-3">
+          <div
+            className={
+              "flex items-center gap-1.5 ml-2 border-l " +
+              "border-border/70 pl-3"
+            }
+          >
             <span className="text-[11px]">Rows:</span>
             <Select
               size="sm"
@@ -93,15 +99,16 @@ export const Pagination: React.FC<PaginationProps> = ({
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 shrink-0 max-w-full">
         {/* Previous Button */}
         <button
           type="button"
           disabled={currentPage <= 1}
           onClick={() => onPageChange(currentPage - 1)}
           className={cn(
-            "flex items-center justify-center h-8 px-2.5 rounded-lg border border-border bg-card",
-            "text-foreground transition-all duration-150",
+            "flex items-center justify-center h-8 px-2.5 rounded-lg " +
+              "border border-border bg-card text-foreground " +
+              "transition-all duration-150",
             currentPage <= 1
               ? "opacity-40 cursor-not-allowed"
               : "hover:bg-secondary hover:border-primary/40 active:scale-95",
@@ -114,38 +121,56 @@ export const Pagination: React.FC<PaginationProps> = ({
           </span>
         </button>
 
-        {/* Page Number Chips */}
-        {pages.map((p, idx) => {
-          if (p === "...") {
-            return (
-              <span
-                key={`ellipsis-${idx}`}
-                className="w-8 h-8 flex items-center justify-center text-muted-foreground font-mono select-none"
-              >
-                ...
-              </span>
-            );
+        {/* Mobile Page Indicator (Hick's Law: minimal mobile load) */}
+        <span
+          className={
+            "sm:hidden px-2 font-mono text-xs font-semibold " +
+            "text-muted-foreground select-none"
           }
+        >
+          {currentPage} / {totalPages}
+        </span>
 
-          const pageNum = p as number;
-          const isActive = pageNum === currentPage;
+        {/* Desktop Page Number Chips */}
+        <div className="hidden sm:flex items-center gap-1">
+          {pages.map((p, idx) => {
+            if (p === "...") {
+              return (
+                <span
+                  key={`ellipsis-${idx}`}
+                  className={
+                    "w-8 h-8 flex items-center justify-center " +
+                    "text-muted-foreground font-mono select-none"
+                  }
+                >
+                  ...
+                </span>
+              );
+            }
 
-          return (
-            <button
-              key={`page-${pageNum}`}
-              type="button"
-              onClick={() => onPageChange(pageNum)}
-              className={cn(
-                "h-8 min-w-[2rem] px-2 rounded-lg text-xs font-semibold transition-all duration-150",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-xs"
-                  : "border border-border bg-card text-foreground hover:bg-secondary hover:border-primary/40 active:scale-95",
-              )}
-            >
-              {pageNum}
-            </button>
-          );
-        })}
+            const pageNum = p as number;
+            const isActive = pageNum === currentPage;
+
+            return (
+              <button
+                key={`page-${pageNum}`}
+                type="button"
+                onClick={() => onPageChange(pageNum)}
+                className={cn(
+                  "h-8 min-w-[2rem] px-2 rounded-lg text-xs font-semibold " +
+                    "transition-all duration-150",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "border border-border bg-card text-foreground " +
+                        "hover:bg-secondary hover:border-primary/40 " +
+                        "active:scale-95",
+                )}
+              >
+                {pageNum}
+              </button>
+            );
+          })}
+        </div>
 
         {/* Next Button */}
         <button
@@ -153,8 +178,9 @@ export const Pagination: React.FC<PaginationProps> = ({
           disabled={currentPage >= totalPages}
           onClick={() => onPageChange(currentPage + 1)}
           className={cn(
-            "flex items-center justify-center h-8 px-2.5 rounded-lg border border-border bg-card",
-            "text-foreground transition-all duration-150",
+            "flex items-center justify-center h-8 px-2.5 rounded-lg " +
+              "border border-border bg-card text-foreground " +
+              "transition-all duration-150",
             currentPage >= totalPages
               ? "opacity-40 cursor-not-allowed"
               : "hover:bg-secondary hover:border-primary/40 active:scale-95",

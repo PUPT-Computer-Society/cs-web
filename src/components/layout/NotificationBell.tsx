@@ -52,9 +52,9 @@ export const NotificationBell: React.FC = () => {
     }
   }, [lastEvent]);
 
-  // Close dropdown on click outside
+  // Close dropdown on click outside (supporting touch on mobile)
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(e.target as Node)
@@ -63,7 +63,11 @@ export const NotificationBell: React.FC = () => {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, []);
 
   const handleToggleOpen = () => {
@@ -183,152 +187,172 @@ export const NotificationBell: React.FC = () => {
       </button>
 
       {isDropdownRendered && (
-        <div
-          className={cn(
-            "absolute right-0 mt-2 w-80 sm:w-96 rounded-xl border",
-            "border-border bg-card shadow-xl z-50 overflow-hidden",
-            "origin-top-right",
-            isDropdownClosing
-              ? "animate-out fade-out-0 zoom-out-95 slide-out-to-top-2 " +
-                  "duration-150 ease-in"
-              : "animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 " +
-                  "duration-200 ease-out",
-          )}
-        >
+        <>
+          {/* Mobile ambient backdrop dismissal */}
           <div
-            className={
-              "p-3.5 border-b border-border flex items-center " +
-              "justify-between bg-muted/40"
-            }
+            className={cn(
+              "fixed inset-0 bg-background/50 z-40 sm:hidden",
+              isDropdownClosing
+                ? "animate-out fade-out-0 duration-150"
+                : "animate-in fade-in-0 duration-200",
+            )}
+            onClick={() => setIsOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            className={cn(
+              "fixed inset-x-3 top-16 sm:absolute sm:inset-auto " +
+                "sm:right-0 sm:top-full sm:mt-2 sm:w-96 max-w-md mx-auto " +
+                "sm:mx-0 rounded-2xl border border-border bg-card " +
+                "shadow-2xl z-50 overflow-hidden origin-top " +
+                "sm:origin-top-right flex flex-col",
+              isDropdownClosing
+                ? "animate-out fade-out-0 zoom-out-95 slide-out-to-top-2 " +
+                    "duration-150 ease-in"
+                : "animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 " +
+                    "duration-200 ease-out",
+            )}
           >
-            <div className="flex items-center gap-2">
-              <span
-                className={
-                  "text-xs font-mono font-bold uppercase tracking-wider " +
-                  "text-foreground"
-                }
-              >
-                Council Dispatches
-              </span>
-              {unreadCount > 0 && (
+            <div
+              className={
+                "p-3.5 border-b border-border flex items-center " +
+                "justify-between bg-muted/40"
+              }
+            >
+              <div className="flex items-center gap-2">
                 <span
-                  className={cn(
-                    "px-1.5 py-0.5 rounded font-mono text-[10px] font-bold",
-                    !isTouched
-                      ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
-                      : "bg-secondary text-muted-foreground",
-                  )}
+                  className={
+                    "text-xs font-mono font-bold uppercase tracking-wider " +
+                    "text-foreground"
+                  }
                 >
-                  {unreadCount} Unread {!isTouched ? "• New" : "• Seen"}
+                  Council Dispatches
                 </span>
+                {unreadCount > 0 && (
+                  <span
+                    className={cn(
+                      "px-1.5 py-0.5 rounded font-mono text-[10px] font-bold",
+                      !isTouched
+                        ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                        : "bg-secondary text-muted-foreground",
+                    )}
+                  >
+                    {unreadCount} Unread {!isTouched ? "• New" : "• Seen"}
+                  </span>
+                )}
+              </div>
+
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={handleMarkAllAsRead}
+                  disabled={isLoading}
+                  className={
+                    "text-[11px] font-mono text-muted-foreground " +
+                    "hover:text-foreground inline-flex items-center gap-1 " +
+                    "transition-colors"
+                  }
+                >
+                  <CheckCheck className="w-3.5 h-3.5" />
+                  <span>Mark All Read</span>
+                </button>
               )}
             </div>
 
-            {unreadCount > 0 && (
-              <button
-                type="button"
-                onClick={handleMarkAllAsRead}
-                disabled={isLoading}
-                className={
-                  "text-[11px] font-mono text-muted-foreground " +
-                  "hover:text-foreground inline-flex items-center gap-1 " +
-                  "transition-colors"
-                }
-              >
-                <CheckCheck className="w-3.5 h-3.5" />
-                <span>Mark All Read</span>
-              </button>
-            )}
-          </div>
-
-          <div className="max-h-80 overflow-y-auto divide-y divide-border">
-            {notifications.length === 0 ? (
-              <div
-                className={
-                  "p-6 text-center text-xs text-muted-foreground italic"
-                }
-              >
-                No notifications logged.
-              </div>
-            ) : (
-              notifications.map((notif) => (
+            <div
+              className={
+                "max-h-[calc(100vh-10rem)] sm:max-h-80 overflow-y-auto " +
+                "divide-y divide-border"
+              }
+            >
+              {notifications.length === 0 ? (
                 <div
-                  key={notif.id}
-                  onClick={() => handleMarkAsRead(notif.id, notif.linkUrl)}
-                  className={cn(
-                    "p-3 text-left cursor-pointer transition-colors flex",
-                    "items-start gap-3",
-                    notif.isRead
-                      ? "bg-card/40 hover:bg-secondary/40"
-                      : "bg-secondary/60 hover:bg-secondary",
-                  )}
+                  className={
+                    "p-6 text-center text-xs text-muted-foreground italic"
+                  }
                 >
-                  <span
+                  No notifications logged.
+                </div>
+              ) : (
+                notifications.map((notif) => (
+                  <div
+                    key={notif.id}
+                    onClick={() => handleMarkAsRead(notif.id, notif.linkUrl)}
                     className={cn(
-                      "mt-1 w-2 h-2 rounded-full shrink-0",
-                      notif.isRead ? "bg-transparent" : "bg-amber-500",
+                      "p-3 text-left cursor-pointer transition-colors flex",
+                      "items-start gap-3",
+                      notif.isRead
+                        ? "bg-card/40 hover:bg-secondary/40"
+                        : "bg-secondary/60 hover:bg-secondary",
                     )}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <p
-                          className={
-                            "text-xs font-bold text-foreground truncate"
-                          }
-                        >
-                          {notif.title}
-                        </p>
-                        {notif.targetPermission && (
-                          <span
+                  >
+                    <span
+                      className={cn(
+                        "mt-1 w-2 h-2 rounded-full shrink-0",
+                        notif.isRead ? "bg-transparent" : "bg-amber-500",
+                      )}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <p
                             className={
-                              "px-1 py-0.5 rounded text-[9px] font-mono " +
-                              "uppercase bg-primary/10 text-primary " +
-                              "border border-primary/20 shrink-0"
+                              "text-xs font-bold text-foreground truncate"
                             }
                           >
-                            {notif.targetPermission.replace(/_/g, " ")}
-                          </span>
-                        )}
+                            {notif.title}
+                          </p>
+                          {notif.targetPermission && (
+                            <span
+                              className={
+                                "px-1 py-0.5 rounded text-[9px] font-mono " +
+                                "uppercase bg-primary/10 text-primary " +
+                                "border border-primary/20 shrink-0"
+                              }
+                            >
+                              {notif.targetPermission.replace(/_/g, " ")}
+                            </span>
+                          )}
+                        </div>
+                        <span
+                          className={
+                            "text-[10px] font-mono text-muted-foreground " +
+                            "whitespace-nowrap"
+                          }
+                        >
+                          {formatTimeAgo(notif.createdAt)}
+                        </span>
                       </div>
-                      <span
+                      <p
                         className={
-                          "text-[10px] font-mono text-muted-foreground " +
-                          "whitespace-nowrap"
+                          "text-[11px] text-muted-foreground line-clamp-2 " +
+                          "mt-0.5"
                         }
                       >
-                        {formatTimeAgo(notif.createdAt)}
-                      </span>
+                        {notif.message}
+                      </p>
                     </div>
-                    <p
-                      className={
-                        "text-[11px] text-muted-foreground line-clamp-2 " +
-                        "mt-0.5"
-                      }
-                    >
-                      {notif.message}
-                    </p>
+                    {!notif.isRead && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMarkAsRead(notif.id);
+                        }}
+                        className={
+                          "p-1 text-muted-foreground hover:text-foreground"
+                        }
+                        title="Mark as read"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
-                  {!notif.isRead && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMarkAsRead(notif.id);
-                      }}
-                      className={
-                        "p-1 text-muted-foreground hover:text-foreground"
-                      }
-                      title="Mark as read"
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
