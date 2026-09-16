@@ -23,6 +23,8 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
 import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
+import { UserAvatar } from "@/components/ui/UserAvatar";
+import { cn } from "@/lib/utils";
 import type { Role, User } from "@/types";
 
 const PAGE_SIZE = 10;
@@ -288,12 +290,22 @@ export const AdminPage: React.FC = () => {
         subtitle="Role-based access control governance for council members"
       />
 
-      <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto w-full space-y-6">
         {/* Officer Roster */}
         <Card>
-          <div className="p-5 border-b border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div
+            className={cn(
+              "p-4 sm:p-5 border-b border-border flex flex-col sm:flex-row",
+              "justify-between items-start sm:items-center gap-3",
+            )}
+          >
             <div>
-              <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
+              <h3
+                className={cn(
+                  "text-xs font-mono font-bold uppercase tracking-wider",
+                  "text-foreground",
+                )}
+              >
                 Officer Directory
               </h3>
               <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -305,143 +317,373 @@ export const AdminPage: React.FC = () => {
 
           <CardContent className="p-0">
             {isLoading ? (
-              <div className="p-5 space-y-2">
+              <div className="p-4 sm:p-5 space-y-2">
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-10 w-full" />
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="border-b border-border bg-secondary/40 font-mono text-[10px] uppercase text-muted-foreground">
-                    <tr>
-                      <th className="p-3.5">Officer</th>
-                      <th className="p-3.5">Email</th>
-                      <th className="p-3.5">Assigned Role</th>
-                      <th className="p-3.5">Status</th>
-                      <th className="p-3.5 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {paginatedUsers.map((u) => (
-                      <tr
-                        key={u.id}
-                        className="hover:bg-secondary/30 transition-colors"
-                      >
-                        <td className="p-3.5">
-                          <div className="font-semibold text-foreground">
-                            {u.fullName}
-                          </div>
-                          {u.username && (
-                            <div className="text-[10px] font-mono text-muted-foreground">
-                              @{u.username}
-                            </div>
-                          )}
-                        </td>
-                        <td className="p-3.5 font-mono text-muted-foreground">
-                          {u.email}
-                        </td>
-                        <td className="p-3.5">
-                          <Badge
-                            variant="outline"
-                            className="font-mono text-[10px]"
-                          >
-                            {u.role?.name || "Unassigned"}
-                          </Badge>
-                        </td>
-                        <td className="p-3.5">
-                          {u.isActive ? (
-                            <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                              Active
-                            </span>
-                          ) : (
-                            <div className="space-y-1">
-                              <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-amber-600 dark:text-amber-400 font-semibold">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                                {u.role
-                                  ? "Pending Activation"
-                                  : "Pending Admission"}
-                              </span>
-                              {u.activationOtp && (
-                                <div className="flex items-center gap-1.5">
-                                  <button
-                                    type="button"
-                                    title="Click to copy OTP"
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(
-                                        u.activationOtp!,
-                                      );
-                                      toastSuccess("Copied OTP to clipboard!");
-                                    }}
-                                    className="inline-flex items-center gap-1 bg-secondary/80 hover:bg-secondary px-1.5 py-0.5 rounded text-[10px] font-mono font-bold text-foreground border border-border transition-colors"
-                                  >
-                                    <Copy className="w-2.5 h-2.5" />
-                                    <span>OTP: {u.activationOtp}</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    title="Resend Activation OTP"
-                                    onClick={() => handleResendUserOtp(u.id)}
-                                    className="text-[10px] text-muted-foreground hover:text-foreground underline flex items-center gap-0.5"
-                                  >
-                                    <RefreshCw className="w-2.5 h-2.5" />
-                                    <span>Resend</span>
-                                  </button>
-                                </div>
+              <>
+                {/* Mobile Officer Card View (< sm) */}
+                <div className="sm:hidden divide-y divide-border/60">
+                  {paginatedUsers.map((u) => (
+                    <div key={u.id} className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <UserAvatar
+                            name={u.fullName}
+                            avatarUrl={u.avatarUrl}
+                            className="w-9 h-9 rounded-full shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <p
+                              className={cn(
+                                "font-semibold text-foreground text-xs",
+                                "truncate",
                               )}
-                            </div>
-                          )}
-                        </td>
-                        <td className="p-3.5 text-right">
-                          <div className="inline-flex items-center gap-2">
-                            {!u.isActive ? (
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  setUserToAdmit(u);
-                                  setAdmitRoleId(
-                                    u.role?.id || roles[0]?.id || null,
-                                  );
-                                }}
-                                className="h-7 text-xs flex items-center gap-1 bg-primary text-primary-foreground font-semibold"
+                            >
+                              {u.fullName}
+                            </p>
+                            {u.username && (
+                              <p
+                                className={cn(
+                                  "text-[10px] font-mono text-muted-foreground",
+                                  "truncate",
+                                )}
                               >
-                                <Check className="w-3 h-3" />
-                                <span>Admit</span>
-                              </Button>
-                            ) : (
-                              <Select
-                                size="sm"
-                                value={u.role?.id ? String(u.role.id) : ""}
-                                onValueChange={(val) =>
-                                  handleUpdateUserRole(u.id, val)
-                                }
-                                options={roles.map((r) => ({
-                                  value: String(r.id),
-                                  label: r.name,
-                                }))}
-                                placeholder="Change Role..."
-                                className="w-36"
-                                triggerClassName="h-8"
-                              />
+                                @{u.username}
+                              </p>
                             )}
+                          </div>
+                        </div>
 
+                        {u.isActive ? (
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1.5 text-[11px]",
+                              "font-mono text-emerald-600 dark:text-emerald-400",
+                              "font-semibold shrink-0",
+                            )}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            Active
+                          </span>
+                        ) : (
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1.5 text-[11px]",
+                              "font-mono text-amber-600 dark:text-amber-400",
+                              "font-semibold shrink-0",
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "w-1.5 h-1.5 rounded-full bg-amber-500",
+                                "animate-pulse",
+                              )}
+                            />
+                            {u.role
+                              ? "Pending Activation"
+                              : "Pending Admission"}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge
+                          variant="outline"
+                          className="font-mono text-[10px] shrink-0"
+                        >
+                          {u.role?.name || "Unassigned"}
+                        </Badge>
+                        <span
+                          className={cn(
+                            "font-mono text-[11px] text-muted-foreground",
+                            "truncate",
+                          )}
+                        >
+                          {u.email}
+                        </span>
+                      </div>
+
+                      {!u.isActive && u.activationOtp && (
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            type="button"
+                            title="Click to copy OTP"
+                            onClick={() => {
+                              navigator.clipboard.writeText(u.activationOtp!);
+                              toastSuccess("Copied OTP to clipboard!");
+                            }}
+                            className={cn(
+                              "flex-1 min-h-[40px] px-2.5 rounded-xl",
+                              "bg-secondary/80 hover:bg-secondary border",
+                              "border-border flex items-center justify-between",
+                              "gap-2 text-xs font-mono font-bold text-foreground",
+                              "transition-colors",
+                            )}
+                          >
+                            <span className="truncate">
+                              OTP: {u.activationOtp}
+                            </span>
+                            <Copy className="w-3.5 h-3.5 shrink-0" />
+                          </button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleResendUserOtp(u.id)}
+                            className={cn(
+                              "min-h-[40px] px-3 rounded-xl text-xs gap-1",
+                              "shrink-0",
+                            )}
+                          >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            <span>Resend</span>
+                          </Button>
+                        </div>
+                      )}
+
+                      <div className="pt-1 flex items-center gap-2">
+                        {!u.isActive ? (
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setUserToAdmit(u);
+                              setAdmitRoleId(
+                                u.role?.id || roles[0]?.id || null,
+                              );
+                            }}
+                            className={cn(
+                              "w-full min-h-[40px] text-xs flex items-center",
+                              "justify-center gap-1.5 bg-primary",
+                              "text-primary-foreground font-semibold rounded-xl",
+                            )}
+                          >
+                            <Check className="w-4 h-4" />
+                            <span>Admit & Assign Role</span>
+                          </Button>
+                        ) : (
+                          <>
+                            <Select
+                              size="sm"
+                              value={u.role?.id ? String(u.role.id) : ""}
+                              onValueChange={(val) =>
+                                handleUpdateUserRole(u.id, val)
+                              }
+                              options={roles.map((r) => ({
+                                value: String(r.id),
+                                label: r.name,
+                              }))}
+                              placeholder="Change Role..."
+                              className="flex-1"
+                              triggerClassName={cn(
+                                "min-h-[40px] h-10 rounded-xl text-xs",
+                              )}
+                            />
                             {currentUser?.id !== u.id && (
                               <button
                                 type="button"
                                 title="Revoke officer"
                                 onClick={() => setOfficerToRevoke(u)}
-                                className="p-1.5 text-muted-foreground hover:text-rose-600 rounded-md hover:bg-rose-500/10 transition-colors"
+                                className={cn(
+                                  "min-h-[40px] min-w-[40px] flex items-center",
+                                  "justify-center text-muted-foreground",
+                                  "hover:text-rose-600 rounded-xl border",
+                                  "border-border hover:bg-rose-500/10",
+                                  "transition-colors shrink-0",
+                                )}
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             )}
-                          </div>
-                        </td>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table View (>= sm) */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead
+                      className={cn(
+                        "border-b border-border bg-secondary/40 font-mono",
+                        "text-[10px] uppercase text-muted-foreground",
+                      )}
+                    >
+                      <tr>
+                        <th className="p-3.5">Officer</th>
+                        <th className="p-3.5">Email</th>
+                        <th className="p-3.5">Assigned Role</th>
+                        <th className="p-3.5">Status</th>
+                        <th className="p-3.5 text-right">Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {paginatedUsers.map((u) => (
+                        <tr
+                          key={u.id}
+                          className="hover:bg-secondary/30 transition-colors"
+                        >
+                          <td className="p-3.5">
+                            <div className="font-semibold text-foreground">
+                              {u.fullName}
+                            </div>
+                            {u.username && (
+                              <div
+                                className={cn(
+                                  "text-[10px] font-mono",
+                                  "text-muted-foreground",
+                                )}
+                              >
+                                @{u.username}
+                              </div>
+                            )}
+                          </td>
+                          <td className="p-3.5 font-mono text-muted-foreground">
+                            {u.email}
+                          </td>
+                          <td className="p-3.5">
+                            <Badge
+                              variant="outline"
+                              className="font-mono text-[10px]"
+                            >
+                              {u.role?.name || "Unassigned"}
+                            </Badge>
+                          </td>
+                          <td className="p-3.5">
+                            {u.isActive ? (
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-1.5 text-[11px]",
+                                  "font-mono text-emerald-600",
+                                  "dark:text-emerald-400 font-semibold",
+                                )}
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                Active
+                              </span>
+                            ) : (
+                              <div className="space-y-1">
+                                <span
+                                  className={cn(
+                                    "inline-flex items-center gap-1.5",
+                                    "text-[11px] font-mono text-amber-600",
+                                    "dark:text-amber-400 font-semibold",
+                                  )}
+                                >
+                                  <span
+                                    className={cn(
+                                      "w-1.5 h-1.5 rounded-full bg-amber-500",
+                                      "animate-pulse",
+                                    )}
+                                  />
+                                  {u.role
+                                    ? "Pending Activation"
+                                    : "Pending Admission"}
+                                </span>
+                                {u.activationOtp && (
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      title="Click to copy OTP"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(
+                                          u.activationOtp!,
+                                        );
+                                        toastSuccess(
+                                          "Copied OTP to clipboard!",
+                                        );
+                                      }}
+                                      className={cn(
+                                        "inline-flex items-center gap-1",
+                                        "bg-secondary/80 hover:bg-secondary",
+                                        "px-1.5 py-0.5 rounded text-[10px]",
+                                        "font-mono font-bold text-foreground",
+                                        "border border-border transition-colors",
+                                      )}
+                                    >
+                                      <Copy className="w-2.5 h-2.5" />
+                                      <span>OTP: {u.activationOtp}</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      title="Resend Activation OTP"
+                                      onClick={() => handleResendUserOtp(u.id)}
+                                      className={cn(
+                                        "text-[10px] text-muted-foreground",
+                                        "hover:text-foreground underline flex",
+                                        "items-center gap-0.5",
+                                      )}
+                                    >
+                                      <RefreshCw className="w-2.5 h-2.5" />
+                                      <span>Resend</span>
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                          <td className="p-3.5 text-right">
+                            <div className="inline-flex items-center gap-2">
+                              {!u.isActive ? (
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    setUserToAdmit(u);
+                                    setAdmitRoleId(
+                                      u.role?.id || roles[0]?.id || null,
+                                    );
+                                  }}
+                                  className={cn(
+                                    "h-7 text-xs flex items-center gap-1",
+                                    "bg-primary text-primary-foreground",
+                                    "font-semibold",
+                                  )}
+                                >
+                                  <Check className="w-3 h-3" />
+                                  <span>Admit</span>
+                                </Button>
+                              ) : (
+                                <Select
+                                  size="sm"
+                                  value={u.role?.id ? String(u.role.id) : ""}
+                                  onValueChange={(val) =>
+                                    handleUpdateUserRole(u.id, val)
+                                  }
+                                  options={roles.map((r) => ({
+                                    value: String(r.id),
+                                    label: r.name,
+                                  }))}
+                                  placeholder="Change Role..."
+                                  className="w-36"
+                                  triggerClassName="h-8"
+                                />
+                              )}
+
+                              {currentUser?.id !== u.id && (
+                                <button
+                                  type="button"
+                                  title="Revoke officer"
+                                  onClick={() => setOfficerToRevoke(u)}
+                                  className={cn(
+                                    "p-1.5 text-muted-foreground",
+                                    "hover:text-rose-600 rounded-md",
+                                    "hover:bg-rose-500/10 transition-colors",
+                                  )}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
 
             {users.length > 0 && (
@@ -459,9 +701,19 @@ export const AdminPage: React.FC = () => {
 
         {/* Granular Permission Matrix */}
         <Card>
-          <div className="p-5 border-b border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div
+            className={cn(
+              "p-4 sm:p-5 border-b border-border flex flex-col sm:flex-row",
+              "justify-between items-start sm:items-center gap-3 sm:gap-4",
+            )}
+          >
             <div>
-              <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
+              <h3
+                className={cn(
+                  "text-xs font-mono font-bold uppercase tracking-wider",
+                  "text-foreground",
+                )}
+              >
                 Granular Capability Matrix
               </h3>
               <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -469,15 +721,20 @@ export const AdminPage: React.FC = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div
+              className={cn(
+                "flex flex-col sm:flex-row items-stretch sm:items-center",
+                "gap-2 w-full sm:w-auto",
+              )}
+            >
               {roles.length > 0 && (
                 <Select
                   size="sm"
                   value={selectedRole?.id ? String(selectedRole.id) : ""}
                   onValueChange={(val) => setSelectedRoleId(val || null)}
                   options={matrixRoleOptions}
-                  className="w-48"
-                  triggerClassName="h-8"
+                  className="w-full sm:w-48"
+                  triggerClassName="min-h-[40px] sm:min-h-0 h-10 sm:h-8"
                 />
               )}
 
@@ -485,7 +742,10 @@ export const AdminPage: React.FC = () => {
                 type="button"
                 size="sm"
                 onClick={() => setRoleModalOpen(true)}
-                className="font-mono text-[11px]"
+                className={cn(
+                  "font-mono text-[11px] min-h-[40px] sm:min-h-0 h-10 sm:h-8",
+                  "w-full sm:w-auto justify-center",
+                )}
               >
                 <Plus className="w-3.5 h-3.5 mr-1" />
                 Add Portfolio
@@ -493,10 +753,16 @@ export const AdminPage: React.FC = () => {
             </div>
           </div>
 
-          <CardContent className="p-5 space-y-4">
+          <CardContent className="p-4 sm:p-5 space-y-4">
             {selectedRole && (
               <>
-                <div className="p-3.5 rounded-lg border border-border bg-secondary/30 flex justify-between items-center">
+                <div
+                  className={cn(
+                    "p-3.5 rounded-xl border border-border bg-secondary/30",
+                    "flex flex-col sm:flex-row sm:items-center",
+                    "justify-between gap-2",
+                  )}
+                >
                   <div>
                     <h4 className="text-xs font-bold text-foreground">
                       {selectedRole.name}
@@ -505,12 +771,20 @@ export const AdminPage: React.FC = () => {
                       {selectedRole.description}
                     </p>
                   </div>
-                  <Badge variant="outline" className="font-mono text-[10px]">
+                  <Badge
+                    variant="outline"
+                    className="font-mono text-[10px] self-start sm:self-auto"
+                  >
                     {selectedRole.permissions.length} Enabled
                   </Badge>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                <div
+                  className={cn(
+                    "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5",
+                    "sm:gap-3",
+                  )}
+                >
                   {availablePermissions.map((perm) => {
                     const isGranted = selectedRole.permissions.includes(perm);
                     return (
@@ -518,28 +792,38 @@ export const AdminPage: React.FC = () => {
                         key={perm}
                         type="button"
                         onClick={() => handleTogglePermission(perm)}
-                        className={`p-3 rounded-lg border text-left transition-all flex items-center justify-between ${
+                        className={cn(
+                          "p-3.5 rounded-xl border text-left transition-all",
+                          "flex items-center justify-between min-h-[48px]",
                           isGranted
                             ? "border-foreground bg-secondary text-foreground"
-                            : "border-border bg-card text-muted-foreground hover:border-foreground/30"
-                        }`}
+                            : "border-border bg-card text-muted-foreground " +
+                                "hover:border-foreground/30 active:scale-[0.99]",
+                        )}
                       >
-                        <div>
-                          <p className="text-xs font-mono font-semibold">
+                        <div className="min-w-0 pr-2">
+                          <p className="text-xs font-mono font-semibold truncate">
                             {perm}
                           </p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">
+                          <p
+                            className={cn(
+                              "text-[10px] text-muted-foreground mt-0.5",
+                              "font-mono",
+                            )}
+                          >
                             {isGranted
                               ? "Permission Granted"
                               : "Access Restricted"}
                           </p>
                         </div>
                         <div
-                          className={`w-4 h-4 rounded border flex items-center justify-center ${
+                          className={cn(
+                            "w-4 h-4 rounded border flex items-center",
+                            "justify-center shrink-0",
                             isGranted
                               ? "bg-foreground border-foreground text-background"
-                              : "border-input"
-                          }`}
+                              : "border-input",
+                          )}
                         >
                           {isGranted && (
                             <Check className="w-3 h-3 stroke-[3]" />
@@ -620,7 +904,11 @@ export const AdminPage: React.FC = () => {
             maxHeight="max-h-[220px]"
           />
 
-          <div className="flex justify-end gap-2 pt-3">
+          <div
+            className={cn(
+              "flex flex-col-reverse sm:flex-row justify-end gap-2 pt-3",
+            )}
+          >
             <Button
               type="button"
               variant="outline"
@@ -632,10 +920,15 @@ export const AdminPage: React.FC = () => {
                 setNewRoleTier("");
                 setNewRoleCommittee("");
               }}
+              className="w-full sm:w-auto min-h-[40px] rounded-xl text-xs"
             >
               Cancel
             </Button>
-            <Button type="submit" size="sm">
+            <Button
+              type="submit"
+              size="sm"
+              className="w-full sm:w-auto min-h-[40px] rounded-xl text-xs"
+            >
               Create Portfolio
             </Button>
           </div>
@@ -652,10 +945,18 @@ export const AdminPage: React.FC = () => {
           }
         }}
         title="Admit Officer Applicant"
-        description="Verify this applicant and assign their constitutional council portfolio to activate their account."
+        description={
+          "Verify this applicant and assign their constitutional council " +
+          "portfolio to activate their account."
+        }
       >
         <form onSubmit={handleAdmitUser} className="space-y-4 pt-2">
-          <div className="p-3 rounded-lg bg-secondary/50 border border-border space-y-1.5 text-xs">
+          <div
+            className={cn(
+              "p-3 rounded-lg bg-secondary/50 border border-border space-y-1.5",
+              "text-xs",
+            )}
+          >
             <div className="flex justify-between">
               <span className="text-muted-foreground">Applicant Name:</span>
               <span className="font-semibold text-foreground">
@@ -677,7 +978,11 @@ export const AdminPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-foreground mb-1">
+            <label
+              className={cn(
+                "block text-[11px] font-semibold text-foreground mb-1",
+              )}
+            >
               Select Constitutional Role to Assign{" "}
               <span className="text-rose-500">*</span>
             </label>
@@ -686,11 +991,15 @@ export const AdminPage: React.FC = () => {
               onValueChange={(val) => setAdmitRoleId(val || null)}
               options={admitRoleOptions}
               placeholder="Select Constitutional Portfolio..."
-              triggerClassName="h-8"
+              triggerClassName="min-h-[40px] sm:min-h-0 h-10 sm:h-8 rounded-xl"
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-3">
+          <div
+            className={cn(
+              "flex flex-col-reverse sm:flex-row justify-end gap-2 pt-3",
+            )}
+          >
             <Button
               type="button"
               variant="outline"
@@ -699,6 +1008,7 @@ export const AdminPage: React.FC = () => {
                 setUserToAdmit(null);
                 setAdmitRoleId(null);
               }}
+              className="w-full sm:w-auto min-h-[40px] rounded-xl text-xs"
             >
               Cancel
             </Button>
@@ -706,6 +1016,7 @@ export const AdminPage: React.FC = () => {
               type="submit"
               size="sm"
               disabled={admitUserMutation.isPending}
+              className="w-full sm:w-auto min-h-[40px] rounded-xl text-xs"
             >
               {admitUserMutation.isPending
                 ? "Admitting..."
