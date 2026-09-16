@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ChevronDown, Compass, LogOut, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTour } from "@/context/TourContext";
+import { useSSE } from "@/context/SSEContext";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { UserAvatar } from "@/components/ui/UserAvatar";
@@ -23,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { user, logout } = useAuth();
   const { startTour } = useTour();
+  const { isConnected } = useSSE();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -124,10 +126,17 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               )}
               <span
-                className={
-                  "w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse " +
-                  "hidden sm:inline-block"
+                title={
+                  isConnected
+                    ? "Real-time sync active"
+                    : "Connecting to real-time sync..."
                 }
+                className={cn(
+                  "w-1.5 h-1.5 rounded-full hidden sm:inline-block",
+                  isConnected
+                    ? "bg-emerald-500 animate-pulse"
+                    : "bg-amber-500/80",
+                )}
               />
             </div>
             <ChevronDown

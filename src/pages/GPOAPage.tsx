@@ -327,7 +327,9 @@ const EventDriveSection: React.FC<EventDriveSectionProps> = ({
               onClick={() => setShowManualLinks(!showManualLinks)}
               className="text-[11px] text-muted-foreground hover:text-primary transition-colors underline"
             >
-              {showManualLinks ? "Hide manual URL inputs" : "Manual Drive URL inputs / override"}
+              {showManualLinks
+                ? "Hide manual URL inputs"
+                : "Manual Drive URL inputs / override"}
             </button>
 
             {showManualLinks && (

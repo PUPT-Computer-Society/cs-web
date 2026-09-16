@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { api } from "@/api/client";
 import { usePresence } from "@/lib/usePresence";
+import { useSSE } from "@/context/SSEContext";
 import { cn } from "@/lib/utils";
 import type { AppNotification, NotificationListResponse } from "@/types";
 
 export const NotificationBell: React.FC = () => {
+  const { lastEvent } = useSSE();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isTouched, setIsTouched] = useState<boolean>(() => {
@@ -39,9 +41,16 @@ export const NotificationBell: React.FC = () => {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 20000); // 20s poll
+    const interval = setInterval(fetchNotifications, 60000); // 60s fallback
     return () => clearInterval(interval);
   }, []);
+
+  // Live SSE real-time reactive trigger
+  useEffect(() => {
+    if (lastEvent?.type === "notifications") {
+      fetchNotifications();
+    }
+  }, [lastEvent]);
 
   // Close dropdown on click outside
   useEffect(() => {
