@@ -432,39 +432,45 @@ export const AuditLogsPage: React.FC = () => {
                 )}
               >
                 <tr>
-                  <th className="py-3 px-4">Timestamp (UTC+8)</th>
-                  <th className="py-3 px-4">Category</th>
-                  <th className="py-3 px-4">Severity</th>
-                  <th className="py-3 px-4">Action / Resource</th>
-                  <th className="py-3 px-4">Actor</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Details</th>
+                  <th className="py-3 px-3 sm:px-4 hidden sm:table-cell">
+                    Timestamp
+                  </th>
+                  <th className="py-3 px-3 sm:px-4 hidden md:table-cell">
+                    Category
+                  </th>
+                  <th className="py-3 px-3 sm:px-4">Severity</th>
+                  <th className="py-3 px-3 sm:px-4">Action / Resource</th>
+                  <th className="py-3 px-3 sm:px-4">Actor</th>
+                  <th className="py-3 px-3 sm:px-4 hidden md:table-cell">
+                    Status
+                  </th>
+                  <th className="py-3 px-3 sm:px-4 text-right">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40 font-mono text-xs">
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, idx) => (
                     <tr key={idx} className="animate-pulse">
-                      <td className="py-4 px-4">
+                      <td className="py-4 px-4 hidden sm:table-cell">
                         <Skeleton className="h-4 w-28 rounded-md" />
                       </td>
-                      <td className="py-4 px-4">
+                      <td className="py-4 px-4 hidden md:table-cell">
                         <Skeleton className="h-4 w-16 rounded-md" />
                       </td>
-                      <td className="py-4 px-4">
+                      <td className="py-4 px-3 sm:px-4">
                         <Skeleton className="h-4 w-14 rounded-md" />
                       </td>
-                      <td className="py-4 px-4">
-                        <Skeleton className="h-4 w-40 rounded-md" />
+                      <td className="py-4 px-3 sm:px-4">
+                        <Skeleton className="h-4 w-32 sm:w-40 rounded-md" />
                       </td>
-                      <td className="py-4 px-4">
-                        <Skeleton className="h-4 w-24 rounded-md" />
+                      <td className="py-4 px-3 sm:px-4">
+                        <Skeleton className="h-4 w-20 sm:w-24 rounded-md" />
                       </td>
-                      <td className="py-4 px-4">
+                      <td className="py-4 px-4 hidden md:table-cell">
                         <Skeleton className="h-4 w-10 rounded-md" />
                       </td>
-                      <td className="py-4 px-4 text-right">
-                        <Skeleton className="h-7 w-16 ml-auto rounded-md" />
+                      <td className="py-4 px-3 sm:px-4 text-right">
+                        <Skeleton className="h-8 w-16 ml-auto rounded-md" />
                       </td>
                     </tr>
                   ))
@@ -496,30 +502,45 @@ export const AuditLogsPage: React.FC = () => {
                         <td
                           className={cn(
                             "py-3 px-4 whitespace-nowrap",
-                            "text-muted-foreground",
+                            "text-muted-foreground hidden sm:table-cell",
                           )}
                         >
                           {formatDateTimeUTC8(log.createdAt)}
                         </td>
-                        <td className="py-3 px-4 whitespace-nowrap">
+                        <td
+                          className={
+                            "py-3 px-4 whitespace-nowrap hidden md:table-cell"
+                          }
+                        >
                           {getCategoryBadge(log.category)}
                         </td>
-                        <td className="py-3 px-4 whitespace-nowrap">
+                        <td className="py-3 px-3 sm:px-4 whitespace-nowrap">
                           {getSeverityBadge(log.severity)}
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-3 sm:px-4">
                           <div
                             className={cn(
                               "font-semibold text-foreground truncate",
-                              "max-w-xs sm:max-w-md",
+                              "max-w-[140px] sm:max-w-md",
                             )}
                           >
                             {log.action}
+                          </div>
+                          <div
+                            className={
+                              "sm:hidden flex items-center gap-1.5 mt-0.5 " +
+                              "text-[10px] text-muted-foreground font-sans"
+                            }
+                          >
+                            <span>{formatDateTimeUTC8(log.createdAt)}</span>
+                            <span>•</span>
+                            <span className="truncate">{log.category}</span>
                           </div>
                           {log.resourceType && (
                             <div
                               className={cn(
                                 "text-[11px] text-muted-foreground truncate",
+                                "hidden sm:block",
                               )}
                             >
                               target: {log.resourceType}
@@ -529,7 +550,9 @@ export const AuditLogsPage: React.FC = () => {
                         </td>
                         <td
                           className={cn(
-                            "py-3 px-4 whitespace-nowrap font-sans text-xs",
+                            "py-3 px-3 sm:px-4 whitespace-nowrap " +
+                              "font-sans text-xs",
+                            "max-w-[100px] truncate sm:max-w-none",
                           )}
                         >
                           {log.actorName ? (
@@ -542,7 +565,11 @@ export const AuditLogsPage: React.FC = () => {
                             </span>
                           )}
                         </td>
-                        <td className="py-3 px-4 whitespace-nowrap">
+                        <td
+                          className={
+                            "py-3 px-4 whitespace-nowrap hidden md:table-cell"
+                          }
+                        >
                           <Badge
                             variant={isErrorStatus ? "destructive" : "outline"}
                             className="font-mono text-[11px] px-1.5 py-0.5"
@@ -550,15 +577,22 @@ export const AuditLogsPage: React.FC = () => {
                             {log.statusCode}
                           </Badge>
                         </td>
-                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                        <td
+                          className={
+                            "py-3 px-3 sm:px-4 text-right whitespace-nowrap"
+                          }
+                        >
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => setSelectedLog(log)}
-                            className="h-7 px-2.5 rounded-lg text-xs gap-1"
+                            className={
+                              "min-h-[36px] px-2 sm:px-2.5 rounded-lg " +
+                              "text-xs gap-1 cursor-pointer"
+                            }
                           >
                             <Eye className="w-3.5 h-3.5" />
-                            Inspect
+                            <span className="hidden sm:inline">Inspect</span>
                           </Button>
                         </td>
                       </tr>

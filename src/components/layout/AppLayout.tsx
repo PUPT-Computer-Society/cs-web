@@ -94,7 +94,12 @@ export const AppLayout: React.FC = () => {
             <Outlet />
           </div>
           {/* Vanishing margin buffer for mobile floating dock - no cropping */}
-          <div className="h-24 lg:hidden shrink-0" aria-hidden="true" />
+          <div
+            className={
+              "h-[calc(6rem+env(safe-area-inset-bottom))] lg:hidden shrink-0"
+            }
+            aria-hidden="true"
+          />
         </main>
       </div>
     </div>

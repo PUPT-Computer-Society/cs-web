@@ -212,8 +212,20 @@ export const Sidebar: React.FC = () => {
     return (
       <>
         {/* Floating Mobile Bottom Dock Pill */}
-        <div className="fixed inset-x-0 bottom-4 z-40 flex w-full justify-center px-4 lg:hidden pointer-events-none">
-          <div className="flex h-16 w-full max-w-md items-center justify-around rounded-2xl border border-border bg-background/90 px-2 py-1 shadow-lg backdrop-blur-xl pointer-events-auto">
+        <div
+          className={cn(
+            "fixed inset-x-0 z-40 flex w-full justify-center px-4 lg:hidden",
+            "bottom-[max(1rem,env(safe-area-inset-bottom))]",
+            "pointer-events-none",
+          )}
+        >
+          <div
+            className={cn(
+              "flex h-16 w-full max-w-md items-center justify-around",
+              "rounded-2xl border border-border bg-background/90 px-2 py-1",
+              "shadow-lg backdrop-blur-xl pointer-events-auto",
+            )}
+          >
             {primaryMobileItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.to);

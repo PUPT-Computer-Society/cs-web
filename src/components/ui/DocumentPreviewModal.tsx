@@ -58,6 +58,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   const toast = useToast();
   const [isLoadingIframe, setIsLoadingIframe] = useState(true);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [mobileTab, setMobileTab] =
+    useState<"preview" | "details">("preview");
 
   // Cache props during exit animation so data does not flash when closing
   const cachedPropsRef = React.useRef({
@@ -86,6 +88,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
 
   useEffect(() => {
     if (open) {
+      setMobileTab("preview");
       setIsLoadingIframe(true);
       // Timeout fallback if browser blocks iframe due to restricted permissions
       const timer = setTimeout(() => {
@@ -136,13 +139,49 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           )}
         >
           <div className="flex items-center gap-2">
+            {/* Mobile Segmented View Switcher */}
+            <div
+              className={cn(
+                "flex md:hidden items-center p-0.5 rounded-lg",
+                "bg-secondary/60 border border-border shrink-0",
+              )}
+            >
+              <button
+                type="button"
+                onClick={() => setMobileTab("preview")}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-[11px] font-semibold",
+                  "transition-all cursor-pointer",
+                  mobileTab === "preview"
+                    ? "bg-background text-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Preview
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileTab("details")}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-[11px] font-semibold",
+                  "transition-all cursor-pointer",
+                  mobileTab === "details"
+                    ? "bg-background text-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Details
+              </button>
+            </div>
+
+            {/* Desktop Sidebar Toggle */}
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => setShowSidebar((prev) => !prev)}
               className={cn(
-                "h-8 px-2.5 text-xs font-semibold flex items-center",
+                "hidden md:flex h-8 px-2.5 text-xs font-semibold items-center",
                 "gap-1.5 cursor-pointer",
               )}
               title={
@@ -152,12 +191,12 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
               {showSidebar ? (
                 <>
                   <PanelLeftClose className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Hide Info</span>
+                  <span>Hide Info</span>
                 </>
               ) : (
                 <>
                   <PanelLeftOpen className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Show Info</span>
+                  <span>Show Info</span>
                 </>
               )}
             </Button>
@@ -210,19 +249,20 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
         <div
           className={cn(
             "flex flex-col md:flex-row items-stretch gap-3 w-full",
-            "min-h-[60vh] max-h-[68vh]",
+            "min-h-[55vh] max-h-[70vh]",
           )}
         >
           {/* LEFT: File Information Sidebar */}
-          {showSidebar && (
-            <aside
-              className={cn(
-                "w-full md:w-80 lg:w-96 shrink-0 flex flex-col rounded-xl",
-                "border border-border/80 bg-card/90 shadow-inner",
-                "overflow-y-auto p-4 space-y-4 text-xs animate-in fade-in-0",
-                "duration-150",
-              )}
-            >
+          <aside
+            className={cn(
+              "w-full md:w-80 lg:w-96 shrink-0 flex-col rounded-xl",
+              "border border-border/80 bg-card/90 shadow-inner",
+              "overflow-y-auto p-4 space-y-4 text-xs animate-in fade-in-0",
+              "duration-150",
+              mobileTab === "details" ? "flex" : "hidden",
+              showSidebar ? "md:flex" : "md:hidden",
+            )}
+          >
               {/* Header Title & Badges */}
               <div className="space-y-2 pb-3 border-b border-border/60">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -378,13 +418,14 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 </div>
               </div>
             </aside>
-          )}
 
           {/* RIGHT: Main Document Preview Frame */}
           <main
             className={cn(
-              "flex-1 min-w-0 flex flex-col rounded-xl border border-border/80",
+              "flex-1 min-w-0 flex-col rounded-xl border border-border/80",
               "bg-secondary/15 overflow-hidden relative shadow-inner",
+              "min-h-[50vh] md:min-h-0",
+              mobileTab === "preview" ? "flex" : "hidden md:flex",
             )}
           >
             {/* Permission Help Alert Banner */}

@@ -236,30 +236,72 @@ export const InventoryPage: React.FC = () => {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="border-b border-border bg-secondary/40 font-mono text-[10px] uppercase text-muted-foreground">
+                <thead
+                  className={
+                    "border-b border-border bg-secondary/40 font-mono " +
+                    "text-[10px] uppercase text-muted-foreground"
+                  }
+                >
                   <tr>
-                    <th className="p-3.5">Item Name</th>
-                    <th className="p-3.5">Quantity</th>
-                    <th className="p-3.5">Condition</th>
-                    <th className="p-3.5">Location</th>
-                    <th className="p-3.5">Received Proof</th>
-                    <th className="p-3.5">Remarks</th>
-                    {canManage && <th className="p-3.5 text-right">Actions</th>}
+                    <th className="p-3 sm:p-3.5">Item Name</th>
+                    <th className="p-3 sm:p-3.5">Qty</th>
+                    <th className="p-3 sm:p-3.5 hidden sm:table-cell">
+                      Condition
+                    </th>
+                    <th className="p-3 sm:p-3.5 hidden md:table-cell">
+                      Location
+                    </th>
+                    <th className="p-3 sm:p-3.5">Received Proof</th>
+                    <th className="p-3 sm:p-3.5 hidden lg:table-cell">
+                      Remarks
+                    </th>
+                    {canManage && (
+                      <th className="p-3 sm:p-3.5 text-right">Actions</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {paginatedItems.map((item) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-secondary/30 transition-colors animate-in fade-in-0 duration-200"
+                      className={
+                        "hover:bg-secondary/30 transition-colors " +
+                        "animate-in fade-in-0 duration-200"
+                      }
                     >
-                      <td className="p-3.5 font-semibold text-foreground">
-                        {item.itemName}
+                      <td
+                        className="p-3 sm:p-3.5 font-semibold text-foreground"
+                      >
+                        <div>{item.itemName}</div>
+                        <div
+                          className={
+                            "sm:hidden flex items-center gap-1.5 mt-0.5 " +
+                            "text-[10px] text-muted-foreground font-normal"
+                          }
+                        >
+                          <span className="truncate">{item.location}</span>
+                          <span>•</span>
+                          <span
+                            className={
+                              item.condition === "Good"
+                                ? "text-emerald-500 font-semibold"
+                                : item.condition === "For Repair"
+                                  ? "text-amber-500 font-semibold"
+                                  : "text-rose-500 font-semibold"
+                            }
+                          >
+                            {item.condition}
+                          </span>
+                        </div>
                       </td>
-                      <td className="p-3.5 font-mono text-muted-foreground">
+                      <td
+                        className={
+                          "p-3 sm:p-3.5 font-mono font-bold text-foreground"
+                        }
+                      >
                         {item.quantity}
                       </td>
-                      <td className="p-3.5">
+                      <td className="p-3 sm:p-3.5 hidden sm:table-cell">
                         <Badge
                           variant={
                             item.condition === "Good"
@@ -273,47 +315,85 @@ export const InventoryPage: React.FC = () => {
                           {item.condition}
                         </Badge>
                       </td>
-                      <td className="p-3.5 text-muted-foreground">
+                      <td
+                        className={
+                          "p-3 sm:p-3.5 text-muted-foreground " +
+                          "hidden md:table-cell"
+                        }
+                      >
                         {item.location}
                       </td>
-                      <td className="p-3.5">
+                      <td className="p-3 sm:p-3.5">
                         {item.proofUrl ? (
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1">
                             <button
                               type="button"
                               onClick={() => setPreviewProof(item)}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary text-[10px] font-semibold transition-colors"
+                              className={
+                                "inline-flex items-center gap-1 px-2 py-1.5 " +
+                                "min-h-[36px] rounded-lg border " +
+                                "border-primary/30 bg-primary/10 " +
+                                "hover:bg-primary/20 text-primary " +
+                                "text-[11px] font-semibold transition-colors " +
+                                "cursor-pointer"
+                              }
                               title="Preview proof of item received"
                             >
-                              <Eye className="w-2.5 h-2.5" />
-                              <span>Proof (PAR)</span>
+                              <Eye className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">
+                                Proof (PAR)
+                              </span>
                             </button>
                             <a
                               href={item.proofUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+                              className={
+                                "p-2 min-h-[36px] min-w-[36px] flex " +
+                                "items-center justify-center rounded-lg " +
+                                "text-muted-foreground hover:text-foreground " +
+                                "transition-colors"
+                              }
                               title="Open original Drive link"
                             >
-                              <ExternalLink className="w-3 h-3" />
+                              <ExternalLink className="w-3.5 h-3.5" />
                             </a>
                           </div>
                         ) : (
-                          <span className="text-muted-foreground font-mono text-[11px]">
+                          <span
+                            className={
+                              "text-muted-foreground font-mono text-[11px]"
+                            }
+                          >
                             —
                           </span>
                         )}
                       </td>
-                      <td className="p-3.5 text-muted-foreground font-mono text-[11px]">
+                      <td
+                        className={
+                          "p-3 sm:p-3.5 text-muted-foreground font-mono " +
+                          "text-[11px] hidden lg:table-cell"
+                        }
+                      >
                         {item.remarks || "—"}
                       </td>
                       {canManage && (
-                        <td className="p-3.5 text-right whitespace-nowrap">
+                        <td
+                          className={
+                            "p-3 sm:p-3.5 text-right whitespace-nowrap"
+                          }
+                        >
                           <div className="flex items-center justify-end gap-1">
                             <button
                               type="button"
                               onClick={() => openEditDialog(item)}
-                              className="p-1 rounded-md border border-border bg-background hover:bg-secondary text-foreground text-xs transition-colors"
+                              className={
+                                "p-2 min-w-[36px] min-h-[36px] flex " +
+                                "items-center justify-center rounded-lg " +
+                                "border border-border bg-background " +
+                                "hover:bg-secondary text-foreground " +
+                                "text-xs transition-colors cursor-pointer"
+                              }
                               title="Edit item / proof"
                             >
                               <Pencil className="w-3.5 h-3.5" />
@@ -321,7 +401,14 @@ export const InventoryPage: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => setDeletingItem(item)}
-                              className="p-1 rounded-md border border-destructive/30 bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs transition-colors"
+                              className={
+                                "p-2 min-w-[36px] min-h-[36px] flex " +
+                                "items-center justify-center rounded-lg " +
+                                "border border-destructive/30 " +
+                                "bg-destructive/10 hover:bg-destructive/20 " +
+                                "text-destructive text-xs transition-colors " +
+                                "cursor-pointer"
+                              }
                               title="Decommission item"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
