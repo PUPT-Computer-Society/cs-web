@@ -37,7 +37,7 @@ const PAGE_SIZE = 8;
 
 const DOC_TYPE_OPTIONS = [
   { value: "resolution", label: "Resolution" },
-  { value: "memorandum", label: "Memorandum" },
+  { value: "memorandum", label: "Memorandum / NoM" },
   { value: "meeting_minutes", label: "Meeting Minutes" },
   { value: "policy", label: "Policy Guideline" },
   { value: "constitution", label: "Constitution" },
@@ -60,7 +60,7 @@ const RESOLUTION_STATUS_OPTIONS = [
 const DOCUMENT_TABS = [
   { id: "all", label: "All Documents" },
   { id: "resolution", label: "Resolutions" },
-  { id: "memorandum", label: "Memorandums" },
+  { id: "memorandum", label: "Memorandums & NoMs" },
   { id: "meeting_minutes", label: "Meeting Minutes" },
   { id: "policy", label: "Policies" },
   { id: "constitution", label: "Constitution" },
@@ -68,7 +68,7 @@ const DOCUMENT_TABS = [
 
 const DOCUMENT_TYPE_LABELS: Record<InternalDocumentType, string> = {
   resolution: "Resolution",
-  memorandum: "Memorandum",
+  memorandum: "Memorandum / NoM",
   meeting_minutes: "Meeting Minutes",
   policy: "Policy Guideline",
   constitution: "Constitution",
@@ -632,7 +632,7 @@ export const ResolutionsPage: React.FC = () => {
                 value={resolutionNo}
                 onChange={(e) => setResolutionNo(e.target.value)}
                 required
-                placeholder="e.g. RES-2026-001 / MEMO-001"
+                placeholder="e.g. RES-2026-001 / MEMO-001 / NOM-001"
               />
             </div>
             <div>

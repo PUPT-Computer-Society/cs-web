@@ -163,9 +163,10 @@ export const DRIVE_REGISTRY: Record<string, DriveFolderEntry> = {
     folderName: "02_Memorandums",
     path: "01_RECORDS_&_INTERNAL_AFFAIRS/02_Memorandums",
     responsibleRoles: ["VP for Records", "AVP for Records"],
-    namingConvention: "MEMO-2026-XXX_[Subject].pdf",
+    namingConvention: "MEMO-2026-XXX_[Subject] / NOM-2026-XXX_[Subject].pdf",
     acceptedFormats: "PDF, Google Docs",
-    instructions: "Council directives and committee operational memos.",
+    instructions:
+      "Council directives, operational memos, and Notice of Meetings (NoM).",
     driveUrl:
       "https://drive.google.com/drive/folders/1v3TwnWkIHXUdfRj4kFB3t9lY2X9CP3AO?usp=drive_link",
   },
