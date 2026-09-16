@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Archive,
   Building2,
@@ -110,7 +110,7 @@ interface KanbanColumnProps {
   canEditTask: (task: Task) => boolean;
   usersMap: Map<string, User>;
   onDragOver: (e: React.DragEvent, status: TaskStatus) => void;
-  onDragLeave: (e: React.DragEvent, status: TaskStatus) => void;
+  onDragLeave: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent, status: TaskStatus) => void;
   onDragStart: (e: React.DragEvent, taskId: string) => void;
   onDragEnd: () => void;
@@ -137,7 +137,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
     return (
       <div
         onDragOver={(e) => onDragOver(e, col.status)}
-        onDragLeave={(e) => onDragLeave(e, col.status)}
+        onDragLeave={onDragLeave}
         onDrop={(e) => onDrop(e, col.status)}
         className={
           "rounded-xl border p-3.5 flex flex-col " +
@@ -191,7 +191,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
                 className={
                   "p-3.5 shadow-xs cursor-pointer border-border/80 " +
                   "hover:border-primary/40 hover:shadow-md select-none " +
-                  "touch-pan-y group relative bg-card " +
+                  "group relative bg-card " +
                   (isDragged
                     ? "opacity-40 border-dashed border-primary " +
                       "ring-2 ring-primary/40"
@@ -476,6 +476,7 @@ export const TasksPage: React.FC = () => {
   // Drag and drop state
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<TaskStatus | null>(null);
+  const dragOverColRef = useRef<TaskStatus | null>(null);
 
   // Form (Create Task)
   const [title, setTitle] = useState("");
@@ -1044,6 +1045,7 @@ export const TasksPage: React.FC = () => {
   }, []);
 
   const handleDragEnd = useCallback(() => {
+    dragOverColRef.current = null;
     setDraggedTaskId(null);
     setDragOverCol(null);
   }, []);
@@ -1052,18 +1054,17 @@ export const TasksPage: React.FC = () => {
     (e: React.DragEvent, colStatus: TaskStatus) => {
       e.preventDefault();
       e.dataTransfer.dropEffect = "move";
-      setDragOverCol((prev) => (prev === colStatus ? prev : colStatus));
+      if (dragOverColRef.current !== colStatus) {
+        dragOverColRef.current = colStatus;
+        setDragOverCol(colStatus);
+      }
     },
     [],
   );
 
-  const handleDragLeave = useCallback(
-    (e: React.DragEvent, colStatus: TaskStatus) => {
-      if (e.currentTarget.contains(e.relatedTarget as Node)) return;
-      setDragOverCol((prev) => (prev === colStatus ? null : prev));
-    },
-    [],
-  );
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+  }, []);
 
   const handleDrop = useCallback(
     async (e: React.DragEvent, colStatus: TaskStatus) => {
@@ -1071,6 +1072,7 @@ export const TasksPage: React.FC = () => {
       const taskId =
         e.dataTransfer.getData(TASK_MIME_TYPE) ||
         e.dataTransfer.getData("text/plain");
+      dragOverColRef.current = null;
       setDraggedTaskId(null);
       setDragOverCol(null);
 
