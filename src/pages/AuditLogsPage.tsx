@@ -221,9 +221,7 @@ export const AuditLogsPage: React.FC = () => {
         {/* Metric Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5">
           <Card className="rounded-2xl border border-border/80 shadow-xs">
-            <CardContent
-              className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3"
-            >
+            <CardContent className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
               <div
                 className={cn(
                   "p-2 sm:p-2.5 rounded-xl bg-primary/10",
@@ -249,9 +247,7 @@ export const AuditLogsPage: React.FC = () => {
           </Card>
 
           <Card className="rounded-2xl border border-border/80 shadow-xs">
-            <CardContent
-              className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3"
-            >
+            <CardContent className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
               <div
                 className={cn(
                   "p-2 sm:p-2.5 rounded-xl bg-emerald-500/10",
@@ -277,9 +273,7 @@ export const AuditLogsPage: React.FC = () => {
           </Card>
 
           <Card className="rounded-2xl border border-border/80 shadow-xs">
-            <CardContent
-              className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3"
-            >
+            <CardContent className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
               <div
                 className={cn(
                   "p-2 sm:p-2.5 rounded-xl bg-purple-500/10",
@@ -305,9 +299,7 @@ export const AuditLogsPage: React.FC = () => {
           </Card>
 
           <Card className="rounded-2xl border border-border/80 shadow-xs">
-            <CardContent
-              className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3"
-            >
+            <CardContent className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
               <div
                 className={cn(
                   "p-2 sm:p-2.5 rounded-xl bg-destructive/10",
@@ -481,9 +473,7 @@ export const AuditLogsPage: React.FC = () => {
                 </div>
               ))
             ) : items.length === 0 ? (
-              <div
-                className="py-12 text-center text-muted-foreground font-sans"
-              >
+              <div className="py-12 text-center text-muted-foreground font-sans">
                 <Terminal className="w-8 h-8 mx-auto mb-2 opacity-40" />
                 <p className="font-semibold text-sm">No telemetry records</p>
                 <p className="text-xs">

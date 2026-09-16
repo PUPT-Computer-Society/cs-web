@@ -199,10 +199,17 @@ export const Sidebar: React.FC = () => {
   ];
 
   const isActive = (to: string) => {
-    return (
-      location.pathname === to ||
-      (to !== "/" && location.pathname.startsWith(`${to}/`))
+    if (location.pathname === to) return true;
+    if (to === "/") return false;
+    const hasMoreSpecificMatch = allItems.some(
+      (item) =>
+        item.to !== to &&
+        item.to.startsWith(`${to}/`) &&
+        (location.pathname === item.to ||
+          location.pathname.startsWith(`${item.to}/`)),
     );
+    if (hasMoreSpecificMatch) return false;
+    return location.pathname.startsWith(`${to}/`);
   };
 
   /* Mobile Bottom Dock */
