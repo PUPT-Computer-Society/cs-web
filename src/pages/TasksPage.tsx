@@ -26,7 +26,7 @@ import { useGlobalLoader } from "@/context/LoadingContext";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { Badge, Pill } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Dialog } from "@/components/ui/Dialog";
@@ -1629,12 +1629,11 @@ export const TasksPage: React.FC = () => {
 
                       <div className="flex items-center gap-2 shrink-0">
                         {st.assignedToName ? (
-                          <span
+                          <Pill
+                            size="sm"
                             className={
-                              "inline-flex items-center gap-1 " +
-                              "text-[10px] " +
-                              "px-2 py-0.5 rounded-full bg-blue-500/10 " +
-                              "text-blue-600 dark:text-blue-400 border " +
+                              "gap-1 text-[10px] bg-blue-500/10 " +
+                              "text-blue-600 dark:text-blue-400 " +
                               "border-blue-500/20"
                             }
                           >
@@ -1642,11 +1641,11 @@ export const TasksPage: React.FC = () => {
                             <span className="max-w-[120px] truncate">
                               {st.assignedToName}
                             </span>
-                          </span>
+                          </Pill>
                         ) : (
                           <span
                             className={
-                              "text-[10px] text-muted-foreground/70 " + "italic"
+                              "text-[10px] text-muted-foreground/70 italic"
                             }
                           >
                             Unassigned
@@ -1654,8 +1653,10 @@ export const TasksPage: React.FC = () => {
                         )}
 
                         {canEditTask(selectedTask) && (
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon"
                             onClick={() =>
                               setSubtaskToDelete({
                                 taskId: selectedTask.id,
@@ -1664,14 +1665,15 @@ export const TasksPage: React.FC = () => {
                               })
                             }
                             title="Remove subtask"
+                            aria-label="Remove subtask"
                             className={
-                              "p-1 rounded text-muted-foreground " +
-                              "hover:text-rose-500 hover:bg-rose-500/10 " +
-                              "transition-colors"
+                              "h-7 w-7 min-h-[28px] min-w-[28px] shrink-0 " +
+                              "text-muted-foreground hover:text-rose-500 " +
+                              "hover:bg-rose-500/10"
                             }
                           >
                             <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -1713,7 +1715,7 @@ export const TasksPage: React.FC = () => {
                       value={newSubtaskTitle}
                       onChange={(e) => setNewSubtaskTitle(e.target.value)}
                       placeholder="e.g. Design posters, Draft letter..."
-                      className="h-8 text-xs flex-1"
+                      className="h-9 sm:h-8 text-base sm:text-xs flex-1"
                       required
                     />
                     <Select
@@ -1724,13 +1726,13 @@ export const TasksPage: React.FC = () => {
                       }
                       options={subtaskAssigneeOptions}
                       className="sm:w-48"
-                      triggerClassName="h-8"
+                      triggerClassName="h-9 sm:h-8"
                     />
                     <Button
                       type="submit"
                       size="sm"
                       disabled={isSubmittingSubtask || !newSubtaskTitle.trim()}
-                      className="h-8 text-xs shrink-0"
+                      className="h-9 sm:h-8 text-xs shrink-0"
                     >
                       <Plus className="w-3.5 h-3.5 mr-1" />
                       Add Part

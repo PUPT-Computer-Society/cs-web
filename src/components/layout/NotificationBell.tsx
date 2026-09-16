@@ -5,6 +5,8 @@ import { api } from "@/api/client";
 import { usePresence } from "@/lib/usePresence";
 import { useSSE } from "@/context/SSEContext";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/Button";
+import { Badge, Pill } from "@/components/ui/Badge";
 import type { AppNotification, NotificationListResponse } from "@/types";
 
 export const NotificationBell: React.FC = () => {
@@ -231,33 +233,36 @@ export const NotificationBell: React.FC = () => {
                   Council Dispatches
                 </span>
                 {unreadCount > 0 && (
-                  <span
+                  <Pill
+                    size="sm"
                     className={cn(
-                      "px-1.5 py-0.5 rounded font-mono text-[10px] font-bold",
+                      "font-mono text-[10px] font-bold border",
                       !isTouched
-                        ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
-                        : "bg-secondary text-muted-foreground",
+                        ? "bg-amber-500/20 text-amber-600 " +
+                            "dark:text-amber-400 border-amber-500/30"
+                        : "bg-secondary text-muted-foreground border-border",
                     )}
                   >
                     {unreadCount} Unread {!isTouched ? "• New" : "• Seen"}
-                  </span>
+                  </Pill>
                 )}
               </div>
 
               {unreadCount > 0 && (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={handleMarkAllAsRead}
                   disabled={isLoading}
                   className={
-                    "text-[11px] font-mono text-muted-foreground " +
-                    "hover:text-foreground inline-flex items-center gap-1 " +
-                    "transition-colors"
+                    "h-7 px-2 text-[11px] font-mono text-muted-foreground " +
+                    "hover:text-foreground inline-flex items-center gap-1"
                   }
                 >
                   <CheckCheck className="w-3.5 h-3.5" />
                   <span>Mark All Read</span>
-                </button>
+                </Button>
               )}
             </div>
 
@@ -305,15 +310,17 @@ export const NotificationBell: React.FC = () => {
                             {notif.title}
                           </p>
                           {notif.targetPermission && (
-                            <span
+                            <Badge
+                              size="sm"
+                              variant="outline"
                               className={
-                                "px-1 py-0.5 rounded text-[9px] font-mono " +
+                                "px-1 py-0.5 text-[9px] font-mono " +
                                 "uppercase bg-primary/10 text-primary " +
-                                "border border-primary/20 shrink-0"
+                                "border-primary/20 shrink-0"
                               }
                             >
                               {notif.targetPermission.replace(/_/g, " ")}
-                            </span>
+                            </Badge>
                           )}
                         </div>
                         <span
@@ -335,19 +342,23 @@ export const NotificationBell: React.FC = () => {
                       </p>
                     </div>
                     {!notif.isRead && (
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="icon"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleMarkAsRead(notif.id);
                         }}
                         className={
-                          "p-1 text-muted-foreground hover:text-foreground"
+                          "h-7 w-7 min-h-[28px] min-w-[28px] shrink-0 " +
+                          "text-muted-foreground hover:text-foreground"
                         }
                         title="Mark as read"
+                        aria-label="Mark notification as read"
                       >
                         <Check className="w-3.5 h-3.5" />
-                      </button>
+                      </Button>
                     )}
                   </div>
                 ))

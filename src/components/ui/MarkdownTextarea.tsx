@@ -221,7 +221,8 @@ export const MarkdownTextarea: React.FC<MarkdownTextareaProps> = ({
             placeholder={placeholder}
             rows={rows}
             className={cn(
-              "w-full px-3 py-2 text-xs bg-transparent text-foreground placeholder:text-muted-foreground",
+              "w-full px-3 py-2 text-base sm:text-xs bg-transparent " +
+                "text-foreground placeholder:text-muted-foreground",
               "border-0 focus:outline-none focus:ring-0 resize-y",
               "overflow-y-auto leading-relaxed font-sans",
               minHeight,

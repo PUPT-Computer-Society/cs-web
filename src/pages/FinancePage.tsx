@@ -434,22 +434,21 @@ export const FinancePage: React.FC = () => {
                       <td className="p-3 sm:p-3.5">
                         {tx.receiptUrl ? (
                           <div className="flex items-center gap-1">
-                            <button
+                            <Button
                               type="button"
+                              size="sm"
+                              variant="secondary"
                               onClick={() => setPreviewReceipt(tx)}
                               className={
-                                "inline-flex items-center gap-1 px-2 py-1.5 " +
-                                "min-h-[36px] rounded-lg border " +
-                                "border-primary/30 bg-primary/10 " +
-                                "hover:bg-primary/20 text-primary " +
-                                "text-[11px] font-semibold transition-colors " +
-                                "cursor-pointer"
+                                "gap-1 border border-primary/30 " +
+                                "bg-primary/10 text-primary " +
+                                "hover:bg-primary/20"
                               }
                               title="Preview receipt in portal"
                             >
                               <Eye className="w-3.5 h-3.5" />
                               <span className="hidden sm:inline">Receipt</span>
-                            </button>
+                            </Button>
                             <a
                               href={tx.receiptUrl}
                               target="_blank"
@@ -496,35 +495,24 @@ export const FinancePage: React.FC = () => {
                           }
                         >
                           <div className="flex items-center justify-end gap-1">
-                            <button
+                            <Button
                               type="button"
+                              variant="outline"
+                              size="icon"
                               onClick={() => openEditDialog(tx)}
-                              className={
-                                "p-2 min-w-[36px] min-h-[36px] flex " +
-                                "items-center justify-center rounded-lg " +
-                                "border border-border bg-background " +
-                                "hover:bg-secondary text-foreground " +
-                                "text-xs transition-colors cursor-pointer"
-                              }
                               title="Edit transaction / receipt"
                             >
                               <Pencil className="w-3.5 h-3.5" />
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                               type="button"
+                              variant="destructive"
+                              size="icon"
                               onClick={() => setDeletingTx(tx)}
-                              className={
-                                "p-2 min-w-[36px] min-h-[36px] flex " +
-                                "items-center justify-center rounded-lg " +
-                                "border border-destructive/30 " +
-                                "bg-destructive/10 hover:bg-destructive/20 " +
-                                "text-destructive text-xs transition-colors " +
-                                "cursor-pointer"
-                              }
                               title="Delete transaction"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            </Button>
                           </div>
                         </td>
                       )}

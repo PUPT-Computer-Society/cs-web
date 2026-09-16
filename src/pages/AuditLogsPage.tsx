@@ -335,8 +335,9 @@ export const AuditLogsPage: React.FC = () => {
                       type="button"
                       onClick={() => handleCategoryChange(tab.key)}
                       className={cn(
-                        "px-3 py-1.5 rounded-lg font-semibold " +
-                          "transition-all whitespace-nowrap shrink-0",
+                        "px-3 py-2 sm:py-1.5 min-h-[36px] sm:min-h-0 " +
+                          "rounded-lg font-semibold transition-all " +
+                          "whitespace-nowrap shrink-0 flex items-center",
                         active
                           ? "bg-background text-foreground shadow-xs"
                           : "text-muted-foreground hover:text-foreground",

@@ -39,7 +39,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           "w-full rounded-md border border-input bg-transparent",
           "pl-8 pr-8 text-foreground placeholder:text-muted-foreground",
           "focus:outline-none focus:ring-1 focus:ring-ring transition-colors",
-          size === "sm" ? "h-8 text-[11px]" : "h-9 text-xs",
+          size === "sm"
+            ? "h-9 sm:h-8 text-base sm:text-[11px]"
+            : "h-10 sm:h-9 text-base sm:text-xs",
           inputClassName,
         )}
       />
@@ -49,9 +51,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           onClick={() => onChange("")}
           aria-label="Clear search"
           className={cn(
-            "absolute right-2 text-muted-foreground hover:text-foreground",
-            "p-0.5 rounded-xs hover:bg-secondary transition-colors",
-            "cursor-pointer",
+            "absolute right-1.5 sm:right-2 text-muted-foreground " +
+              "hover:text-foreground p-1.5 sm:p-0.5 rounded-xs " +
+              "hover:bg-secondary transition-colors cursor-pointer",
           )}
         >
           <X className={size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5"} />
