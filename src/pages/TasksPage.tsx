@@ -1318,7 +1318,7 @@ export const TasksPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Subtasks / Toka Breakdown Checklist */}
+            {/* Subtasks / Deliverables Breakdown Checklist */}
             <div
               className={
                 "space-y-3 p-3.5 rounded-lg border border-border " +
@@ -1334,7 +1334,7 @@ export const TasksPage: React.FC = () => {
                       "tracking-wider"
                     }
                   >
-                    Deliverables & Toka Breakdown
+                    Deliverables & Subtask Breakdown
                   </span>
                 </div>
                 {selectedTask.totalSubtasksCount !== undefined &&
@@ -1492,8 +1492,8 @@ export const TasksPage: React.FC = () => {
                       "text-muted-foreground"
                     }
                   >
-                    There is no assigned subtask yet. Add one below to track
-                    assigned worksz
+                    No subtasks added yet. Add one below to track granular
+                    deliverables.
                   </div>
                 )}
               </div>
@@ -1873,7 +1873,7 @@ export const TasksPage: React.FC = () => {
           {/* Draft Subtasks Section */}
           <div className="space-y-2 pt-2 border-t border-border">
             <label className="block text-[11px] font-semibold text-foreground">
-              Break Down into Toka / Deliverables (Optional)
+              Subtasks & Granular Deliverables (Optional)
             </label>
 
             {draftSubtasks.length > 0 && (
@@ -1944,7 +1944,7 @@ export const TasksPage: React.FC = () => {
                 value={draftSubtaskAssigneeId || ""}
                 onValueChange={(val) => setDraftSubtaskAssigneeId(val || null)}
                 options={[
-                  { value: "", label: "Toka kanino?" },
+                  { value: "", label: "Assign to..." },
                   ...subtaskAssigneeOptions.filter((o) => o.value !== ""),
                 ]}
                 className="sm:w-44"
