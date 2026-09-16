@@ -63,3 +63,48 @@ export function formatTimeUTC8(
     return String(dateInput);
   }
 }
+
+export function toDateTimeLocalUTC8(
+  dateInput: string | Date | null | undefined,
+): string {
+  if (!dateInput) return "";
+  try {
+    const d = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+    if (isNaN(d.getTime())) return "";
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: MANILA_TIMEZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    });
+    const parts = formatter.formatToParts(d);
+    const getVal = (type: string) =>
+      parts.find((p) => p.type === type)?.value || "";
+    return `${getVal("year")}-${getVal("month")}-${getVal("day")}T${getVal(
+      "hour",
+    )}:${getVal("minute")}`;
+  } catch {
+    return "";
+  }
+}
+
+export function toISOStringUTC8(
+  localDateStr: string | null | undefined,
+): string | null {
+  if (!localDateStr) return null;
+  const trimmed = localDateStr.trim();
+  if (!trimmed) return null;
+  if (trimmed.endsWith("Z") || trimmed.includes("+")) {
+    return trimmed;
+  }
+  const parts = trimmed.split("T");
+  if (parts.length === 1) {
+    return `${parts[0]}T00:00:00+08:00`;
+  }
+  const time = parts[1];
+  const timeWithSeconds = time.length === 5 ? `${time}:00` : time;
+  return `${parts[0]}T${timeWithSeconds}+08:00`;
+}

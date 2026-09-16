@@ -34,6 +34,11 @@ import { SearchBar } from "@/components/ui/SearchBar";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import { buildGoogleCalendarUrl } from "@/lib/calendar";
+import {
+  formatDateUTC8,
+  toDateTimeLocalUTC8,
+  toISOStringUTC8,
+} from "@/lib/dateUtils";
 import type { GPOAEvent, Task, TaskStatus, User } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryClient";
@@ -237,7 +242,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
                           "group-hover/gcal:text-primary"
                         }
                       />
-                      <span>{new Date(task.dueDate).toLocaleDateString()}</span>
+                      <span>{formatDateUTC8(task.dueDate)}</span>
                       <ExternalLink
                         className={
                           "w-2.5 h-2.5 opacity-60 " +
@@ -642,7 +647,7 @@ export const TasksPage: React.FC = () => {
     setEditDescription(t.description || "");
     setEditStatus(t.status);
     setEditDueDate(
-      t.dueDate ? new Date(t.dueDate).toISOString().slice(0, 10) : "",
+      t.dueDate ? toDateTimeLocalUTC8(t.dueDate).slice(0, 10) : "",
     );
     setEditAssignedToId(t.assignedToId || null);
     setEditGpoaEventId(t.gpoaEventId || null);
@@ -693,7 +698,7 @@ export const TasksPage: React.FC = () => {
         title: editTitle.trim(),
         description: editDescription,
         status: editStatus,
-        dueDate: editDueDate ? new Date(editDueDate).toISOString() : null,
+        dueDate: editDueDate ? toISOStringUTC8(editDueDate) : null,
         assignedToId: editAssignedToId,
         gpoaEventId: editGpoaEventId,
       },
@@ -734,7 +739,7 @@ export const TasksPage: React.FC = () => {
       title,
       description,
       status: "todo",
-      dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+      dueDate: dueDate ? toISOStringUTC8(dueDate) : null,
       assignedToId,
       gpoaEventId,
       subtasks: draftSubtasks,
@@ -1262,7 +1267,7 @@ export const TasksPage: React.FC = () => {
                   >
                     <Clock className="w-3.5 h-3.5 text-primary" />
                     <span>
-                      Due: {new Date(selectedTask.dueDate).toLocaleDateString()}
+                      Due: {formatDateUTC8(selectedTask.dueDate)}
                     </span>
                   </div>
                   <a
@@ -1605,8 +1610,7 @@ export const TasksPage: React.FC = () => {
                   ID: #{selectedTask.id}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  Created:{" "}
-                  {new Date(selectedTask.createdAt).toLocaleDateString()}
+                  Created: {formatDateUTC8(selectedTask.createdAt)}
                 </p>
               </div>
             </div>

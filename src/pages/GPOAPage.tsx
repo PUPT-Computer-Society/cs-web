@@ -37,6 +37,12 @@ import { DriveLinkInput } from "@/components/ui/DriveLinkInput";
 import { DriveGuideModal } from "@/components/ui/DriveGuideModal";
 import { DriveDropzone } from "@/components/ui/DriveDropzone";
 import { buildGoogleCalendarUrl } from "@/lib/calendar";
+import {
+  formatDateUTC8,
+  formatTimeUTC8,
+  toDateTimeLocalUTC8,
+  toISOStringUTC8,
+} from "@/lib/dateUtils";
 import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import { DateTimePicker } from "@/components/ui/DateTimePicker";
 import type { GPOAEvent, GPOAEventStatus } from "@/types";
@@ -106,19 +112,6 @@ const GPOA_STATUS_BADGES: Record<
     className:
       "bg-rose-500/10 text-rose-500 border-rose-500/20 dark:bg-rose-500/15",
   },
-};
-
-const formatForDateTimeLocal = (dateStr: string) => {
-  if (!dateStr) return "";
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const year = d.getFullYear();
-  const month = pad(d.getMonth() + 1);
-  const day = pad(d.getDate());
-  const hours = pad(d.getHours());
-  const minutes = pad(d.getMinutes());
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
 interface EventDriveSectionProps {
@@ -653,8 +646,8 @@ export const GPOAPage: React.FC = () => {
     setEditTitle(event.title);
     setEditDescription(event.description || "");
     setEditStatus(event.status || "proposal");
-    setEditStartTime(formatForDateTimeLocal(event.startTime));
-    setEditEndTime(formatForDateTimeLocal(event.endTime));
+    setEditStartTime(toDateTimeLocalUTC8(event.startTime));
+    setEditEndTime(toDateTimeLocalUTC8(event.endTime));
     setEditLocation(event.location || "");
     setEditTargetAudience(event.targetAudience || "");
     setEditDriveFolderUrl(event.driveFolderUrl || "");
@@ -682,8 +675,8 @@ export const GPOAPage: React.FC = () => {
       title,
       description,
       status,
-      startTime: new Date(startTime).toISOString(),
-      endTime: new Date(endTime).toISOString(),
+      startTime: toISOStringUTC8(startTime) || "",
+      endTime: toISOStringUTC8(endTime) || "",
       location,
       targetAudience: targetAudience || "All CS Students",
       syncToGoogle,
@@ -699,8 +692,8 @@ export const GPOAPage: React.FC = () => {
         title: editTitle,
         description: editDescription,
         status: editStatus,
-        startTime: new Date(editStartTime).toISOString(),
-        endTime: new Date(editEndTime).toISOString(),
+        startTime: toISOStringUTC8(editStartTime) || "",
+        endTime: toISOStringUTC8(editEndTime) || "",
         location: editLocation,
         targetAudience: editTargetAudience || "All CS Students",
         driveFolderUrl: editDriveFolderUrl.trim() || null,
@@ -1081,18 +1074,18 @@ export const GPOAPage: React.FC = () => {
                     >
                       <div className="space-y-1.5 min-w-0">
                         <div className="flex items-center gap-2">
-                          <Clock className="w-3.5 h-3.5 shrink-0 text-primary" />
+                          <Clock
+                            className="w-3.5 h-3.5 shrink-0 text-primary"
+                          />
                           <span>
-                            {new Date(event.startTime).toLocaleDateString()} (
-                            {new Date(event.startTime).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                            )
+                            {formatDateUTC8(event.startTime)} (
+                            {formatTimeUTC8(event.startTime)})
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <MapPin className="w-3.5 h-3.5 shrink-0 text-primary" />
+                          <MapPin
+                            className="w-3.5 h-3.5 shrink-0 text-primary"
+                          />
                           <span className="truncate">
                             {event.location || "Online / Discord"}
                           </span>

@@ -8,7 +8,6 @@ import React, {
 import { createPortal } from "react-dom";
 import {
   Calendar as CalendarIcon,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   RotateCcw,
@@ -72,7 +71,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   onChange,
   disabled = false,
   className,
-  placeholder = "Select date",
+  placeholder = "Pick a date",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [pos, setPos] = useState<{
@@ -110,8 +109,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     const rect = triggerRef.current.getBoundingClientRect();
     const vh = window.innerHeight;
     const vw = window.innerWidth;
-    const popoverHeight = 330;
-    const popoverWidth = 280;
+    const popoverHeight = 350;
+    const popoverWidth = 300;
 
     const spaceBelow = vh - rect.bottom;
     const preferUp = spaceBelow < popoverHeight && rect.top > spaceBelow;
@@ -125,6 +124,14 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     const top = preferUp ? rect.top - 6 : rect.bottom + 6;
     setPos({ top, left, placement });
   }, []);
+
+  const handleToggle = () => {
+    if (disabled) return;
+    if (!isOpen) {
+      updatePosition();
+    }
+    setIsOpen((prev) => !prev);
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -183,18 +190,6 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   const handleSelectDate = (dateStr: string) => {
     onChange?.(dateStr);
-    setIsOpen(false);
-  };
-
-  const handlePresetSelect = (daysOffset: number) => {
-    const target = new Date();
-    target.setDate(target.getDate() + daysOffset);
-    const formatted = formatDateStr(
-      target.getFullYear(),
-      target.getMonth() + 1,
-      target.getDate(),
-    );
-    onChange?.(formatted);
     setIsOpen(false);
   };
 
@@ -261,40 +256,34 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   return (
     <div className={cn("relative inline-block w-full", className)}>
-      {/* Trigger Button */}
+      {/* Shadcn-styled Trigger Button */}
       <button
         ref={triggerRef}
         type="button"
         disabled={disabled}
-        onClick={() => !disabled && setIsOpen((prev) => !prev)}
+        onClick={handleToggle}
         className={cn(
-          "flex items-center justify-between w-full h-9 rounded-md border",
-          "border-input bg-card px-2.5 text-xs text-foreground shadow-2xs",
-          "hover:border-primary/50 hover:bg-accent/20 transition-colors",
-          "focus-visible:outline-hidden focus-visible:ring-1",
-          "focus-visible:ring-ring text-left cursor-pointer",
+          "flex h-9 w-full items-center justify-start rounded-md border",
+          "border-input bg-card px-3 py-1 text-xs text-foreground",
+          "shadow-2xs transition-colors hover:bg-accent/30",
+          "hover:border-primary/50 focus-visible:outline-hidden",
+          "focus-visible:ring-1 focus-visible:ring-ring text-left",
+          "cursor-pointer",
           isOpen && "border-primary ring-1 ring-ring",
           disabled && "opacity-50 cursor-not-allowed pointer-events-none",
         )}
       >
-        <div className="flex items-center gap-2 min-w-0">
-          <CalendarIcon className="w-3.5 h-3.5 text-primary shrink-0" />
-          <span
-            className={cn(
-              "truncate font-medium",
-              !value && "text-muted-foreground",
-            )}
-          >
-            {displayDate || placeholder}
-          </span>
-        </div>
-        <ChevronDown
-          className={cn(
-            "w-3.5 h-3.5 text-muted-foreground/70 shrink-0",
-            "transition-transform",
-            isOpen && "rotate-180 text-primary",
-          )}
+        <CalendarIcon
+          className="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground"
         />
+        <span
+          className={cn(
+            "truncate font-normal",
+            !value && "text-muted-foreground",
+          )}
+        >
+          {displayDate || placeholder}
+        </span>
       </button>
 
       {/* Floating Popover via Portal */}
@@ -303,57 +292,68 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         createPortal(
           <div
             ref={popoverRef}
+            onMouseDown={(e) => e.stopPropagation()}
             style={{
               position: "fixed",
               top: `${pos.top}px`,
               left: `${pos.left}px`,
-              width: "280px",
+              width: "300px",
               zIndex: 9999,
               transform: pos.placement === "top" ? "translateY(-100%)" : "none",
             }}
             className={cn(
-              "rounded-xl border border-border bg-card p-3 shadow-2xl",
-              "text-card-foreground animate-in fade-in-0 zoom-in-95",
-              "duration-150",
+              "rounded-lg border border-border bg-popover p-3 shadow-md",
+              "text-popover-foreground animate-in fade-in-0 zoom-in-95",
+              "duration-100 select-none",
             )}
           >
-            {/* Header: Month & Year Navigator */}
-            <div className="flex items-center justify-between pb-2 mb-1">
+            {/* Header: Centered Month & Year with Ghost Chevrons */}
+            <div
+              className={
+                "relative flex items-center justify-center pt-1 pb-2"
+              }
+            >
               <button
                 type="button"
                 onClick={handlePrevMonth}
                 className={cn(
-                  "p-1 rounded-md text-muted-foreground hover:text-foreground",
-                  "hover:bg-accent transition-colors cursor-pointer",
+                  "absolute left-1 h-7 w-7 bg-transparent p-0",
+                  "inline-flex items-center justify-center rounded-md",
+                  "text-muted-foreground hover:text-foreground hover:bg-accent",
+                  "border border-input/60 transition-colors cursor-pointer",
                 )}
                 title="Previous Month"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="h-4 w-4" />
               </button>
-              <div className="text-xs font-bold text-foreground">
+
+              <div className="text-sm font-medium text-foreground">
                 {MONTH_NAMES[viewMonth - 1]} {viewYear}
               </div>
+
               <button
                 type="button"
                 onClick={handleNextMonth}
                 className={cn(
-                  "p-1 rounded-md text-muted-foreground hover:text-foreground",
-                  "hover:bg-accent transition-colors cursor-pointer",
+                  "absolute right-1 h-7 w-7 bg-transparent p-0",
+                  "inline-flex items-center justify-center rounded-md",
+                  "text-muted-foreground hover:text-foreground hover:bg-accent",
+                  "border border-input/60 transition-colors cursor-pointer",
                 )}
                 title="Next Month"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Weekdays Row */}
+            {/* Weekdays Row: Shadcn 0.8rem text-muted-foreground */}
             <div className="grid grid-cols-7 gap-1 text-center mb-1">
               {WEEKDAYS.map((wd) => (
                 <span
                   key={wd}
                   className={
-                    "text-[10px] font-semibold text-muted-foreground/70 " +
-                    "uppercase py-0.5"
+                    "text-muted-foreground w-9 text-[0.8rem] font-normal " +
+                    "text-center py-1 select-none"
                   }
                 >
                   {wd}
@@ -361,7 +361,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               ))}
             </div>
 
-            {/* Calendar Days Grid */}
+            {/* Calendar Days Grid: Shadcn 36px x 36px buttons */}
             <div className="grid grid-cols-7 gap-1">
               {calendarDays.map((item) => (
                 <button
@@ -369,17 +369,17 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                   type="button"
                   onClick={() => handleSelectDate(item.dateStr)}
                   className={cn(
-                    "h-7 w-7 mx-auto flex items-center justify-center",
-                    "rounded-md text-xs transition-all cursor-pointer",
+                    "h-9 w-9 p-0 font-normal text-sm rounded-md",
+                    "inline-flex items-center justify-center transition-colors",
+                    "cursor-pointer",
                     item.isSelected
-                      ? "bg-primary text-primary-foreground font-bold " +
-                        "shadow-2xs scale-105"
+                      ? "bg-primary text-primary-foreground font-medium " +
+                          "shadow-xs hover:bg-primary focus:bg-primary"
                       : item.isToday
-                        ? "border border-primary text-primary font-bold " +
-                          "hover:bg-primary/10"
+                        ? "bg-accent text-accent-foreground font-semibold"
                         : item.isCurrentMonth
                           ? "text-foreground hover:bg-accent " +
-                            "hover:text-accent-foreground font-medium"
+                            "hover:text-accent-foreground"
                           : "text-muted-foreground/30 hover:bg-accent/40 " +
                             "hover:text-muted-foreground",
                   )}
@@ -389,51 +389,24 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               ))}
             </div>
 
-            {/* Quick Action Presets */}
+            {/* Subtle Footer: Today & Clear */}
             <div
               className={
-                "pt-2 mt-2 border-t border-border/60 flex items-center " +
-                "justify-between gap-1 flex-wrap"
+                "pt-2 mt-2 border-t border-border flex items-center " +
+                "justify-between"
               }
             >
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => handlePresetSelect(0)}
-                  className={cn(
-                    "text-[10px] font-medium px-2 py-0.5 rounded border",
-                    "border-border bg-secondary/50 hover:bg-primary",
-                    "hover:text-primary-foreground hover:border-primary",
+              <button
+                type="button"
+                onClick={() => handleSelectDate(todayStr)}
+                className={cn(
+                  "text-xs font-medium text-muted-foreground " +
+                    "hover:text-foreground px-2 py-1 rounded hover:bg-accent " +
                     "transition-colors cursor-pointer",
-                  )}
-                >
-                  Today
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePresetSelect(1)}
-                  className={cn(
-                    "text-[10px] font-medium px-2 py-0.5 rounded border",
-                    "border-border bg-secondary/50 hover:bg-primary",
-                    "hover:text-primary-foreground hover:border-primary",
-                    "transition-colors cursor-pointer",
-                  )}
-                >
-                  Tomorrow
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePresetSelect(7)}
-                  className={cn(
-                    "text-[10px] font-medium px-2 py-0.5 rounded border",
-                    "border-border bg-secondary/50 hover:bg-primary",
-                    "hover:text-primary-foreground hover:border-primary",
-                    "transition-colors cursor-pointer",
-                  )}
-                >
-                  +7 Days
-                </button>
-              </div>
+                )}
+              >
+                Today
+              </button>
 
               {value && (
                 <button
@@ -443,12 +416,15 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     setIsOpen(false);
                   }}
                   className={cn(
-                    "text-[10px] text-muted-foreground hover:text-destructive",
-                    "p-0.5 transition-colors cursor-pointer",
+                    "text-xs font-medium text-muted-foreground " +
+                      "hover:text-destructive px-2 py-1 rounded " +
+                      "hover:bg-accent transition-colors cursor-pointer " +
+                      "flex items-center gap-1",
                   )}
                   title="Clear date"
                 >
                   <RotateCcw className="w-3 h-3" />
+                  <span>Clear</span>
                 </button>
               )}
             </div>
