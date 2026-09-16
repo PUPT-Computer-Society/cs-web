@@ -343,21 +343,23 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
 
   return (
     <div className={cn("space-y-1.5", className)}>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         {label && (
-          <label className="text-xs font-semibold text-foreground">
+          <label className="text-xs font-semibold text-foreground truncate">
             {label}
           </label>
         )}
         <div
-          className={"flex items-center gap-1 bg-secondary/50 p-0.5 rounded-lg"}
+          className={
+            "flex items-center gap-1 bg-secondary/50 p-0.5 rounded-lg shrink-0"
+          }
         >
           <button
             type="button"
             onClick={() => setMode("file")}
             className={cn(
-              "px-2 py-0.5 rounded-md text-[10px] font-medium " +
-                "transition-colors",
+              "px-2 py-0.5 rounded-md text-[10px] " +
+                "font-medium transition-colors",
               mode === "file"
                 ? "bg-background text-foreground font-semibold shadow-2xs"
                 : "text-muted-foreground hover:text-foreground",
@@ -369,8 +371,8 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
             type="button"
             onClick={() => setMode("collaborative")}
             className={cn(
-              "px-2 py-0.5 rounded-md text-[10px] font-medium " +
-                "transition-colors",
+              "px-2 py-0.5 rounded-md text-[10px] " +
+                "font-medium transition-colors",
               mode === "collaborative"
                 ? "bg-background text-foreground font-semibold shadow-2xs"
                 : "text-muted-foreground hover:text-foreground",
@@ -422,24 +424,24 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
         <div
           className={cn(
             "border border-border/80 bg-card rounded-xl p-3 space-y-2",
-            "shadow-2xs",
+            "shadow-2xs overflow-hidden",
           )}
         >
           <div className="flex items-center justify-between gap-2">
             <div
               className={
                 "flex items-center gap-1.5 text-xs font-semibold " +
-                "text-foreground"
+                "text-foreground min-w-0"
               }
             >
               <Link2 className="w-3.5 h-3.5 text-primary shrink-0" />
-              <span>Paste Google Collaborative URL</span>
+              <span className="truncate">Paste Google Collaborative URL</span>
             </div>
             {collabUrl && (
               <span
                 className={cn(
                   "text-[9px] px-1.5 py-0.5 rounded-full border " +
-                    "font-semibold",
+                    "font-semibold shrink-0",
                   detectGoogleDocType(collabUrl).color,
                 )}
               >
@@ -447,7 +449,11 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1.5">
+          <div
+            className={
+              "flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5"
+            }
+          >
             <input
               type="url"
               value={collabUrl}
@@ -460,7 +466,7 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
               }}
               placeholder="https://docs.google.com/document/d/... or sheets"
               className={cn(
-                "flex-1 h-8 px-2.5 rounded-lg border border-border " +
+                "flex-1 min-w-0 h-8 px-2.5 rounded-lg border border-border " +
                   "bg-background text-xs text-foreground " +
                   "placeholder:text-muted-foreground/60 focus:outline-hidden " +
                   "focus:ring-1 focus:ring-primary font-mono",
@@ -474,7 +480,7 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
                 "h-8 px-3 rounded-lg bg-primary text-primary-foreground",
                 "text-xs font-semibold hover:bg-primary/90 transition-colors",
                 "disabled:opacity-50 disabled:pointer-events-none " +
-                  "shadow-xs shrink-0",
+                  "shadow-xs shrink-0 whitespace-nowrap",
               )}
             >
               Copy to Drive

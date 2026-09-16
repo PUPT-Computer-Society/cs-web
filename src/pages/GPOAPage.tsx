@@ -163,6 +163,8 @@ const EventDriveSection: React.FC<EventDriveSectionProps> = ({
   isProvisioning,
 }) => {
   const [showManualLinks, setShowManualLinks] = useState(false);
+  const [activeDeliverableIdx, setActiveDeliverableIdx] = useState(0);
+
   const configuredCount = [
     driveFolderUrl,
     proposalDocUrl,
@@ -171,6 +173,56 @@ const EventDriveSection: React.FC<EventDriveSectionProps> = ({
     evaluationsUrl,
     terminalReportUrl,
   ].filter(Boolean).length;
+
+  const deliverables = [
+    {
+      id: "proposals",
+      num: "01",
+      shortLabel: "Proposals",
+      fullLabel: "01 Proposals & Permits",
+      docType: "01_Proposals",
+      value: proposalDocUrl,
+      onChange: onProposalDocChange,
+    },
+    {
+      id: "materials",
+      num: "02",
+      shortLabel: "Program",
+      fullLabel: "02 Program & Materials",
+      docType: "02_Program_Materials",
+      value: materialsUrl,
+      onChange: onMaterialsChange,
+    },
+    {
+      id: "documentation",
+      num: "03",
+      shortLabel: "Docs",
+      fullLabel: "03 Documentation",
+      docType: "03_Documentation",
+      value: documentationUrl,
+      onChange: onDocumentationChange,
+    },
+    {
+      id: "evaluations",
+      num: "04",
+      shortLabel: "Evals",
+      fullLabel: "04 Evaluations",
+      docType: "04_Evaluations",
+      value: evaluationsUrl,
+      onChange: onEvaluationsChange,
+    },
+    {
+      id: "terminal",
+      num: "05",
+      shortLabel: "Report",
+      fullLabel: "05 Terminal Report",
+      docType: "05_Terminal_Report",
+      value: terminalReportUrl,
+      onChange: onTerminalReportChange,
+    },
+  ];
+
+  const currentDeliv = deliverables[activeDeliverableIdx];
 
   return (
     <div className="border border-border/80 rounded-lg p-3 bg-secondary/20">
@@ -265,67 +317,130 @@ const EventDriveSection: React.FC<EventDriveSectionProps> = ({
             </div>
           </div>
 
-          {/* Subfolder Direct Upload Dropzones */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Deliverables Tab Selector & Spacious Full-Width Dropzone */}
+          <div className="space-y-2">
+            <div
+              className={
+                "grid grid-cols-5 gap-1 p-1 bg-secondary/40 rounded-lg " +
+                "border border-border/60"
+              }
+            >
+              {deliverables.map((item, idx) => {
+                const isLinked = Boolean(item.value);
+                const isActive = activeDeliverableIdx === idx;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setActiveDeliverableIdx(idx)}
+                    className={
+                      "flex flex-col items-center justify-center py-1.5 px-1 " +
+                      "rounded-md text-center transition-all cursor-pointer " +
+                      (isActive
+                        ? "bg-card text-foreground font-semibold shadow-xs " +
+                          "border border-border/80"
+                        : "text-muted-foreground hover:text-foreground " +
+                          "hover:bg-background/50")
+                    }
+                  >
+                    <div className="flex items-center gap-1">
+                      {isLinked ? (
+                        <CheckCircle2
+                          className="w-3 h-3 text-emerald-500 shrink-0"
+                        />
+                      ) : (
+                        <span
+                          className={
+                            "w-1.5 h-1.5 rounded-full shrink-0 " +
+                            (isActive
+                              ? "bg-primary"
+                              : "bg-muted-foreground/30")
+                          }
+                        />
+                      )}
+                      <span className="text-[11px] font-mono font-medium">
+                        {item.num}
+                      </span>
+                    </div>
+                    <span
+                      className={
+                        "text-[10px] truncate max-w-full block leading-tight " +
+                        "mt-0.5"
+                      }
+                    >
+                      {item.shortLabel}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Active Deliverable Dropzone - Full Width */}
             <DriveDropzone
-              label="01 Proposals & Permits"
+              key={currentDeliv.id}
+              label={currentDeliv.fullLabel}
               moduleType="gpoa"
               title={eventTitle}
-              docType="01_Proposals"
-              value={proposalDocUrl}
-              onUploaded={(url) => onProposalDocChange(url)}
-              onCleared={() => onProposalDocChange("")}
+              docType={currentDeliv.docType}
+              value={currentDeliv.value}
+              onUploaded={(url) => currentDeliv.onChange(url)}
+              onCleared={() => currentDeliv.onChange("")}
             />
 
-            <DriveDropzone
-              label="02 Program & Materials"
-              moduleType="gpoa"
-              title={eventTitle}
-              docType="02_Program_Materials"
-              value={materialsUrl}
-              onUploaded={(url) => onMaterialsChange(url)}
-              onCleared={() => onMaterialsChange("")}
-            />
+            {/* Pagination / Stepper Navigation */}
+            <div
+              className={
+                "flex items-center justify-between text-[11px] " +
+                "text-muted-foreground px-1"
+              }
+            >
+              <span>
+                {configuredCount} of 5 SOP deliverables linked
+              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  disabled={activeDeliverableIdx === 0}
+                  onClick={() =>
+                    setActiveDeliverableIdx((prev) => Math.max(0, prev - 1))
+                  }
+                  className={
+                    "px-2 py-0.5 rounded border border-border/70 " +
+                    "hover:bg-secondary text-[10px] font-medium " +
+                    "disabled:opacity-30 disabled:pointer-events-none"
+                  }
+                >
+                  Prev
+                </button>
+                <button
+                  type="button"
+                  disabled={activeDeliverableIdx === deliverables.length - 1}
+                  onClick={() =>
+                    setActiveDeliverableIdx((prev) =>
+                      Math.min(deliverables.length - 1, prev + 1),
+                    )
+                  }
+                  className={
+                    "px-2 py-0.5 rounded border border-border/70 " +
+                    "hover:bg-secondary text-[10px] font-medium " +
+                    "disabled:opacity-30 disabled:pointer-events-none"
+                  }
+                >
+                  Next
+                </button>
+              </div>
+            </div>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <DriveDropzone
-              label="03 Documentation"
-              moduleType="gpoa"
-              title={eventTitle}
-              docType="03_Documentation"
-              value={documentationUrl}
-              onUploaded={(url) => onDocumentationChange(url)}
-              onCleared={() => onDocumentationChange("")}
-            />
-
-            <DriveDropzone
-              label="04 Evaluations"
-              moduleType="gpoa"
-              title={eventTitle}
-              docType="04_Evaluations"
-              value={evaluationsUrl}
-              onUploaded={(url) => onEvaluationsChange(url)}
-              onCleared={() => onEvaluationsChange("")}
-            />
-          </div>
-
-          <DriveDropzone
-            label="05 Terminal Report"
-            moduleType="gpoa"
-            title={eventTitle}
-            docType="05_Terminal_Report"
-            value={terminalReportUrl}
-            onUploaded={(url) => onTerminalReportChange(url)}
-            onCleared={() => onTerminalReportChange("")}
-          />
 
           {/* Manual Link Override Collapsible */}
           <div className="pt-1">
             <button
               type="button"
               onClick={() => setShowManualLinks(!showManualLinks)}
-              className="text-[11px] text-muted-foreground hover:text-primary transition-colors underline"
+              className={
+                "text-[11px] text-muted-foreground hover:text-primary " +
+                "transition-colors underline"
+              }
             >
               {showManualLinks
                 ? "Hide manual URL inputs"
@@ -333,7 +448,12 @@ const EventDriveSection: React.FC<EventDriveSectionProps> = ({
             </button>
 
             {showManualLinks && (
-              <div className="mt-2 space-y-2.5 p-2.5 bg-background/50 rounded border border-border/50">
+              <div
+                className={
+                  "mt-2 space-y-2.5 p-2.5 bg-background/50 rounded " +
+                  "border border-border/50"
+                }
+              >
                 <DriveLinkInput
                   registryKey="eventFolderTemplate"
                   value={driveFolderUrl}
@@ -989,6 +1109,7 @@ export const GPOAPage: React.FC = () => {
         description={
           "Set activity status lifecycle, Google Drive folders, and timeline."
         }
+        className="max-w-2xl sm:max-w-2xl"
       >
         <form onSubmit={handleCreateEvent} className="space-y-3">
           <div className="grid grid-cols-3 gap-3">
@@ -1065,7 +1186,6 @@ export const GPOAPage: React.FC = () => {
               <DateTimePicker
                 value={endTime}
                 onChange={setEndTime}
-                referenceStartTime={startTime}
                 required
               />
             </div>
@@ -1168,6 +1288,7 @@ export const GPOAPage: React.FC = () => {
         description={
           "Update scheduled activity lifecycle, timeline, and Drive links."
         }
+        className="max-w-2xl sm:max-w-2xl"
       >
         <form onSubmit={handleUpdateEvent} className="space-y-3">
           <div className="grid grid-cols-3 gap-3">
@@ -1238,7 +1359,6 @@ export const GPOAPage: React.FC = () => {
               <DateTimePicker
                 value={editEndTime}
                 onChange={setEditEndTime}
-                referenceStartTime={editStartTime}
                 required
               />
             </div>
