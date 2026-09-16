@@ -175,7 +175,8 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({
 
     if (isProd && !BASE_SERVER_URL) {
       console.error(
-        "[wakeBackend] CRITICAL: VITE_API_URL is missing in production!",
+        "[wakeBackend] {ValidateConfig}: " +
+          "CRITICAL: VITE_API_URL is missing in production!",
       );
       clearTimeout(coldStartTimer);
       setIsConnectionErrorOpen(true);
@@ -188,37 +189,44 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({
       if (hasShownLoader) {
         let dynamicMsg = "CONNECTING TO BACKEND CLUSTER...";
         if (elapsed > 35000) {
-          dynamicMsg = "ALMOST READY // FINALIZING SERVICE WAKEUP...";
+          dynamicMsg = "ALMOST READY...";
         } else if (elapsed > 20000) {
           dynamicMsg = "SPINNING UP PYTHON RUNTIME & DATABASE...";
         } else if (elapsed > 8000) {
-          dynamicMsg = "RENDER INSTANCE WAKING UP // COLD BOOT...";
+          dynamicMsg = "SERVER INSTANCE WAKING UP...";
         }
         updateProgress(progressRef.current, dynamicMsg);
       }
 
       try {
-        const pingCtrl = new AbortController();
-        const pingTimer = setTimeout(() => {
-          pingCtrl.abort();
-        }, PING_PER_REQUEST_TIMEOUT_MS);
+        const pingWithTimeout = async (url: string) => {
+          const ctrl = new AbortController();
+          const timer = setTimeout(
+            () => ctrl.abort(),
+            PING_PER_REQUEST_TIMEOUT_MS,
+          );
+          try {
+            return await fetch(url, { signal: ctrl.signal });
+          } finally {
+            clearTimeout(timer);
+          }
+        };
 
         let res: Response | null = null;
         try {
-          res = await fetch(`${BASE_SERVER_URL}/api/v1/healthz`, {
-            signal: pingCtrl.signal,
-          });
+          res = await pingWithTimeout(`${BASE_SERVER_URL}/api/v1/healthz`);
         } catch {
-          res = await fetch(`${BASE_SERVER_URL}/healthz`, {
-            signal: pingCtrl.signal,
-          });
-        } finally {
-          clearTimeout(pingTimer);
+          try {
+            res = await pingWithTimeout(`${BASE_SERVER_URL}/healthz`);
+          } catch {
+            res = null;
+          }
         }
 
         if (res && res.status === 404) {
           console.error(
-            `[wakeBackend] 404 on ${res.url}. Verify VITE_API_URL config.`,
+            `[wakeBackend] {HealthCheck}: 404 on ${res.url}. ` +
+              "Verify VITE_API_URL config.",
           );
           clearTimeout(coldStartTimer);
           if (hasShownLoader) {

@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { CyberVisualizer } from "@/components/ui/CyberVisualizer";
+import { APP_CONFIG } from "@/constants/app";
 import type { Announcement, DashboardStats } from "@/types";
 
 export const DashboardPage: React.FC = () => {
@@ -40,10 +41,7 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <>
-      <Header
-        title="Executive Dashboard"
-        subtitle="Computer Science Student Organization Central Command"
-      />
+      <Header title="Executive Dashboard" subtitle={APP_CONFIG.subtitle} />
 
       <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
         {/* Hero: Executive Command (Left) + Cyber Visualizer (Right) */}

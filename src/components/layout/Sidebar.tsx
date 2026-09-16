@@ -21,6 +21,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useIsMobile } from "@/lib/useIsMobile";
 import { Drawer } from "@/components/ui/Drawer";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { Logo } from "@/components/ui/Logo";
+import { APP_CONFIG } from "@/constants/app";
 import { cn } from "@/lib/utils";
 
 /* Desktop floating sidebar sizing constants */
@@ -414,19 +416,9 @@ export const Sidebar: React.FC = () => {
             }}
           >
             <div className="absolute inset-0 flex flex-col items-center justify-center px-3 text-center">
-              <img
-                src="/logo.png"
-                alt="PUPT Computer Society Logo"
-                className="shrink-0 object-contain rounded-full"
-                style={{
-                  width: visualExpanded ? "3.25rem" : "2.25rem",
-                  height: visualExpanded ? "3.25rem" : "2.25rem",
-                  transition: [
-                    `width ${SHELL_DURATION}ms ${SHELL_EASING}`,
-                    `height ${SHELL_DURATION}ms ${SHELL_EASING}`,
-                  ].join(", "),
-                  willChange: "width, height",
-                }}
+              <Logo
+                size={visualExpanded ? 48 : 34}
+                className="transition-all duration-300 ease-out"
               />
 
               {/* Text label with staged fade/slide */}
@@ -455,11 +447,21 @@ export const Sidebar: React.FC = () => {
                   willChange: "max-height, margin-top, opacity, transform",
                 }}
               >
-                <p className="mx-auto max-w-[13rem] text-xs font-bold leading-tight text-foreground">
-                  Polytechnic University of the Philippines Taguig Campus
+                <p
+                  className={
+                    "mx-auto max-w-[13rem] text-xs font-bold " +
+                    "leading-tight text-foreground"
+                  }
+                >
+                  {APP_CONFIG.campus}
                 </p>
-                <p className="mx-auto mt-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-                  Computer Society Portal
+                <p
+                  className={
+                    "mx-auto mt-0.5 text-[10px] font-semibold " +
+                    "text-amber-600 dark:text-amber-400"
+                  }
+                >
+                  {APP_CONFIG.name} Portal
                 </p>
               </div>
             </div>

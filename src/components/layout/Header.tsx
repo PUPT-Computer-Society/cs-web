@@ -105,10 +105,7 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right Utility & Identity Suite */}
       <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-        <NotificationBell
-          isOpen={isBellOpen}
-          onOpenChange={handleOpenBell}
-        />
+        <NotificationBell isOpen={isBellOpen} onOpenChange={handleOpenBell} />
         <ThemeToggle />
 
         {/* Executive Officer Identity Capsule & Dropdown (Jakob's Law) */}
