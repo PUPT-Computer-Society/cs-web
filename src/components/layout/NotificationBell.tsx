@@ -9,14 +9,35 @@ import { Button } from "@/components/ui/Button";
 import { Badge, Pill } from "@/components/ui/Badge";
 import type { AppNotification, NotificationListResponse } from "@/types";
 
-export const NotificationBell: React.FC = () => {
+export interface NotificationBellProps {
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export const NotificationBell: React.FC<NotificationBellProps> = ({
+  isOpen: controlledIsOpen,
+  onOpenChange,
+}) => {
   const { lastEvent } = useSSE();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isTouched, setIsTouched] = useState<boolean>(() => {
     return sessionStorage.getItem("cs_bell_is_touched") === "true";
   });
-  const [isOpen, setIsOpen] = useState(false);
+  const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(false);
+  const isControlled = controlledIsOpen !== undefined;
+  const isOpen = isControlled ? controlledIsOpen : uncontrolledIsOpen;
+
+  const setIsOpen = (next: boolean | ((prev: boolean) => boolean)) => {
+    const value = typeof next === "function" ? next(isOpen) : next;
+    if (onOpenChange) {
+      onOpenChange(value);
+    }
+    if (!isControlled) {
+      setUncontrolledIsOpen(value);
+    }
+  };
+
   const { isRendered: isDropdownRendered, isClosing: isDropdownClosing } =
     usePresence(isOpen, 150);
   const [isLoading, setIsLoading] = useState(false);
@@ -145,6 +166,7 @@ export const NotificationBell: React.FC = () => {
         data-touched={isTouched}
         className={cn(
           "relative p-2 rounded-md border transition-all",
+          isOpen && "z-50 ring-2 ring-primary/40",
           !isTouched && unreadCount > 0
             ? "border-amber-500/60 bg-amber-500/10 text-amber-600 " +
                 "dark:text-amber-400 ring-2 ring-amber-500/30"
@@ -190,10 +212,10 @@ export const NotificationBell: React.FC = () => {
 
       {isDropdownRendered && (
         <>
-          {/* Mobile ambient backdrop dismissal */}
+          {/* Ambient focus backdrop overlay */}
           <div
             className={cn(
-              "fixed inset-0 bg-background/80 z-40 sm:hidden",
+              "fixed inset-0 bg-black/80 z-40",
               isDropdownClosing
                 ? "animate-out fade-out-0 duration-150"
                 : "animate-in fade-in-0 duration-200",
