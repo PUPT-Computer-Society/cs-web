@@ -95,7 +95,7 @@ export const DashboardPage: React.FC = () => {
                 </span>
               </div>
               <h3 className="text-xl font-bold text-foreground tracking-tight">
-                Welcome, {user?.roleName || "Officer"}!
+                Welcome, {user?.username || "Officer"}!
               </h3>
               <p
                 className={
