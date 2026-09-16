@@ -38,6 +38,7 @@ import { DriveGuideModal } from "@/components/ui/DriveGuideModal";
 import { DriveDropzone } from "@/components/ui/DriveDropzone";
 import { buildGoogleCalendarUrl } from "@/lib/calendar";
 import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
+import { DateTimePicker } from "@/components/ui/DateTimePicker";
 import type { GPOAEvent, GPOAEventStatus } from "@/types";
 
 const GPOA_STATUS_OPTIONS = [
@@ -1036,7 +1037,7 @@ export const GPOAPage: React.FC = () => {
             maxHeight="max-h-[160px]"
           />
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label
                 className={
@@ -1045,10 +1046,9 @@ export const GPOAPage: React.FC = () => {
               >
                 Start Time
               </label>
-              <Input
-                type="datetime-local"
+              <DateTimePicker
                 value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
+                onChange={setStartTime}
                 required
               />
             </div>
@@ -1060,10 +1060,10 @@ export const GPOAPage: React.FC = () => {
               >
                 End Time
               </label>
-              <Input
-                type="datetime-local"
+              <DateTimePicker
                 value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
+                onChange={setEndTime}
+                referenceStartTime={startTime}
                 required
               />
             </div>
@@ -1210,7 +1210,7 @@ export const GPOAPage: React.FC = () => {
             maxHeight="max-h-[160px]"
           />
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label
                 className={
@@ -1219,10 +1219,9 @@ export const GPOAPage: React.FC = () => {
               >
                 Start Time
               </label>
-              <Input
-                type="datetime-local"
+              <DateTimePicker
                 value={editStartTime}
-                onChange={(e) => setEditStartTime(e.target.value)}
+                onChange={setEditStartTime}
                 required
               />
             </div>
@@ -1234,10 +1233,10 @@ export const GPOAPage: React.FC = () => {
               >
                 End Time
               </label>
-              <Input
-                type="datetime-local"
+              <DateTimePicker
                 value={editEndTime}
-                onChange={(e) => setEditEndTime(e.target.value)}
+                onChange={setEditEndTime}
+                referenceStartTime={editStartTime}
                 required
               />
             </div>
