@@ -415,10 +415,22 @@ export const Sidebar: React.FC = () => {
               transform: "translateZ(0)",
             }}
           >
-            <div className="absolute inset-0 flex flex-col items-center justify-center px-3 text-center">
+            <div
+              className={
+                "absolute inset-0 flex flex-col items-center " +
+                "justify-center px-3 text-center"
+              }
+            >
               <Logo
-                size={visualExpanded ? 48 : 34}
-                className="transition-all duration-300 ease-out"
+                style={{
+                  width: visualExpanded ? "3.25rem" : "2.25rem",
+                  height: visualExpanded ? "3.25rem" : "2.25rem",
+                  transition: [
+                    `width ${SHELL_DURATION}ms ${SHELL_EASING}`,
+                    `height ${SHELL_DURATION}ms ${SHELL_EASING}`,
+                  ].join(", "),
+                  willChange: "width, height",
+                }}
               />
 
               {/* Text label with staged fade/slide */}
