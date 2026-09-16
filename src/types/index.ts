@@ -233,6 +233,7 @@ export interface Task {
   description: string;
   status: TaskStatus;
   dueDate: string | null;
+  department?: string | null;
   assignedToId: string | null;
   gpoaEventId?: string | null;
   gpoaEventTitle?: string | null;

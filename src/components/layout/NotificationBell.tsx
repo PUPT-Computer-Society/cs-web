@@ -110,7 +110,14 @@ export const NotificationBell: React.FC = () => {
   };
 
   const formatTimeAgo = (dateStr: string) => {
-    const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+    if (!dateStr) return "";
+    const normalized =
+      dateStr.endsWith("Z") || dateStr.includes("+")
+        ? dateStr
+        : `${dateStr}+08:00`;
+    const diff = Math.floor(
+      (Date.now() - new Date(normalized).getTime()) / 1000,
+    );
     if (diff < 60) return "Just now";
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;

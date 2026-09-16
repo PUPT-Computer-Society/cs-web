@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Archive,
+  Building2,
   Calendar,
   CheckCircle2,
   Clock,
@@ -51,6 +52,19 @@ const TASK_SORT_OPTIONS = [
   { value: "due_date:desc", label: "Due Date (Latest first)" },
   { value: "title:asc", label: "Title (A-Z)" },
 ];
+
+export const COUNCIL_DEPARTMENTS = [
+  "Executive Governance",
+  "Internal Affairs",
+  "External Affairs",
+  "Records & Documentation",
+  "Finance & Audit",
+  "Communications & Media",
+  "Creatives & Branding",
+  "Academics & Research",
+  "Sports & Wellness",
+  "Logistics & Property",
+] as const;
 
 interface KanbanColumnDef {
   status: TaskStatus;
@@ -254,6 +268,21 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
                     </a>
                   )}
 
+                  {task.department && (
+                    <span
+                      className={
+                        "inline-flex items-center gap-1 bg-amber-500/10 " +
+                        "text-amber-600 dark:text-amber-400 border " +
+                        "border-amber-500/20 px-1.5 py-0.5 rounded " +
+                        "truncate max-w-[130px]"
+                      }
+                      title={`Department: ${task.department}`}
+                    >
+                      <Building2 className="w-2.5 h-2.5 shrink-0" />
+                      <span className="truncate">{task.department}</span>
+                    </span>
+                  )}
+
                   {task.gpoaEventTitle && (
                     <span
                       className={
@@ -452,6 +481,7 @@ export const TasksPage: React.FC = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [department, setDepartment] = useState<string>("");
   const [assignedToId, setAssignedToId] = useState<string | null>(null);
   const [gpoaEventId, setGpoaEventId] = useState<string | null>(null);
   const [draftSubtasks, setDraftSubtasks] = useState<
@@ -468,11 +498,13 @@ export const TasksPage: React.FC = () => {
   const [editDescription, setEditDescription] = useState("");
   const [editStatus, setEditStatus] = useState<TaskStatus>("todo");
   const [editDueDate, setEditDueDate] = useState("");
+  const [editDepartment, setEditDepartment] = useState<string>("");
   const [editAssignedToId, setEditAssignedToId] = useState<string | null>(null);
   const [editGpoaEventId, setEditGpoaEventId] = useState<string | null>(null);
 
   // Multidimensional Filters
   const [searchQuery, setSearchQuery] = useState("");
+  const [departmentFilter, setDepartmentFilter] = useState<string>("all");
   const [filterAssigneeId, setFilterAssigneeId] = useState<string>("all");
   const [filterEventId, setFilterEventId] = useState<string>("all");
   const [showConcludedEvents, setShowConcludedEvents] = useState(false);
@@ -501,9 +533,23 @@ export const TasksPage: React.FC = () => {
     (t: Task | null) => {
       if (!t) return false;
       if (canManage) return true;
-      return Boolean(user && t.createdById === user.id);
+      return Boolean(
+        user && (t.createdById === user.id || t.assignedToId === user.id)
+      );
     },
     [canManage, user],
+  );
+
+  const departmentFilterOptions = useMemo(
+    () => [
+      { value: "all", label: "All Departments" },
+      { value: "none", label: "No Department (General)" },
+      ...COUNCIL_DEPARTMENTS.map((dept) => ({
+        value: dept,
+        label: dept,
+      })),
+    ],
+    [],
   );
 
   const assigneeFilterOptions = useMemo(
@@ -537,6 +583,17 @@ export const TasksPage: React.FC = () => {
       { value: "in_progress", label: "In Progress" },
       { value: "under_review", label: "Under Review" },
       { value: "done", label: "Done" },
+    ],
+    [],
+  );
+
+  const departmentModalOptions = useMemo(
+    () => [
+      { value: "", label: "No Department (General Council Task)" },
+      ...COUNCIL_DEPARTMENTS.map((dept) => ({
+        value: dept,
+        label: dept,
+      })),
     ],
     [],
   );
@@ -649,6 +706,7 @@ export const TasksPage: React.FC = () => {
     setEditTitle(t.title);
     setEditDescription(t.description || "");
     setEditStatus(t.status);
+    setEditDepartment(t.department || "");
     setEditDueDate(
       t.dueDate ? toDateTimeLocalUTC8(t.dueDate).slice(0, 10) : "",
     );
@@ -668,6 +726,7 @@ export const TasksPage: React.FC = () => {
         description: string;
         status: TaskStatus;
         dueDate: string | null;
+        department?: string | null;
         assignedToId: string | null;
         gpoaEventId: string | null;
       };
@@ -702,6 +761,7 @@ export const TasksPage: React.FC = () => {
         description: editDescription,
         status: editStatus,
         dueDate: editDueDate ? toISOStringUTC8(editDueDate) : null,
+        department: editDepartment || null,
         assignedToId: editAssignedToId,
         gpoaEventId: editGpoaEventId,
       },
@@ -714,6 +774,7 @@ export const TasksPage: React.FC = () => {
       description?: string;
       status: TaskStatus;
       dueDate?: string | null;
+      department?: string | null;
       assignedToId?: string | null;
       gpoaEventId?: string | null;
       subtasks?: { title: string; assignedToId: string | null }[];
@@ -724,6 +785,7 @@ export const TasksPage: React.FC = () => {
       setTitle("");
       setDescription("");
       setDueDate("");
+      setDepartment("");
       setAssignedToId(null);
       setGpoaEventId(null);
       setDraftSubtasks([]);
@@ -743,6 +805,7 @@ export const TasksPage: React.FC = () => {
       description,
       status: "todo",
       dueDate: dueDate ? toISOStringUTC8(dueDate) : null,
+      department: department || null,
       assignedToId,
       gpoaEventId,
       subtasks: draftSubtasks,
@@ -883,6 +946,14 @@ export const TasksPage: React.FC = () => {
         if (!matchTitle && !matchDesc) return false;
       }
 
+      if (departmentFilter !== "all") {
+        if (departmentFilter === "none") {
+          if (t.department) return false;
+        } else {
+          if (t.department !== departmentFilter) return false;
+        }
+      }
+
       if (filterAssigneeId !== "all") {
         if (filterAssigneeId === "my") {
           if (!user || t.assignedToId !== user.id) return false;
@@ -911,6 +982,7 @@ export const TasksPage: React.FC = () => {
   }, [
     tasks,
     searchQuery,
+    departmentFilter,
     filterAssigneeId,
     filterEventId,
     showConcludedEvents,
@@ -935,12 +1007,14 @@ export const TasksPage: React.FC = () => {
 
   const isFiltered =
     Boolean(searchQuery.trim()) ||
+    departmentFilter !== "all" ||
     filterAssigneeId !== "all" ||
     filterEventId !== "all" ||
     showConcludedEvents;
 
   const handleClearFilters = () => {
     setSearchQuery("");
+    setDepartmentFilter("all");
     setFilterAssigneeId("all");
     setFilterEventId("all");
     setShowConcludedEvents(false);
@@ -1024,6 +1098,9 @@ export const TasksPage: React.FC = () => {
       if (filterAssigneeId !== "all") {
         params.set("assigned_to_id", filterAssigneeId);
       }
+      if (departmentFilter !== "all") {
+        params.set("department", departmentFilter);
+      }
       if (filterEventId !== "all") {
         params.set("gpoa_event_id", filterEventId);
       }
@@ -1070,6 +1147,7 @@ export const TasksPage: React.FC = () => {
     showLoader,
     hideLoader,
     searchQuery,
+    departmentFilter,
     filterAssigneeId,
     filterEventId,
     toastSuccess,
@@ -1151,6 +1229,17 @@ export const TasksPage: React.FC = () => {
                 onChange={setSearchQuery}
                 placeholder="Search action items or deliverables..."
                 size="sm"
+              />
+            </div>
+
+            {/* Filter by Department */}
+            <div className="flex items-center gap-1.5 sm:w-48">
+              <Select
+                size="sm"
+                value={departmentFilter}
+                onValueChange={setDepartmentFilter}
+                options={departmentFilterOptions}
+                triggerClassName="bg-background/50"
               />
             </div>
 
@@ -1697,6 +1786,17 @@ export const TasksPage: React.FC = () => {
                 <p className="text-xs text-muted-foreground">
                   ID: #{selectedTask.id}
                 </p>
+                {selectedTask.department && (
+                  <p
+                    className={
+                      "text-[11px] text-amber-600 dark:text-amber-400 " +
+                      "mt-1 flex items-center gap-1 font-semibold"
+                    }
+                  >
+                    <Building2 className="w-3 h-3 shrink-0" />
+                    <span>Dept: {selectedTask.department}</span>
+                  </p>
+                )}
                 <p className="text-[10px] text-muted-foreground mt-1">
                   Created: {formatDateUTC8(selectedTask.createdAt)}
                 </p>
@@ -1803,6 +1903,25 @@ export const TasksPage: React.FC = () => {
                   "block text-[11px] font-semibold " + "text-foreground mb-1"
                 }
               >
+                Department / Committee
+              </label>
+              <Select
+                value={editDepartment}
+                onValueChange={setEditDepartment}
+                options={departmentModalOptions}
+                placeholder="No Department (General)"
+                triggerClassName="h-8"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label
+                className={
+                  "block text-[11px] font-semibold " + "text-foreground mb-1"
+                }
+              >
                 Person Responsible (Assignee)
               </label>
               <Select
@@ -1811,6 +1930,21 @@ export const TasksPage: React.FC = () => {
                 options={userSelectOptions}
                 placeholder="Select Active Officer..."
                 triggerClassName="h-8"
+              />
+            </div>
+
+            <div>
+              <label
+                className={
+                  "block text-[11px] font-semibold " + "text-foreground mb-1"
+                }
+              >
+                Due Date
+              </label>
+              <Input
+                type="date"
+                value={editDueDate}
+                onChange={(e) => setEditDueDate(e.target.value)}
               />
             </div>
           </div>
@@ -1829,21 +1963,6 @@ export const TasksPage: React.FC = () => {
               options={gpoaModalOptions}
               placeholder="No GPOA activity linked (Standalone Task)"
               triggerClassName="h-8"
-            />
-          </div>
-
-          <div>
-            <label
-              className={
-                "block text-[11px] font-semibold " + "text-foreground mb-1"
-              }
-            >
-              Due Date
-            </label>
-            <Input
-              type="date"
-              value={editDueDate}
-              onChange={(e) => setEditDueDate(e.target.value)}
             />
           </div>
 
@@ -1904,21 +2023,40 @@ export const TasksPage: React.FC = () => {
             />
           </div>
 
-          <div>
-            <label
-              className={
-                "block text-[11px] font-semibold " + "text-foreground mb-1"
-              }
-            >
-              Person Responsible (Assignee)
-            </label>
-            <Select
-              value={assignedToId || ""}
-              onValueChange={(val) => setAssignedToId(val || null)}
-              options={userSelectOptions}
-              placeholder="Select Active Officer..."
-              triggerClassName="h-8"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label
+                className={
+                  "block text-[11px] font-semibold " + "text-foreground mb-1"
+                }
+              >
+                Department / Committee
+              </label>
+              <Select
+                value={department}
+                onValueChange={setDepartment}
+                options={departmentModalOptions}
+                placeholder="No Department (General)"
+                triggerClassName="h-8"
+              />
+            </div>
+
+            <div>
+              <label
+                className={
+                  "block text-[11px] font-semibold " + "text-foreground mb-1"
+                }
+              >
+                Person Responsible (Assignee)
+              </label>
+              <Select
+                value={assignedToId || ""}
+                onValueChange={(val) => setAssignedToId(val || null)}
+                options={userSelectOptions}
+                placeholder="Select Active Officer..."
+                triggerClassName="h-8"
+              />
+            </div>
           </div>
 
           <div>
