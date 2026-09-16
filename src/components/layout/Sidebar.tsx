@@ -222,8 +222,8 @@ export const Sidebar: React.FC = () => {
           <div
             className={cn(
               "flex h-16 w-full max-w-md items-center justify-around",
-              "rounded-2xl border border-border bg-background/90 px-2 py-1",
-              "shadow-lg backdrop-blur-xl pointer-events-auto",
+              "rounded-2xl border border-border bg-background px-2 py-1",
+              "shadow-lg pointer-events-auto",
             )}
           >
             {primaryMobileItems.map((item) => {
@@ -400,8 +400,7 @@ export const Sidebar: React.FC = () => {
         <aside
           className={cn(
             "relative z-50 flex h-full w-full flex-col overflow-visible",
-            "rounded-3xl border border-border bg-card/95 shadow-md",
-            "backdrop-blur-xl",
+            "rounded-3xl border border-border bg-card shadow-md",
           )}
         >
           {/* Top Branding Section */}

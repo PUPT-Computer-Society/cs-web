@@ -218,7 +218,7 @@ export const NotificationBell: React.FC = () => {
             <div
               className={
                 "p-3.5 border-b border-border flex items-center " +
-                "justify-between bg-muted/40"
+                "justify-between bg-muted"
               }
             >
               <div className="flex items-center gap-2">
@@ -284,8 +284,8 @@ export const NotificationBell: React.FC = () => {
                       "p-3 text-left cursor-pointer transition-colors flex",
                       "items-start gap-3",
                       notif.isRead
-                        ? "bg-card/40 hover:bg-secondary/40"
-                        : "bg-secondary/60 hover:bg-secondary",
+                        ? "bg-card hover:bg-secondary/70"
+                        : "bg-secondary hover:bg-secondary/90",
                     )}
                   >
                     <span

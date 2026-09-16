@@ -46,8 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
       className={cn(
         "sticky top-0 z-30 w-full flex items-center justify-between " +
           "gap-4 px-4 sm:px-6 py-3 min-h-[3.5rem]",
-        "bg-background/90 dark:bg-background/80 backdrop-blur-md " +
-          "border-b border-border/60",
+        "bg-background border-b border-border",
         "shadow-[0_4px_24px_-6px_rgba(0,0,0,0.04)] " +
           "dark:shadow-[0_4px_24px_-6px_rgba(0,0,0,0.25)]",
         "transition-all duration-200 select-none",
@@ -96,9 +95,9 @@ export const Header: React.FC<HeaderProps> = ({
             aria-label="Open user account menu"
             className={cn(
               "flex items-center gap-2 h-8 pl-1.5 pr-2.5 rounded-full " +
-                "cursor-pointer border border-border/80 bg-card/70 " +
-                "backdrop-blur-xs shadow-xs hover:border-primary/60 " +
-                "hover:bg-card/90 transition-all duration-150 group",
+                "cursor-pointer border border-border bg-card shadow-xs " +
+                "hover:border-primary/60 hover:bg-secondary " +
+                "transition-all duration-150 group",
               isOpen && "border-primary/60 bg-card ring-2 ring-primary/20",
             )}
           >
@@ -153,7 +152,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div
               className={cn(
                 "absolute right-0 mt-2 w-64 rounded-2xl border " +
-                  "border-border/80 bg-card/95 backdrop-blur-xl shadow-xl " +
+                  "border-border bg-card shadow-2xl " +
                   "z-50 p-2 space-y-1 animate-in fade-in-0 zoom-in-95 " +
                   "duration-150",
               )}
@@ -162,7 +161,7 @@ export const Header: React.FC<HeaderProps> = ({
               <div
                 className={
                   "flex items-center gap-3 p-2.5 rounded-xl " +
-                  "bg-secondary/40 border border-border/50"
+                  "bg-secondary border border-border"
                 }
               >
                 <UserAvatar
