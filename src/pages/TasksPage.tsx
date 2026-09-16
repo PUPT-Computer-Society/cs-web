@@ -66,6 +66,8 @@ export const COUNCIL_DEPARTMENTS = [
   "Logistics & Property",
 ] as const;
 
+const TASK_MIME_TYPE = "application/x-cs-task-id";
+
 interface KanbanColumnDef {
   status: TaskStatus;
   label: string;
@@ -1033,6 +1035,7 @@ export const TasksPage: React.FC = () => {
 
   // Drag and drop handlers
   const handleDragStart = useCallback((e: React.DragEvent, taskId: string) => {
+    e.dataTransfer.setData(TASK_MIME_TYPE, taskId);
     e.dataTransfer.setData("text/plain", taskId);
     e.dataTransfer.effectAllowed = "move";
     window.requestAnimationFrame(() => {
@@ -1065,7 +1068,9 @@ export const TasksPage: React.FC = () => {
   const handleDrop = useCallback(
     async (e: React.DragEvent, colStatus: TaskStatus) => {
       e.preventDefault();
-      const taskId = e.dataTransfer.getData("text/plain");
+      const taskId =
+        e.dataTransfer.getData(TASK_MIME_TYPE) ||
+        e.dataTransfer.getData("text/plain");
       setDraggedTaskId(null);
       setDragOverCol(null);
 
