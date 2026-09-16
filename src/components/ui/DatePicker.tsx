@@ -302,8 +302,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               transform: pos.placement === "top" ? "translateY(-100%)" : "none",
             }}
             className={cn(
-              "rounded-lg border border-border bg-popover p-3 shadow-md",
-              "text-popover-foreground animate-in fade-in-0 zoom-in-95",
+              "rounded-lg border border-border bg-card p-3 shadow-2xl",
+              "text-card-foreground animate-in fade-in-0 zoom-in-95",
               "duration-100 select-none",
             )}
           >
