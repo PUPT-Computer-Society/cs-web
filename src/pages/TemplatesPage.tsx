@@ -252,18 +252,7 @@ export const TemplatesPage: React.FC = () => {
       <Header
         title="Document Templates & SOPs"
         subtitle="Official council standard operating document templates"
-      >
-        {canManage && (
-          <Button
-            size="sm"
-            onClick={() => setCreateOpen(true)}
-            className="flex items-center gap-1.5 shadow-xs"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Register Template</span>
-          </Button>
-        )}
-      </Header>
+      />
 
       <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
         {/* Banner Section */}
@@ -336,17 +325,30 @@ export const TemplatesPage: React.FC = () => {
                 className="pl-9 text-xs"
               />
             </div>
-            <p
+            <div
               className={
-                "text-xs text-muted-foreground self-start sm:self-center"
+                "flex items-center gap-3 w-full sm:w-auto " +
+                "justify-between sm:justify-end"
               }
             >
-              Showing{" "}
-              <span className="font-bold text-foreground">
-                {filteredCount}
-              </span>{" "}
-              templates
-            </p>
+              <p className="text-xs text-muted-foreground">
+                Showing{" "}
+                <span className="font-bold text-foreground">
+                  {filteredCount}
+                </span>{" "}
+                templates
+              </p>
+              {canManage && (
+                <Button
+                  size="sm"
+                  onClick={() => setCreateOpen(true)}
+                  className="flex items-center gap-1.5 shadow-xs text-xs"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Register Template</span>
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Wing Filter Pills */}
