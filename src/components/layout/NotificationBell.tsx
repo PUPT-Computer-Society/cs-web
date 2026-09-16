@@ -205,7 +205,9 @@ export const NotificationBell: React.FC = () => {
                 "sm:right-0 sm:top-full sm:mt-2 sm:w-96 max-w-md mx-auto " +
                 "sm:mx-0 rounded-2xl border border-border bg-card " +
                 "shadow-2xl z-50 overflow-hidden origin-top " +
-                "sm:origin-top-right flex flex-col",
+                "sm:origin-top-right flex flex-col " +
+                "max-h-[calc(100dvh-13rem-env(safe-area-inset-bottom,0px))] " +
+                "sm:max-h-none",
               isDropdownClosing
                 ? "animate-out fade-out-0 zoom-out-95 slide-out-to-top-2 " +
                     "duration-150 ease-in"
@@ -261,7 +263,7 @@ export const NotificationBell: React.FC = () => {
 
             <div
               className={
-                "max-h-[calc(100vh-10rem)] sm:max-h-80 overflow-y-auto " +
+                "max-h-64 sm:max-h-80 overflow-y-auto " +
                 "divide-y divide-border"
               }
             >
