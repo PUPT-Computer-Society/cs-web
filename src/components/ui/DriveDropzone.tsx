@@ -47,6 +47,14 @@ interface DriveDropzoneProps {
 export const detectGoogleDocType = (
   url: string,
 ): { label: string; color: string } => {
+  if (url.includes("/folders/")) {
+    return {
+      label: "Google Drive Folder",
+      color:
+        "bg-purple-500/10 text-purple-600 dark:text-purple-400 " +
+        "border-purple-500/20",
+    };
+  }
   if (url.includes("/document/d/")) {
     return {
       label: "Google Docs",
@@ -169,6 +177,17 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
       return;
     }
 
+    // Direct link for Google Drive folder without slow/failing clone
+    if (trimmed.includes("/folders/")) {
+      const folderMatch = trimmed.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+      const fId = folderMatch ? folderMatch[1] : undefined;
+      const fName = title ? `${title} (Folder)` : "Google Drive Folder";
+      onUploaded(trimmed, fId, fName);
+      setCollabUrl("");
+      toastSuccess("Google Drive folder linked successfully!");
+      return;
+    }
+
     setIsUploading(true);
     const detected = detectGoogleDocType(trimmed);
     setCurrentUploadingName(detected.label);
@@ -230,6 +249,22 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
   const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     setDragOver(false);
+    const items = e.dataTransfer.items;
+    if (items && items.length > 0) {
+      const entry = (
+        items[0] as unknown as {
+          webkitGetAsEntry?: () => { isDirectory?: boolean };
+        }
+      ).webkitGetAsEntry?.();
+      if (entry?.isDirectory) {
+        toastError(
+          "Direct folder upload is not supported by browsers. " +
+            "Upload individual files or paste a Google Drive folder link " +
+            "under 'Google Doc / Link'.",
+        );
+        return;
+      }
+    }
     const file = e.dataTransfer.files?.[0];
     if (file) handleFile(file);
   };
@@ -378,7 +413,7 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            Google Doc / Sheet
+            Google Doc / Link
           </button>
         </div>
       </div>
@@ -435,7 +470,11 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
               }
             >
               <Link2 className="w-3.5 h-3.5 text-primary shrink-0" />
-              <span className="truncate">Paste Google Collaborative URL</span>
+              <span className="truncate">
+                {collabUrl.includes("/folders/")
+                  ? "Paste Google Drive Folder URL"
+                  : "Paste Google Doc, Sheet, or Drive Link"}
+              </span>
             </div>
             {collabUrl && (
               <span
@@ -464,7 +503,7 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
                   handleCollaborativeSubmit();
                 }
               }}
-              placeholder="https://docs.google.com/document/d/... or sheets"
+              placeholder="https://drive.google.com/... (Doc, Sheet, or Folder)"
               className={cn(
                 "flex-1 min-w-0 h-8 px-2.5 rounded-lg border border-border " +
                   "bg-background text-xs text-foreground " +
@@ -483,11 +522,15 @@ export const DriveDropzone: React.FC<DriveDropzoneProps> = ({
                   "shadow-xs shrink-0 whitespace-nowrap",
               )}
             >
-              Copy to Drive
+              {collabUrl.includes("/folders/")
+                ? "Link Folder"
+                : "Copy to Drive"}
             </button>
           </div>
           <p className="text-[10px] text-muted-foreground">
-            Clones into official Council folder with automated SOP name.
+            {collabUrl.includes("/folders/")
+              ? "Directly links official Google Drive folder to deliverable."
+              : "Clones into official Council folder with automated SOP name."}
           </p>
         </div>
       )}

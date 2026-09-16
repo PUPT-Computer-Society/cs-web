@@ -387,6 +387,40 @@ const EventDriveSection: React.FC<EventDriveSectionProps> = ({
               onCleared={() => currentDeliv.onChange("")}
             />
 
+            {/* Direct Subfolder Link Shortcut if linked */}
+            {currentDeliv.value && (
+              <div
+                className={
+                  "flex items-center justify-between p-2 rounded-lg " +
+                  "bg-background/60 border border-border/60 text-xs"
+                }
+              >
+                <span className="text-[11px] text-muted-foreground truncate">
+                  Active Asset:{" "}
+                  <strong className="text-foreground font-medium">
+                    {currentDeliv.shortLabel}
+                  </strong>
+                </span>
+                <a
+                  href={currentDeliv.value}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={
+                    "inline-flex items-center gap-1 text-[11px] " +
+                    "font-semibold text-primary hover:underline shrink-0"
+                  }
+                >
+                  <span>Open in Google Drive</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            )}
+
+            <p className="text-[10px] text-muted-foreground/80 px-0.5">
+              Tip: For bulk files (like event photos), open the folder in Drive
+              to drop files directly, or paste the Google Drive folder link.
+            </p>
+
             {/* Pagination / Stepper Navigation */}
             <div
               className={
