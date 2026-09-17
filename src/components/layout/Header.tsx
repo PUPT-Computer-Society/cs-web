@@ -175,7 +175,7 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Ambient focus backdrop overlay */}
               <div
                 className={cn(
-                  "fixed inset-0 bg-black/80 z-40 touch-none select-none",
+                  "fixed inset-0 bg-black/60 z-40 touch-none select-none",
                   isProfileClosing
                     ? "animate-out fade-out-0 duration-150"
                     : "animate-in fade-in-0 duration-200",
