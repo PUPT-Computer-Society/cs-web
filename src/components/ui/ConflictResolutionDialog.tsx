@@ -66,8 +66,8 @@ export const ConflictResolutionDialog: React.FC<
               May nagbago mula sa kabilang device o session.
             </p>
             <p className="text-muted-foreground">
-              Upang hindi ma-overwrite ang pinakabagong bersyon sa server,
-              hindi muna itinuloy ang pag-save.
+              Upang hindi ma-overwrite ang pinakabagong bersyon sa server, hindi
+              muna itinuloy ang pag-save.
             </p>
           </div>
         </div>

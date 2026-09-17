@@ -1924,9 +1924,7 @@ export const TasksPage: React.FC = () => {
             >
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 shrink-0 animate-pulse" />
-                <span>
-                  May bagong pagbabago mula sa kabilang device!
-                </span>
+                <span>May bagong pagbabago mula sa kabilang device!</span>
               </div>
               <Button
                 type="button"
@@ -1936,7 +1934,7 @@ export const TasksPage: React.FC = () => {
                   if (!selectedTask) return;
                   try {
                     const fresh = await api.get<Task>(
-                      `/tasks/${selectedTask.id}`
+                      `/tasks/${selectedTask.id}`,
                     );
                     setSelectedTask(fresh);
                     setEditTitle(fresh.title);
@@ -1945,7 +1943,7 @@ export const TasksPage: React.FC = () => {
                     setEditDueDate(
                       fresh.dueDate
                         ? toDateTimeLocalUTC8(fresh.dueDate).slice(0, 10)
-                        : ""
+                        : "",
                     );
                     setEditDepartment(fresh.department || "");
                     setEditAssignedToId(fresh.assignedToId || null);
@@ -2098,9 +2096,7 @@ export const TasksPage: React.FC = () => {
         open={conflictDialogOpen}
         onOpenChange={setConflictDialogOpen}
         entityName="Task"
-        draftContentToCopy={
-          `Title: ${editTitle}\nDescription: ${editDescription}`
-        }
+        draftContentToCopy={`Title: ${editTitle}\nDescription: ${editDescription}`}
         onReloadLatest={async () => {
           if (!selectedTask) return;
           try {

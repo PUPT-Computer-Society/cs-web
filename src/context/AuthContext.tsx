@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         const freshUser = await api.get<AuthSessionUser>("/auth/me");
         setUser(freshUser);
-        setToken("cookie_active");
+        setToken(localStorage.getItem("cs_token") || "cookie_active");
         localStorage.setItem("cs_user", JSON.stringify(freshUser));
       } catch {
         setUser(null);
@@ -76,7 +76,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setToken(response.token || "cookie_active");
     setUser(response.user);
     localStorage.setItem("cs_user", JSON.stringify(response.user));
-    localStorage.removeItem("cs_token");
+    if (response.token) {
+      localStorage.setItem("cs_token", response.token);
+    }
   };
 
   const updateUserSession = (updatedUser: AuthSessionUser) => {
