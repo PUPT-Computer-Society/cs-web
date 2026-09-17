@@ -6,11 +6,13 @@ import React, {
   useState,
 } from "react";
 import {
+  AlertCircle,
   AlertTriangle,
   Archive,
   Building2,
   Calendar,
   CheckCircle2,
+  Circle,
   Clock,
   Download,
   Edit3,
@@ -54,6 +56,7 @@ import {
 import type { GPOAEvent, Task, TaskStatus, User } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryClient";
+import { type } from "os";
 
 const TASK_SORT_OPTIONS = [
   { value: "created_at:desc", label: "Date (Newest first)" },
@@ -81,34 +84,29 @@ const TASK_MIME_TYPE = "application/x-cs-task-id";
 interface KanbanColumnDef {
   status: TaskStatus;
   label: string;
-  dotClass: string;
-  bgTint: string;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 const columns: KanbanColumnDef[] = [
   {
     status: "todo",
     label: "To Do",
-    dotClass: "bg-slate-400 dark:bg-slate-500",
-    bgTint: "bg-slate-500/[0.02]",
+    icon: Circle,
   },
   {
     status: "in_progress",
     label: "In Progress",
-    dotClass: "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]",
-    bgTint: "bg-amber-500/[0.02]",
+    icon: Clock,
   },
   {
     status: "under_review",
     label: "Under Review",
-    dotClass: "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]",
-    bgTint: "bg-blue-500/[0.02]",
+    icon: AlertCircle,
   },
   {
     status: "done",
     label: "Done",
-    dotClass: "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]",
-    bgTint: "bg-emerald-500/[0.02]",
+    icon: CheckCircle2,
   },
 ];
 
@@ -150,40 +148,42 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
         onDragLeave={onDragLeave}
         onDrop={(e) => onDrop(e, col.status)}
         className={
-          "rounded-xl border p-3.5 flex flex-col " +
+          "rounded-xl border p-3 flex flex-col " +
           "max-h-[calc(100vh-270px)] min-h-[460px] " +
-          `transition-colors duration-150 ${
+          `transition-colors duration-100 ${
             isOver
-              ? "border-primary ring-2 ring-primary/30 bg-primary/10"
-              : `border-border/70 bg-card/70 ${col.bgTint}`
+              ? "border-primary ring-1 ring-primary/40 bg-primary/10"
+              : "border-white/[0.08] bg-card/40"
           }`
         }
       >
         <div
           className={
-            "flex justify-between items-center pb-3 border-b " +
-            "border-border/80 mb-3 shrink-0"
+            "flex justify-between items-center pb-2.5 border-b " +
+            "border-white/[0.08] mb-2.5 shrink-0"
           }
         >
           <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${col.dotClass}`} />
+            <col.icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
             <span
               className={
-                "text-[11px] font-bold uppercase tracking-wider text-foreground"
+                "text-[12px] font-semibold tracking-[-0.01em] text-foreground"
               }
             >
               {col.label}
             </span>
           </div>
-          <Badge
-            variant="outline"
-            className="text-[10px] font-semibold bg-background/50"
+          <span
+            className={
+              "text-[11px] font-mono text-muted-foreground px-1.5 py-0.5 " +
+              "rounded bg-muted/40 border border-white/[0.08]"
+            }
           >
             {tasks.length}
-          </Badge>
+          </span>
         </div>
 
-        <div className="space-y-2.5 flex-1 overflow-y-auto pr-1">
+        <div className="space-y-2 flex-1 overflow-y-auto pr-1">
           {tasks.map((task) => {
             const assignee = task.assignedToId
               ? usersMap.get(task.assignedToId)
@@ -192,26 +192,27 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
             const canEdit = canEditTask(task);
 
             return (
-              <Card
+              <div
                 key={task.id}
                 draggable={canEdit}
                 onDragStart={(e) => onDragStart(e, task.id)}
                 onDragEnd={onDragEnd}
                 onClick={() => onSelectTask(task)}
                 className={
-                  "p-3.5 shadow-xs cursor-pointer border-border/80 " +
-                  "hover:border-primary/40 hover:shadow-md select-none " +
-                  "group relative bg-card " +
+                  "p-3 rounded-lg cursor-pointer border border-white/[0.08] " +
+                  "hover:border-white/20 select-none group relative bg-card " +
+                  "hover:bg-muted/30 text-[13px] tracking-[-0.01em] " +
                   (isDragged
                     ? "opacity-40 border-dashed border-primary " +
-                      "ring-2 ring-primary/40"
-                    : "transition-[border-color,box-shadow] duration-150")
+                      "ring-1 ring-primary/40"
+                    : "transition-colors duration-100")
                 }
               >
                 <div className="flex items-start justify-between gap-2">
                   <h5
                     className={
-                      "text-xs font-bold text-foreground line-clamp-2 flex-1"
+                      "text-[13px] font-medium text-foreground " +
+                      "line-clamp-2 flex-1 tracking-[-0.01em] leading-snug"
                     }
                   >
                     {task.title}
@@ -219,7 +220,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
                   {canEdit && (
                     <GripVertical
                       className={
-                        "w-3.5 h-3.5 text-muted-foreground/50 opacity-0 " +
+                        "w-3.5 h-3.5 text-muted-foreground/40 opacity-0 " +
                         "group-hover:opacity-100 transition-opacity shrink-0"
                       }
                     />
@@ -229,7 +230,8 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
                 {task.description && (
                   <p
                     className={
-                      "text-[11px] text-muted-foreground mt-1 line-clamp-2"
+                      "text-[12px] text-muted-foreground mt-1 line-clamp-2 " +
+                      "leading-relaxed"
                     }
                   >
                     {task.description}
@@ -238,8 +240,8 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
 
                 <div
                   className={
-                    "mt-2.5 flex flex-wrap items-center " +
-                    "gap-2 text-[10px] text-muted-foreground"
+                    "mt-2 flex flex-wrap items-center " +
+                    "gap-1.5 text-[11px] text-muted-foreground"
                   }
                 >
                   {task.dueDate && (
@@ -254,19 +256,15 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
                       draggable={false}
                       onClick={(e) => e.stopPropagation()}
                       className={
-                        "inline-flex items-center gap-1 " +
-                        "bg-secondary/70 " +
-                        "hover:bg-primary/15 hover:text-primary " +
-                        "px-1.5 py-0.5 rounded transition-colors " +
-                        "group/gcal"
+                        "inline-flex items-center gap-1 bg-secondary/60 " +
+                        "border border-white/[0.06] text-muted-foreground " +
+                        "hover:text-foreground px-1.5 py-0.5 rounded " +
+                        "transition-colors duration-100 group/gcal"
                       }
                       title="Sync deadline to Google Calendar"
                     >
                       <Calendar
-                        className={
-                          "w-3 h-3 text-muted-foreground " +
-                          "group-hover/gcal:text-primary"
-                        }
+                        className={"w-3 h-3 text-muted-foreground shrink-0"}
                       />
                       <span>{formatDateUTC8(task.dueDate)}</span>
                       <ExternalLink
@@ -281,14 +279,15 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
                   {task.department && (
                     <span
                       className={
-                        "inline-flex items-center gap-1 bg-amber-500/10 " +
-                        "text-amber-600 dark:text-amber-400 border " +
-                        "border-amber-500/20 px-1.5 py-0.5 rounded " +
-                        "truncate max-w-[130px]"
+                        "inline-flex items-center gap-1 bg-secondary/60 " +
+                        "border border-white/[0.06] text-muted-foreground " +
+                        "px-1.5 py-0.5 rounded truncate max-w-[130px]"
                       }
                       title={`Department: ${task.department}`}
                     >
-                      <Building2 className="w-2.5 h-2.5 shrink-0" />
+                      <Building2
+                        className={"w-3 h-3 shrink-0 text-muted-foreground/80"}
+                      />
                       <span className="truncate">{task.department}</span>
                     </span>
                   )}
@@ -296,12 +295,14 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
                   {task.gpoaEventTitle && (
                     <span
                       className={
-                        "inline-flex items-center gap-1 bg-blue-500/10 " +
-                        "text-blue-600 dark:text-blue-400 px-1.5 " +
-                        "py-0.5 rounded truncate max-w-[150px]"
+                        "inline-flex items-center gap-1 bg-secondary/60 " +
+                        "border border-white/[0.06] text-muted-foreground " +
+                        "px-1.5 py-0.5 rounded truncate max-w-[150px]"
                       }
                     >
-                      <Calendar className="w-2.5 h-2.5 shrink-0" />
+                      <Calendar
+                        className={"w-3 h-3 shrink-0 text-muted-foreground/80"}
+                      />
                       <span className="truncate">{task.gpoaEventTitle}</span>
                     </span>
                   )}
@@ -309,11 +310,14 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
                   {assignee && (
                     <span
                       className={
-                        "inline-flex items-center gap-1 bg-secondary/70 " +
+                        "inline-flex items-center gap-1 bg-secondary/60 " +
+                        "border border-white/[0.06] text-muted-foreground " +
                         "px-1.5 py-0.5 rounded truncate max-w-[120px]"
                       }
                     >
-                      <UserIcon className="w-3 h-3 shrink-0" />
+                      <UserIcon
+                        className={"w-3 h-3 shrink-0 text-muted-foreground/80"}
+                      />
                       <span className="truncate">{assignee.fullName}</span>
                     </span>
                   )}
@@ -428,7 +432,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
                     )}
                   </div>
                 </div>
-              </Card>
+              </div>
             );
           })}
 
@@ -555,6 +559,33 @@ export const TasksPage: React.FC = () => {
       setIsStaleWarningVisible(true);
     }
   }, [lastEvent, editDialogOpen, selectedTask]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = (document.activeElement?.tagName || "").toLowerCase();
+      const isInput =
+        activeTag === "input" ||
+        activeTag === "textarea" ||
+        activeTag === "select" ||
+        document.activeElement?.getAttribute("contenteditable") === "true";
+      if (isInput) return;
+
+      if (
+        e.key.toLowerCase() === "c" &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey
+      ) {
+        if (canManage) {
+          e.preventDefault();
+          setDialogOpen(true);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [canManage]);
 
   const canEditTask = useCallback(
     (t: Task | null) => {
@@ -1248,10 +1279,22 @@ export const TasksPage: React.FC = () => {
                 type="button"
                 size="sm"
                 onClick={() => setDialogOpen(true)}
-                className="text-[11px] font-semibold h-8"
+                className={
+                  "text-[12px] font-semibold tracking-[-0.01em] h-8 px-3 " +
+                  "flex items-center gap-1.5"
+                }
               >
-                <Plus className="w-3.5 h-3.5 mr-1" />
-                New Action Item
+                <Plus className="w-3.5 h-3.5" />
+                <span>New Action Item</span>
+                <kbd
+                  className={
+                    "ml-1 px-1.5 py-0.2 rounded text-[10px] font-mono " +
+                    "bg-primary-foreground/20 text-primary-foreground " +
+                    "select-none"
+                  }
+                >
+                  C
+                </kbd>
               </Button>
             )}
           </div>

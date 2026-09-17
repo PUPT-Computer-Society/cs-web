@@ -156,16 +156,14 @@ export const Header: React.FC<HeaderProps> = ({
                 }
                 className={cn(
                   "w-1.5 h-1.5 rounded-full hidden sm:inline-block",
-                  isConnected
-                    ? "bg-emerald-500 animate-pulse"
-                    : "bg-amber-500/80",
+                  isConnected ? "bg-emerald-500" : "bg-amber-500/80",
                 )}
               />
             </div>
             <ChevronDown
               className={cn(
                 "w-3 h-3 text-muted-foreground transition-transform " +
-                  "duration-200 shrink-0",
+                  "duration-150 shrink-0",
                 isProfileOpen && "rotate-180 text-foreground",
               )}
             />
@@ -179,8 +177,8 @@ export const Header: React.FC<HeaderProps> = ({
                 className={cn(
                   "fixed inset-0 bg-black/80 z-40 touch-none select-none",
                   isProfileClosing
-                    ? "animate-out fade-out-0 duration-150"
-                    : "animate-in fade-in-0 duration-200",
+                    ? "animate-out fade-out-0 duration-100"
+                    : "animate-in fade-in-0 duration-150",
                 )}
                 onClick={() => setIsProfileOpen(false)}
                 onTouchMove={(e) => e.preventDefault()}
@@ -192,14 +190,15 @@ export const Header: React.FC<HeaderProps> = ({
                 className={cn(
                   "fixed inset-x-3 top-16 sm:absolute sm:inset-auto " +
                     "sm:right-0 sm:top-full sm:mt-2 sm:w-64 max-w-xs " +
-                    "mx-auto sm:mx-0 rounded-2xl border border-border " +
-                    "bg-card shadow-2xl z-50 p-2 space-y-1 origin-top " +
-                    "sm:origin-top-right",
+                    "mx-auto sm:mx-0 rounded-2xl border border-white/[0.08] " +
+                    "bg-card text-[13px] tracking-[-0.01em] " +
+                    "shadow-[0_2px_4px_rgba(0,0,0,0.08),0_12px_24px_rgba(0,0,0,0.12),0_32px_48px_rgba(0,0,0,0.18)] " +
+                    "z-50 p-2 space-y-1 origin-top sm:origin-top-right",
                   isProfileClosing
                     ? "animate-out fade-out-0 zoom-out-95 " +
-                        "slide-out-to-top-2 duration-150 ease-in"
+                        "slide-out-to-top-2 duration-100 ease-in"
                     : "animate-in fade-in-0 zoom-in-95 " +
-                        "slide-in-from-top-2 duration-200 ease-out",
+                        "slide-in-from-top-2 duration-150 ease-out",
                 )}
               >
                 {/* Identity Header */}
@@ -319,8 +318,8 @@ export const Header: React.FC<HeaderProps> = ({
         }}
         title="Sign Out All Devices"
         description={
-          "I-lo-logout ang account mo sa lahat ng active sessions " +
-          "(phone, laptop, ibang browser). Sigurado ka ba?"
+          "Your account will be logged out of all sessions " +
+          "(phone, laptop, other browser). Are you sure?"
         }
         confirmText="Sign Out Everywhere"
         cancelText="Cancel"

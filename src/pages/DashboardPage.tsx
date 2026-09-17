@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, Link } from "react-router-dom";
 import {
   ArrowUpRight,
   Boxes,
@@ -159,9 +159,7 @@ export const DashboardPage: React.FC = () => {
                 }
               >
                 <span
-                  className={
-                    "w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"
-                  }
+                  className={"w-1.5 h-1.5 rounded-full bg-emerald-500/80"}
                 />
               </div>
             </div>
@@ -172,14 +170,15 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Elevated Metric Cards with Hover Elevation and Glow Accents */}
+        {/* Elevated Metric Cards with Layered Light Falloff Depth */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* GPOA Activity Metric (Primary Blue Highlight) */}
+          {/* GPOA Activity Metric */}
           <Card
             className={
-              "border-border/80 bg-card hover:border-primary/40 " +
-              "hover:-translate-y-0.5 hover:shadow-md " +
-              "transition-[border-color,box-shadow,transform] duration-150"
+              "border border-white/[0.08] bg-card hover:border-white/20 " +
+              "shadow-[0_2px_4px_rgba(0,0,0,0.06),0_12px_24px_rgba(0,0,0,0.08),0_32px_48px_rgba(0,0,0,0.12)] " +
+              "hover:scale-[1.015] hover:-translate-y-0.5 " +
+              "transition-all duration-150 ease-out"
             }
           >
             <CardContent className="p-5 flex justify-between items-start">
@@ -214,12 +213,13 @@ export const DashboardPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Treasury Balance Metric (Gold Accent Highlight) */}
+          {/* Treasury Balance Metric */}
           <Card
             className={
-              "border-border/80 bg-card hover:border-amber-500/40 " +
-              "hover:-translate-y-0.5 hover:shadow-md " +
-              "transition-[border-color,box-shadow,transform] duration-150"
+              "border border-white/[0.08] bg-card hover:border-amber-500/30 " +
+              "shadow-[0_2px_4px_rgba(0,0,0,0.06),0_12px_24px_rgba(0,0,0,0.08),0_32px_48px_rgba(0,0,0,0.12)] " +
+              "hover:scale-[1.015] hover:-translate-y-0.5 " +
+              "transition-all duration-150 ease-out"
             }
           >
             <CardContent className="p-5 flex justify-between items-start">
@@ -266,12 +266,13 @@ export const DashboardPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Open Tasks Metric (Secondary Grey Highlight) */}
+          {/* Open Tasks Metric */}
           <Card
             className={
-              "border-border/80 bg-card hover:border-primary/40 " +
-              "hover:-translate-y-0.5 hover:shadow-md " +
-              "transition-[border-color,box-shadow,transform] duration-150"
+              "border border-white/[0.08] bg-card hover:border-white/20 " +
+              "shadow-[0_2px_4px_rgba(0,0,0,0.06),0_12px_24px_rgba(0,0,0,0.08),0_32px_48px_rgba(0,0,0,0.12)] " +
+              "hover:scale-[1.015] hover:-translate-y-0.5 " +
+              "transition-all duration-150 ease-out"
             }
           >
             <CardContent className="p-5 flex justify-between items-start">
@@ -309,9 +310,10 @@ export const DashboardPage: React.FC = () => {
           {/* Executive Roster */}
           <Card
             className={
-              "border-border/80 bg-card hover:border-primary/40 " +
-              "hover:-translate-y-0.5 hover:shadow-md " +
-              "transition-[border-color,box-shadow,transform] duration-150"
+              "border border-white/[0.08] bg-card hover:border-white/20 " +
+              "shadow-[0_2px_4px_rgba(0,0,0,0.06),0_12px_24px_rgba(0,0,0,0.08),0_32px_48px_rgba(0,0,0,0.12)] " +
+              "hover:scale-[1.015] hover:-translate-y-0.5 " +
+              "transition-all duration-150 ease-out"
             }
           >
             <CardContent className="p-5 flex justify-between items-start">

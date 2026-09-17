@@ -316,7 +316,7 @@ export const Sidebar: React.FC = () => {
                     {user?.fullName || "Officer"}
                   </p>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/80" />
                     <p className="text-[11px] text-muted-foreground truncate uppercase font-semibold">
                       {user?.roleName?.replace("_", " ") || "Officer"}
                     </p>
@@ -711,7 +711,7 @@ export const Sidebar: React.FC = () => {
                       {user?.fullName || "Officer"}
                     </p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/80" />
                       <p className="text-[10px] text-muted-foreground truncate uppercase font-semibold">
                         {user?.roleName?.replace("_", " ") || "Officer"}
                       </p>

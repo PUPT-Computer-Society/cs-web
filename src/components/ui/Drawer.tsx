@@ -50,11 +50,12 @@ export const Drawer: React.FC<DrawerProps> = ({
         aria-modal="true"
         className={cn(
           "relative z-50 w-full max-w-lg max-h-[85vh] flex flex-col",
-          "rounded-t-3xl border-t border-border bg-card shadow-2xl",
+          "rounded-t-3xl border-t border-white/[0.08] bg-card",
+          "shadow-[0_-2px_4px_rgba(0,0,0,0.06),0_-12px_24px_rgba(0,0,0,0.1),0_-32px_48px_rgba(0,0,0,0.15)]",
           "text-card-foreground pb-[max(1rem,env(safe-area-inset-bottom))]",
           isClosing
-            ? "animate-out slide-out-to-bottom-full duration-200 ease-in"
-            : "animate-in slide-in-from-bottom-full duration-250 ease-out",
+            ? "animate-out slide-out-to-bottom-full duration-100 ease-in"
+            : "animate-in slide-in-from-bottom-full duration-150 ease-out",
           className,
         )}
       >

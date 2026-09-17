@@ -29,10 +29,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
-import type {
-  AuthSessionUser,
-  UserProfileUpdateRequest,
-} from "@/types";
+import type { AuthSessionUser, UserProfileUpdateRequest } from "@/types";
 
 type ProfileTab = "profile" | "security";
 
@@ -129,12 +126,7 @@ export const ProfilePage: React.FC = () => {
       return;
     }
 
-    const allowedMimes = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/gif",
-    ];
+    const allowedMimes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
     if (!allowedMimes.includes(file.type)) {
       toast.error("Only JPEG, PNG, WebP, and GIF images are supported.");
       return;
@@ -246,7 +238,10 @@ export const ProfilePage: React.FC = () => {
                 <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">
                   {user?.fullName || "Council Officer"}
                 </h1>
-                <Badge variant="outline" className="text-xs font-semibold px-2 py-0.5">
+                <Badge
+                  variant="outline"
+                  className="text-xs font-semibold px-2 py-0.5"
+                >
                   {user?.roleName?.replace("_", " ") || "Officer"}
                 </Badge>
               </div>
@@ -254,7 +249,7 @@ export const ProfilePage: React.FC = () => {
                 {user?.email}
               </p>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-emerald-500/80" />
                 <span className="font-semibold text-foreground text-[11px]">
                   Verified Council Account
                 </span>
@@ -504,7 +499,8 @@ export const ProfilePage: React.FC = () => {
                         className="h-10 bg-muted/40 text-muted-foreground cursor-not-allowed text-xs font-mono"
                       />
                       <p className="text-[11px] text-muted-foreground">
-                        Locked to council whitelist credentials to guarantee identity integrity
+                        Locked to council whitelist credentials to guarantee
+                        identity integrity
                       </p>
                     </div>
 
@@ -558,7 +554,8 @@ export const ProfilePage: React.FC = () => {
                   <div>
                     <CardTitle>Account Authentication Credentials</CardTitle>
                     <CardDescription>
-                      Secure access to the CS organization portal with a robust password
+                      Secure access to the CS organization portal with a robust
+                      password
                     </CardDescription>
                   </div>
                 </div>
@@ -571,7 +568,9 @@ export const ProfilePage: React.FC = () => {
                       Portal Password Protection
                     </p>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      Your native password is authenticated with bcrypt hashing. Updating your password requires confirming your current credentials.
+                      Your native password is authenticated with bcrypt hashing.
+                      Updating your password requires confirming your current
+                      credentials.
                     </p>
                   </div>
 
@@ -598,7 +597,8 @@ export const ProfilePage: React.FC = () => {
                   <div>
                     <CardTitle>Security Posture & Privileges</CardTitle>
                     <CardDescription>
-                      Account protection standards enforced by the council infrastructure
+                      Account protection standards enforced by the council
+                      infrastructure
                     </CardDescription>
                   </div>
                 </div>
@@ -612,7 +612,8 @@ export const ProfilePage: React.FC = () => {
                       <p className="text-xs font-bold">Session Active</p>
                     </div>
                     <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      Signed bearer token active with Redis session synchronization.
+                      Signed bearer token active with Redis session
+                      synchronization.
                     </p>
                   </div>
 
@@ -622,7 +623,8 @@ export const ProfilePage: React.FC = () => {
                       <p className="text-xs font-bold">Whitelist Identity</p>
                     </div>
                     <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      Account email is permanently bound to the council officer whitelist.
+                      Account email is permanently bound to the council officer
+                      whitelist.
                     </p>
                   </div>
 
@@ -632,7 +634,11 @@ export const ProfilePage: React.FC = () => {
                       <p className="text-xs font-bold">Role-Based Control</p>
                     </div>
                     <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      Assigned role: <span className="font-semibold text-foreground uppercase">{user?.roleName?.replace("_", " ")}</span>.
+                      Assigned role:{" "}
+                      <span className="font-semibold text-foreground uppercase">
+                        {user?.roleName?.replace("_", " ")}
+                      </span>
+                      .
                     </p>
                   </div>
                 </div>

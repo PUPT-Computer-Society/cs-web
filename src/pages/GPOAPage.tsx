@@ -339,16 +339,12 @@ const EventDriveSection: React.FC<EventDriveSectionProps> = ({
                   >
                     <div className="flex items-center gap-1">
                       {isLinked ? (
-                        <CheckCircle2
-                          className="w-3 h-3 text-emerald-500 shrink-0"
-                        />
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
                       ) : (
                         <span
                           className={
                             "w-1.5 h-1.5 rounded-full shrink-0 " +
-                            (isActive
-                              ? "bg-primary"
-                              : "bg-muted-foreground/30")
+                            (isActive ? "bg-primary" : "bg-muted-foreground/30")
                           }
                         />
                       )}
@@ -422,9 +418,7 @@ const EventDriveSection: React.FC<EventDriveSectionProps> = ({
                 "text-muted-foreground px-1"
               }
             >
-              <span>
-                {configuredCount} of 5 SOP deliverables linked
-              </span>
+              <span>{configuredCount} of 5 SOP deliverables linked</span>
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
@@ -757,9 +751,7 @@ export const GPOAPage: React.FC = () => {
           }
         >
           <div className="flex items-center gap-2">
-            <span
-              className={"w-2 h-2 rounded-full bg-emerald-500 animate-pulse"}
-            />
+            <span className={"w-2 h-2 rounded-full bg-emerald-500/80"} />
             <span className="text-xs font-semibold text-muted-foreground">
               Google Calendar 1-Click Sync Enabled
             </span>
@@ -1086,18 +1078,14 @@ export const GPOAPage: React.FC = () => {
                     >
                       <div className="space-y-1.5 min-w-0">
                         <div className="flex items-center gap-2">
-                          <Clock
-                            className="w-3.5 h-3.5 shrink-0 text-primary"
-                          />
+                          <Clock className="w-3.5 h-3.5 shrink-0 text-primary" />
                           <span>
                             {formatDateUTC8(event.startTime)} (
                             {formatTimeUTC8(event.startTime)})
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <MapPin
-                            className="w-3.5 h-3.5 shrink-0 text-primary"
-                          />
+                          <MapPin className="w-3.5 h-3.5 shrink-0 text-primary" />
                           <span className="truncate">
                             {event.location || "Online / Discord"}
                           </span>
@@ -1222,11 +1210,7 @@ export const GPOAPage: React.FC = () => {
               >
                 End Time
               </label>
-              <DateTimePicker
-                value={endTime}
-                onChange={setEndTime}
-                required
-              />
+              <DateTimePicker value={endTime} onChange={setEndTime} required />
             </div>
           </div>
 

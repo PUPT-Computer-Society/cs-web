@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +21,21 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   size = "default",
   autoFocus = false,
 }) => {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <div className={cn("relative flex items-center w-full", className)}>
       <Search
@@ -30,34 +45,49 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         )}
       />
       <input
+        ref={inputRef}
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         autoFocus={autoFocus}
         className={cn(
-          "w-full rounded-md border border-input bg-transparent",
-          "pl-8 pr-8 text-foreground placeholder:text-muted-foreground",
-          "focus:outline-none focus:ring-1 focus:ring-ring transition-colors",
-          size === "sm"
-            ? "h-9 sm:h-8 text-base sm:text-[11px]"
-            : "h-10 sm:h-9 text-base sm:text-xs",
+          "w-full rounded-md border border-white/[0.08] bg-secondary/30",
+          "pl-8 pr-14 text-foreground placeholder:text-muted-foreground",
+          "focus:outline-none focus:ring-1 focus:ring-primary/40",
+          "text-[13px] tracking-[-0.01em] transition-colors duration-100",
+          size === "sm" ? "h-8" : "h-9",
           inputClassName,
         )}
       />
-      {value && (
+      {value ? (
         <button
           type="button"
-          onClick={() => onChange("")}
+          onClick={() => {
+            onChange("");
+            inputRef.current?.focus();
+          }}
           aria-label="Clear search"
           className={cn(
             "absolute right-1.5 sm:right-2 text-muted-foreground " +
-              "hover:text-foreground p-1.5 sm:p-0.5 rounded-xs " +
-              "hover:bg-secondary transition-colors cursor-pointer",
+              "hover:text-foreground p-1 sm:p-0.5 rounded-xs " +
+              "hover:bg-secondary transition-colors duration-100 " +
+              "cursor-pointer",
           )}
         >
           <X className={size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5"} />
         </button>
+      ) : (
+        <kbd
+          className={
+            "hidden sm:inline-flex items-center gap-0.5 absolute right-2 " +
+            "px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground/70 " +
+            "rounded border border-white/[0.08] bg-muted/40 select-none " +
+            "pointer-events-none"
+          }
+        >
+          ⌘K
+        </kbd>
       )}
     </div>
   );

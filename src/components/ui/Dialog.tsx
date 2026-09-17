@@ -47,14 +47,15 @@ export const Dialog: React.FC<DialogProps> = ({
         className={cn(
           "relative z-50 w-full max-w-lg flex flex-col",
           "max-h-[92vh] sm:max-h-[90vh]",
-          "rounded-t-3xl sm:rounded-2xl border border-border bg-card",
-          "p-4 sm:p-6 shadow-2xl text-card-foreground",
+          "rounded-t-3xl sm:rounded-2xl border border-white/[0.08] bg-card",
+          "p-4 sm:p-6 text-card-foreground",
+          "shadow-[0_2px_4px_rgba(0,0,0,0.08),0_12px_24px_rgba(0,0,0,0.12),0_32px_48px_rgba(0,0,0,0.18)]",
           "pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-6",
           isClosing
             ? "animate-out fade-out-0 zoom-out-95 " +
-                "slide-out-to-bottom-4 duration-150 ease-in"
+                "slide-out-to-bottom-4 duration-100 ease-in"
             : "animate-in fade-in-0 zoom-in-95 " +
-                "slide-in-from-bottom-4 duration-200 ease-out",
+                "slide-in-from-bottom-4 duration-150 ease-out",
           className,
         )}
       >

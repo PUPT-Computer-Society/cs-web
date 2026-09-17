@@ -33,8 +33,8 @@ export const LiquidSphereLoader: React.FC<LiquidSphereLoaderProps> = ({
           "relative w-36 h-36 rounded-full border-2 overflow-hidden",
           "shadow-inner flex items-center justify-center bg-secondary/30",
           isError
-            ? "border-destructive/60 shadow-[0_0_15px_hsl(var(--destructive)/0.25)]"
-            : "border-primary/50 shadow-[0_0_15px_hsl(var(--primary)/0.15)]",
+            ? "border-destructive/60 border border-white/[0.08]"
+            : "border-primary/50 border border-white/[0.08]",
         )}
       >
         {/* Rising Water Body */}
@@ -124,8 +124,8 @@ export const LiquidSphereLoader: React.FC<LiquidSphereLoaderProps> = ({
         >
           <span
             className={cn(
-              "w-1.5 h-1.5 rounded-full animate-pulse",
-              isError ? "bg-destructive" : "bg-primary",
+              "w-1.5 h-1.5 rounded-full",
+              isError ? "bg-destructive" : "bg-primary/80",
             )}
           />
           <span>{subMessage}</span>
