@@ -302,13 +302,14 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
   return (
     <ToastContext.Provider value={{ showToast, success, error, info, warning }}>
       {children}
-      {/* Toast Container: Optimized for mobile viewport & safe areas */}
+      {/* Toast Container: Clears floating dock on <lg screens */}
       <div
         aria-live="polite"
         className={
-          "fixed inset-x-3 bottom-3 sm:inset-x-auto sm:right-4 sm:bottom-4 " +
-          "z-50 flex flex-col gap-2 sm:max-w-sm sm:w-full pointer-events-none " +
-          "pb-[env(safe-area-inset-bottom,0px)]"
+          "fixed inset-x-3 " +
+          "bottom-[calc(5.75rem+env(safe-area-inset-bottom,0px))] " +
+          "sm:inset-x-auto sm:right-4 sm:max-w-sm sm:w-full " +
+          "lg:bottom-4 z-50 flex flex-col gap-2 pointer-events-none"
         }
       >
         {toasts.map((t) => (
