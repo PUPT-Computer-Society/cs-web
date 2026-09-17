@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, Compass, LogOut, User } from "lucide-react";
+import { ChevronDown, Compass, LogOut, ShieldAlert, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTour } from "@/context/TourContext";
 import { useSSE } from "@/context/SSEContext";
@@ -8,6 +8,7 @@ import { usePresence } from "@/lib/usePresence";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { cn } from "@/lib/utils";
 
 export interface HeaderProps {
@@ -23,11 +24,12 @@ export const Header: React.FC<HeaderProps> = ({
   children,
   className,
 }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, logoutAll } = useAuth();
   const { startTour } = useTour();
   const { isConnected } = useSSE();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isBellOpen, setIsBellOpen] = useState(false);
+  const [isLogoutAllOpen, setIsLogoutAllOpen] = useState(false);
 
   const { isRendered: isProfileRendered, isClosing: isProfileClosing } =
     usePresence(isProfileOpen, 150);
@@ -175,7 +177,7 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Ambient focus backdrop overlay */}
               <div
                 className={cn(
-                  "fixed inset-0 bg-black/60 z-40 touch-none select-none",
+                  "fixed inset-0 bg-black/80 z-40 touch-none select-none",
                   isProfileClosing
                     ? "animate-out fade-out-0 duration-150"
                     : "animate-in fade-in-0 duration-200",
@@ -277,11 +279,29 @@ export const Header: React.FC<HeaderProps> = ({
                     className={
                       "flex items-center gap-2.5 w-full px-2.5 py-2 " +
                       "text-xs font-semibold rounded-xl text-destructive " +
-                      "hover:bg-destructive/10 transition-colors"
+                      "hover:bg-destructive/10 transition-colors " +
+                      "cursor-pointer"
                     }
                   >
                     <LogOut className="w-3.5 h-3.5 shrink-0" />
                     <span>Sign Out</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      setIsLogoutAllOpen(true);
+                    }}
+                    className={
+                      "flex items-center gap-2.5 w-full px-2.5 py-2 " +
+                      "text-xs font-semibold rounded-xl text-destructive " +
+                      "hover:bg-destructive/10 transition-colors " +
+                      "cursor-pointer"
+                    }
+                  >
+                    <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+                    <span>Sign Out All Devices</span>
                   </button>
                 </div>
               </div>
@@ -289,6 +309,23 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={isLogoutAllOpen}
+        onClose={() => setIsLogoutAllOpen(false)}
+        onConfirm={async () => {
+          await logoutAll();
+          setIsLogoutAllOpen(false);
+        }}
+        title="Sign Out All Devices"
+        description={
+          "I-lo-logout ang account mo sa lahat ng active sessions " +
+          "(phone, laptop, ibang browser). Sigurado ka ba?"
+        }
+        confirmText="Sign Out Everywhere"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </header>
   );
 };

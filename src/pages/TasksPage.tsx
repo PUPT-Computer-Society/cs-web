@@ -6,6 +6,7 @@ import React, {
   useState,
 } from "react";
 import {
+  AlertTriangle,
   Archive,
   Building2,
   Calendar,
@@ -29,6 +30,7 @@ import { API_BASE_URL, api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { useGlobalLoader } from "@/context/LoadingContext";
+import { useSSE } from "@/context/SSEContext";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -37,6 +39,7 @@ import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Dialog } from "@/components/ui/Dialog";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ConflictResolutionDialog } from "@/components/ui/ConflictResolutionDialog";
 import { Select } from "@/components/ui/Select";
 import { SearchBar } from "@/components/ui/SearchBar";
 import { DatePicker } from "@/components/ui/DatePicker";
@@ -534,8 +537,24 @@ export const TasksPage: React.FC = () => {
   const { user, hasPermission } = useAuth();
   const { success: toastSuccess, error: toastError } = useToast();
   const { showLoader, hideLoader } = useGlobalLoader();
+  const { lastEvent } = useSSE();
   const [isExporting, setIsExporting] = useState(false);
+  const [isStaleWarningVisible, setIsStaleWarningVisible] = useState(false);
+  const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
   const canManage = hasPermission("manage_tasks");
+
+  useEffect(() => {
+    if (!lastEvent || lastEvent.type !== "tasks") return;
+    const payload = lastEvent.data as any;
+    if (
+      editDialogOpen &&
+      selectedTask &&
+      payload?.taskId === selectedTask.id &&
+      (payload?.action === "update" || payload?.action === "status_change")
+    ) {
+      setIsStaleWarningVisible(true);
+    }
+  }, [lastEvent, editDialogOpen, selectedTask]);
 
   const canEditTask = useCallback(
     (t: Task | null) => {
@@ -720,6 +739,7 @@ export const TasksPage: React.FC = () => {
     );
     setEditAssignedToId(t.assignedToId || null);
     setEditGpoaEventId(t.gpoaEventId || null);
+    setIsStaleWarningVisible(false);
     setEditDialogOpen(true);
   };
 
@@ -737,6 +757,7 @@ export const TasksPage: React.FC = () => {
         department?: string | null;
         assignedToId: string | null;
         gpoaEventId: string | null;
+        version?: number;
       };
     }) => api.patch<Task>(`/tasks/${taskId}`, payload),
     onSuccess: (updatedTask) => {
@@ -749,9 +770,18 @@ export const TasksPage: React.FC = () => {
         setSelectedTask(updatedTask);
       }
       setEditDialogOpen(false);
+      setIsStaleWarningVisible(false);
       toastSuccess("Action item updated successfully.");
     },
     onError: (err: any) => {
+      if (
+        err?.status === 409 ||
+        err?.message?.toLowerCase().includes("conflict") ||
+        err?.message?.toLowerCase().includes("stale")
+      ) {
+        setConflictDialogOpen(true);
+        return;
+      }
       toastError(err.message || "Failed to update action item");
     },
     onSettled: () => {
@@ -772,6 +802,7 @@ export const TasksPage: React.FC = () => {
         department: editDepartment || null,
         assignedToId: editAssignedToId,
         gpoaEventId: editGpoaEventId,
+        version: selectedTask.version,
       },
     });
   };
@@ -1104,7 +1135,6 @@ export const TasksPage: React.FC = () => {
     showLoader("PREPARING CSV EXPORT...", 25);
 
     try {
-      const token = localStorage.getItem("cs_token") || "";
       const params = new URLSearchParams();
       if (searchQuery.trim()) {
         params.set("search", searchQuery.trim());
@@ -1125,9 +1155,7 @@ export const TasksPage: React.FC = () => {
       }`;
 
       const res = await fetch(exportUrl, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
 
       if (!res.ok) {
@@ -1885,6 +1913,55 @@ export const TasksPage: React.FC = () => {
         }
       >
         <form onSubmit={handleEditTaskSubmit} className="space-y-3">
+          {isStaleWarningVisible && (
+            <div
+              className={
+                "flex items-center justify-between gap-2 p-2.5 rounded-xl " +
+                "border border-amber-500/40 bg-amber-500/10 " +
+                "text-amber-600 dark:text-amber-400 text-xs " +
+                "animate-in fade-in-0 duration-200"
+              }
+            >
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 animate-pulse" />
+                <span>
+                  May bagong pagbabago mula sa kabilang device!
+                </span>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  if (!selectedTask) return;
+                  try {
+                    const fresh = await api.get<Task>(
+                      `/tasks/${selectedTask.id}`
+                    );
+                    setSelectedTask(fresh);
+                    setEditTitle(fresh.title);
+                    setEditDescription(fresh.description || "");
+                    setEditStatus(fresh.status);
+                    setEditDueDate(
+                      fresh.dueDate
+                        ? toDateTimeLocalUTC8(fresh.dueDate).slice(0, 10)
+                        : ""
+                    );
+                    setEditDepartment(fresh.department || "");
+                    setEditAssignedToId(fresh.assignedToId || null);
+                    setEditGpoaEventId(fresh.gpoaEventId || null);
+                    setIsStaleWarningVisible(false);
+                    toastSuccess("Na-refresh ang pinakabagong bersyon.");
+                  } catch (err: any) {
+                    toastError(err.message || "Failed to reload task");
+                  }
+                }}
+                className="h-7 text-xs border-amber-500/40 shrink-0"
+              >
+                I-refresh
+              </Button>
+            </div>
+          )}
           <div>
             <label
               className={
@@ -2016,6 +2093,38 @@ export const TasksPage: React.FC = () => {
           </div>
         </form>
       </Dialog>
+
+      <ConflictResolutionDialog
+        open={conflictDialogOpen}
+        onOpenChange={setConflictDialogOpen}
+        entityName="Task"
+        draftContentToCopy={
+          `Title: ${editTitle}\nDescription: ${editDescription}`
+        }
+        onReloadLatest={async () => {
+          if (!selectedTask) return;
+          try {
+            const fresh = await api.get<Task>(`/tasks/${selectedTask.id}`);
+            setSelectedTask(fresh);
+            setEditTitle(fresh.title);
+            setEditDescription(fresh.description || "");
+            setEditStatus(fresh.status);
+            setEditDueDate(
+              fresh.dueDate
+                ? toDateTimeLocalUTC8(fresh.dueDate).slice(0, 10)
+                : "",
+            );
+            setEditDepartment(fresh.department || "");
+            setEditAssignedToId(fresh.assignedToId || null);
+            setEditGpoaEventId(fresh.gpoaEventId || null);
+            setIsStaleWarningVisible(false);
+            queryClient.invalidateQueries({ queryKey: queryKeys.tasks });
+            toastSuccess("Na-load ang pinakabagong bersyon.");
+          } catch (err: any) {
+            toastError(err.message || "Failed to reload task");
+          }
+        }}
+      />
 
       {/* Create Task Dialog */}
       <Dialog

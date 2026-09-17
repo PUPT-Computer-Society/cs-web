@@ -12,6 +12,7 @@ interface AuthContextType {
   setAuthSession: (response: AuthResponse) => void;
   updateUserSession: (user: AuthSessionUser) => void;
   logout: () => Promise<void>;
+  logoutAll: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -24,6 +25,7 @@ const AuthContext = createContext<AuthContextType>({
   setAuthSession: () => {},
   updateUserSession: () => {},
   logout: async () => {},
+  logoutAll: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -34,18 +36,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem("cs_token");
-    const savedUser = localStorage.getItem("cs_user");
+    const revalidateSession = async () => {
+      const savedUser = localStorage.getItem("cs_user");
+      if (savedUser) {
+        try {
+          setUser(JSON.parse(savedUser));
+        } catch {
+          setUser(null);
+        }
+      }
 
-    if (savedToken && savedUser) {
-      setToken(savedToken);
       try {
-        setUser(JSON.parse(savedUser));
+        const freshUser = await api.get<AuthSessionUser>("/auth/me");
+        setUser(freshUser);
+        setToken("cookie_active");
+        localStorage.setItem("cs_user", JSON.stringify(freshUser));
       } catch {
         setUser(null);
+        setToken(null);
+        localStorage.removeItem("cs_user");
+        localStorage.removeItem("cs_token");
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+
+    revalidateSession();
   }, []);
 
   const isPresident = user?.roleName === "President";
@@ -57,10 +73,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const setAuthSession = (response: AuthResponse) => {
-    setToken(response.token);
+    setToken(response.token || "cookie_active");
     setUser(response.user);
-    localStorage.setItem("cs_token", response.token);
     localStorage.setItem("cs_user", JSON.stringify(response.user));
+    localStorage.removeItem("cs_token");
   };
 
   const updateUserSession = (updatedUser: AuthSessionUser) => {
@@ -70,11 +86,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = async () => {
     try {
-      if (token) {
-        await api.post(`/auth/logout?token=${token}`);
-      }
+      await api.post("/auth/logout");
     } catch (err) {
-      console.error("Logout error:", err);
+      console.error("[logout] {Revoke}:", err);
+    } finally {
+      setToken(null);
+      setUser(null);
+      localStorage.removeItem("cs_token");
+      localStorage.removeItem("cs_user");
+    }
+  };
+
+  const logoutAll = async () => {
+    try {
+      await api.post("/auth/logout/all");
+    } catch (err) {
+      console.error("[logoutAll] {RevokeAll}:", err);
     } finally {
       setToken(null);
       setUser(null);
@@ -95,6 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setAuthSession,
         updateUserSession,
         logout,
+        logoutAll,
       }}
     >
       {children}

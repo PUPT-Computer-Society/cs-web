@@ -71,6 +71,7 @@ export interface User {
   isActive: boolean;
   role: Role | null;
   activationOtp?: string | null;
+  version?: number;
 }
 
 export interface DashboardStats {
@@ -243,6 +244,7 @@ export interface Task {
   subtasks?: TaskSubtask[];
   completedSubtasksCount?: number;
   totalSubtasksCount?: number;
+  version?: number;
 }
 
 export type LogCategory = "audit" | "security" | "system";

@@ -62,11 +62,8 @@ export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({
         eventSourceRef.current.close();
       }
 
-      const sseUrl = (
-        `${API_BASE_URL}/events/stream?token=` +
-        encodeURIComponent(token)
-      );
-      const es = new EventSource(sseUrl);
+      const sseUrl = `${API_BASE_URL}/events/stream`;
+      const es = new EventSource(sseUrl, { withCredentials: true });
       eventSourceRef.current = es;
 
       es.onopen = () => {

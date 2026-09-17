@@ -78,9 +78,7 @@ export const Dialog: React.FC<DialogProps> = ({
             </h3>
             {description && (
               <p
-                className={
-                  "text-xs text-muted-foreground mt-0.5 line-clamp-2"
-                }
+                className={"text-xs text-muted-foreground mt-0.5 line-clamp-2"}
               >
                 {description}
               </p>

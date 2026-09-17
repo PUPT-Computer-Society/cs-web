@@ -38,6 +38,7 @@ export async function apiRequest<T>(
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      credentials: "include",
       ...options,
       headers,
     });
