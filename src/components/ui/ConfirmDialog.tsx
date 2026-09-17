@@ -69,22 +69,27 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className={cn(
-          "fixed inset-0 bg-black/60 backdrop-blur-sm",
+          "fixed inset-0 bg-black/60 backdrop-blur-sm touch-none select-none",
           isClosing
             ? "animate-out fade-out-0 duration-150"
             : "animate-in fade-in-0 duration-200",
         )}
         onClick={isLoading ? undefined : onClose}
+        onTouchMove={(e) => e.preventDefault()}
+        onWheel={(e) => e.preventDefault()}
         aria-hidden="true"
       />
       <div
         role="alertdialog"
         aria-modal="true"
         className={cn(
-          "relative z-50 w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl text-card-foreground",
+          "relative z-50 w-full max-w-md rounded-xl border border-border " +
+            "bg-card p-6 shadow-2xl text-card-foreground",
           isClosing
-            ? "animate-out fade-out-0 zoom-out-95 slide-out-to-bottom-4 duration-150 ease-in"
-            : "animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-4 duration-200 ease-out",
+            ? "animate-out fade-out-0 zoom-out-95 slide-out-to-bottom-4 " +
+                "duration-150 ease-in"
+            : "animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-4 " +
+                "duration-200 ease-out",
         )}
       >
         <div className="flex items-start justify-between pb-3">

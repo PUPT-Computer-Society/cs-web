@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Archive,
   Building2,
@@ -33,6 +39,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Select } from "@/components/ui/Select";
 import { SearchBar } from "@/components/ui/SearchBar";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import { buildGoogleCalendarUrl } from "@/lib/calendar";
@@ -535,7 +542,7 @@ export const TasksPage: React.FC = () => {
       if (!t) return false;
       if (canManage) return true;
       return Boolean(
-        user && (t.createdById === user.id || t.assignedToId === user.id)
+        user && (t.createdById === user.id || t.assignedToId === user.id),
       );
     },
     [canManage, user],
@@ -1179,9 +1186,7 @@ export const TasksPage: React.FC = () => {
           }
         >
           <div
-            className={
-              "flex items-center gap-2 text-xs text-muted-foreground"
-            }
+            className={"flex items-center gap-2 text-xs text-muted-foreground"}
           >
             <span>Coordinated Action Items</span>
             <span className="text-border">•</span>
@@ -1459,9 +1464,7 @@ export const TasksPage: React.FC = () => {
                     }
                   >
                     <Clock className="w-3.5 h-3.5 text-primary" />
-                    <span>
-                      Due: {formatDateUTC8(selectedTask.dueDate)}
-                    </span>
+                    <span>Due: {formatDateUTC8(selectedTask.dueDate)}</span>
                   </div>
                   <a
                     href={buildGoogleCalendarUrl({
@@ -1491,9 +1494,7 @@ export const TasksPage: React.FC = () => {
                     title="Add deadline to Google Calendar"
                   >
                     <Calendar className="w-3 h-3 text-primary" />
-                    <ExternalLink
-                      className="w-2.5 h-2.5 text-muted-foreground"
-                    />
+                    <ExternalLink className="w-2.5 h-2.5 text-muted-foreground" />
                   </a>
                 </div>
               )}
@@ -1962,10 +1963,10 @@ export const TasksPage: React.FC = () => {
               >
                 Due Date
               </label>
-              <Input
-                type="date"
+              <DatePicker
                 value={editDueDate}
-                onChange={(e) => setEditDueDate(e.target.value)}
+                onChange={setEditDueDate}
+                placeholder="Pick due date"
               />
             </div>
           </div>
@@ -2114,10 +2115,10 @@ export const TasksPage: React.FC = () => {
             >
               Due Date
             </label>
-            <Input
-              type="date"
+            <DatePicker
               value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
+              onChange={setDueDate}
+              placeholder="Pick due date"
             />
           </div>
 

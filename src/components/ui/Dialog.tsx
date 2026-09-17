@@ -33,12 +33,14 @@ export const Dialog: React.FC<DialogProps> = ({
     >
       <div
         className={cn(
-          "fixed inset-0 bg-black/60 backdrop-blur-sm",
+          "fixed inset-0 bg-black/60 backdrop-blur-sm touch-none select-none",
           isClosing
             ? "animate-out fade-out-0 duration-150"
             : "animate-in fade-in-0 duration-200",
         )}
         onClick={() => onOpenChange(false)}
+        onTouchMove={(e) => e.preventDefault()}
+        onWheel={(e) => e.preventDefault()}
         aria-hidden="true"
       />
       <div

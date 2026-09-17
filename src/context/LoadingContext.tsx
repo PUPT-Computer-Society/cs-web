@@ -11,6 +11,7 @@ import { LiquidSphereLoader } from "@/components/ui/LiquidSphereLoader";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { BASE_SERVER_URL } from "@/api/client";
+import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
 const COLD_START_POLL_INTERVAL_MS = 2500;
 const MAX_COLD_START_TIMEOUT_MS = 55000;
@@ -294,6 +295,14 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, [wakeBackend, stopOrganicProgress]);
 
+  useEffect(() => {
+    if (!isLoading) return;
+    lockScroll();
+    return () => {
+      unlockScroll();
+    };
+  }, [isLoading]);
+
   return (
     <LoadingContext.Provider
       value={{
@@ -316,8 +325,10 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({
           className={
             "fixed inset-0 z-50 flex items-center justify-center " +
             "bg-background/85 backdrop-blur-md transition-opacity " +
-            "duration-300 animate-in fade-in-0"
+            "duration-300 animate-in fade-in-0 touch-none select-none"
           }
+          onTouchMove={(e) => e.preventDefault()}
+          onWheel={(e) => e.preventDefault()}
           aria-live="assertive"
         >
           <LiquidSphereLoader

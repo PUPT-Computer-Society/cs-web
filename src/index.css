@@ -175,11 +175,31 @@
 .slide-out-to-right-4 {
   --tw-exit-translate-x: 1rem;
 }
+.slide-in-from-bottom,
+.slide-in-from-bottom-full {
+  --tw-enter-translate-y: 100%;
+}
+.slide-out-to-bottom,
+.slide-out-to-bottom-full {
+  --tw-exit-translate-y: 100%;
+}
 .duration-150 {
   animation-duration: 150ms;
 }
+.duration-200 {
+  animation-duration: 200ms;
+}
+.duration-250 {
+  animation-duration: 250ms;
+}
+.duration-300 {
+  animation-duration: 300ms;
+}
 .ease-in {
   animation-timing-function: cubic-bezier(0.4, 0, 1, 1);
+}
+.ease-out {
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Animated background wave system (Hardware-accelerated) */

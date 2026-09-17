@@ -16,6 +16,7 @@ import {
   DriveFolderEntry,
   ROOT_DRIVE_URL,
 } from "@/lib/driveRegistry";
+import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 import { cn } from "@/lib/utils";
 
 export interface DriveLinkInputProps {
@@ -115,6 +116,14 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("resize", handleScrollOrResize);
       window.removeEventListener("scroll", handleScrollOrResize, true);
+    };
+  }, [tooltipOpen]);
+
+  useEffect(() => {
+    if (!tooltipOpen) return;
+    lockScroll();
+    return () => {
+      unlockScroll();
     };
   }, [tooltipOpen]);
 
@@ -246,9 +255,12 @@ export const DriveLinkInput: React.FC<DriveLinkInputProps> = ({
             <div
               className={cn(
                 "fixed inset-0 bg-black/60 backdrop-blur-xs z-[100]",
-                "animate-in fade-in-0 duration-150 cursor-pointer",
+                "touch-none select-none animate-in fade-in-0 duration-150",
+                "cursor-pointer",
               )}
               onClick={() => setTooltipOpen(false)}
+              onTouchMove={(e) => e.preventDefault()}
+              onWheel={(e) => e.preventDefault()}
               aria-hidden="true"
             />
 

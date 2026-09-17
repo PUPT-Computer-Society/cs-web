@@ -76,13 +76,13 @@ export const LoginPage: React.FC = () => {
 
     try {
       if (mode === "login") {
-        showLoader("VERIFYING CREDENTIALS // SIGNING IN...", 25);
+        showLoader("VERIFYING CREDENTIALS", 25);
         const res = await api.post<AuthResponse>("/auth/login/native", {
           identifier: loginIdentifier.trim(),
           password: loginPassword,
         });
         setAuthSession(res);
-        await hideLoader(true, "ACCESS GRANTED // REDIRECTING...");
+        await hideLoader(true, "REDIRECTING...");
         navigate("/dashboard");
       } else {
         if (

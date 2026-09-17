@@ -33,12 +33,14 @@ export const Drawer: React.FC<DrawerProps> = ({
       {/* Backdrop overlay */}
       <div
         className={cn(
-          "fixed inset-0 bg-black/60 backdrop-blur-xs",
+          "fixed inset-0 bg-black/60 backdrop-blur-xs touch-none select-none",
           isClosing
             ? "animate-out fade-out-0 duration-200 ease-in"
             : "animate-in fade-in-0 duration-200 ease-out",
         )}
         onClick={() => onOpenChange(false)}
+        onTouchMove={(e) => e.preventDefault()}
+        onWheel={(e) => e.preventDefault()}
         aria-hidden="true"
       />
 
@@ -51,8 +53,8 @@ export const Drawer: React.FC<DrawerProps> = ({
           "rounded-t-3xl border-t border-border bg-card shadow-2xl",
           "text-card-foreground pb-[max(1rem,env(safe-area-inset-bottom))]",
           isClosing
-            ? "animate-out slide-out-to-bottom duration-200 ease-in"
-            : "animate-in slide-in-from-bottom duration-250 ease-out",
+            ? "animate-out slide-out-to-bottom-full duration-200 ease-in"
+            : "animate-in slide-in-from-bottom-full duration-250 ease-out",
           className,
         )}
       >
