@@ -137,7 +137,7 @@ const ToastCard: React.FC<ToastCardProps> = ({ toast, onDismiss }) => {
         "gap-3 p-3.5 rounded-xl border shadow-xl backdrop-blur-md select-none " +
         (toast.isDismissing
           ? "animate-out fade-out-0 slide-out-to-right-4 duration-150 ease-in "
-          : "animate-in fade-in-0 slide-in-from-bottom-5 duration-200 ease-out ") +
+          : "animate-in fade-in-0 slide-in-from-bottom-2 duration-150 ease-out ") +
         (toast.type === "success"
           ? "bg-emerald-50 dark:bg-emerald-950/80 border-emerald-500/30 " +
             "text-emerald-900 dark:text-emerald-200 "
