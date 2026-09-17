@@ -6,12 +6,15 @@ import {
   Calendar,
   CheckSquare,
   DollarSign,
+  Eye,
+  EyeOff,
   Users,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/client";
 import { queryKeys } from "@/lib/queryClient";
 import { useAuth } from "@/context/AuthContext";
+import { usePrivacyBalance } from "@/lib/usePrivacyBalance";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -22,6 +25,7 @@ import type { Announcement, DashboardStats } from "@/types";
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
+  const { showBalance, toggleShowBalance } = usePrivacyBalance();
 
   const { data: stats = null, isLoading: isStatsLoading } =
     useQuery<DashboardStats>({
@@ -224,14 +228,33 @@ export const DashboardPage: React.FC = () => {
           >
             <CardContent className="p-5 flex justify-between items-start">
               <div>
-                <p
-                  className={
-                    "text-xs uppercase font-bold tracking-wider " +
-                    "text-muted-foreground"
-                  }
-                >
-                  Net Treasury
-                </p>
+                <div className="flex items-center gap-1.5">
+                  <p
+                    className={
+                      "text-xs uppercase font-bold tracking-wider " +
+                      "text-muted-foreground"
+                    }
+                  >
+                    Net Treasury
+                  </p>
+                  <button
+                    type="button"
+                    onClick={toggleShowBalance}
+                    className={
+                      "p-1 rounded text-muted-foreground hover:text-foreground " +
+                      "hover:bg-secondary/80 transition-colors duration-100 " +
+                      "cursor-pointer"
+                    }
+                    title={showBalance ? "Hide balance" : "Show balance"}
+                    aria-label={showBalance ? "Hide balance" : "Show balance"}
+                  >
+                    {showBalance ? (
+                      <EyeOff className="w-3.5 h-3.5" />
+                    ) : (
+                      <Eye className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
                 {isLoading ? (
                   <Skeleton className="h-7 w-24 mt-2" />
                 ) : (
@@ -241,10 +264,17 @@ export const DashboardPage: React.FC = () => {
                       "dark:text-amber-400 mt-1"
                     }
                   >
-                    ₱
-                    {(stats?.netTreasuryBalance ?? 0).toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                    })}
+                    {showBalance ? (
+                      <>
+                        ₱
+                        {(stats?.netTreasuryBalance ?? 0).toLocaleString(
+                          "en-US",
+                          { minimumFractionDigits: 2 },
+                        )}
+                      </>
+                    ) : (
+                      "₱ ••••••••"
+                    )}
                   </h4>
                 )}
                 <p

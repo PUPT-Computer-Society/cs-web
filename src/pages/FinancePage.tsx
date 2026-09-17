@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   ExternalLink,
   Eye,
+  EyeOff,
   Pencil,
   Plus,
   Receipt,
@@ -13,6 +14,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@/api/client";
 import { queryClient, queryKeys } from "@/lib/queryClient";
 import { useAuth } from "@/context/AuthContext";
+import { usePrivacyBalance } from "@/lib/usePrivacyBalance";
 import { useToast } from "@/context/ToastContext";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
@@ -47,6 +49,7 @@ const FINANCE_SORT_OPTIONS = [
 export const FinancePage: React.FC = () => {
   const { success: toastSuccess, error: toastError } = useToast();
   const { isPresident, hasPermission } = useAuth();
+  const { showBalance, toggleShowBalance } = usePrivacyBalance();
   const canManage = hasPermission("manage_finance");
   const canAudit = hasPermission("audit_finance");
   const canEditFinance = canManage || canAudit || isPresident;
@@ -233,10 +236,17 @@ export const FinancePage: React.FC = () => {
                     <Skeleton className="h-7 w-24 mt-2" />
                   ) : (
                     <h4 className="text-2xl font-bold font-mono text-foreground mt-1">
-                      ₱
-                      {(summary?.totalExpense || 0).toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                      })}
+                      {showBalance ? (
+                        <>
+                          ₱
+                          {(summary?.totalExpense || 0).toLocaleString(
+                            "en-US",
+                            { minimumFractionDigits: 2 },
+                          )}
+                        </>
+                      ) : (
+                        "₱ ••••••••"
+                      )}
                     </h4>
                   )}
                   <p className="text-[11px] text-muted-foreground mt-2">
@@ -261,10 +271,17 @@ export const FinancePage: React.FC = () => {
                     <Skeleton className="h-7 w-24 mt-2" />
                   ) : (
                     <h4 className="text-2xl font-bold font-mono text-foreground mt-1">
-                      ₱
-                      {(summary?.totalIncome || 0).toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                      })}
+                      {showBalance ? (
+                        <>
+                          ₱
+                          {(summary?.totalIncome || 0).toLocaleString(
+                            "en-US",
+                            { minimumFractionDigits: 2 },
+                          )}
+                        </>
+                      ) : (
+                        "₱ ••••••••"
+                      )}
                     </h4>
                   )}
                   <p className="text-[11px] text-muted-foreground mt-2">
@@ -282,17 +299,47 @@ export const FinancePage: React.FC = () => {
             <CardContent className="p-5">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-xs font-mono font-semibold text-muted-foreground">
-                    NET TREASURY BALANCE
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-mono font-semibold text-muted-foreground">
+                      NET TREASURY BALANCE
+                    </p>
+                    <button
+                      type="button"
+                      onClick={toggleShowBalance}
+                      className={
+                        "p-1 rounded text-muted-foreground " +
+                        "hover:text-foreground hover:bg-secondary/80 " +
+                        "transition-colors duration-100 cursor-pointer"
+                      }
+                      title={
+                        showBalance ? "Hide balances" : "Show balances"
+                      }
+                      aria-label={
+                        showBalance ? "Hide balances" : "Show balances"
+                      }
+                    >
+                      {showBalance ? (
+                        <EyeOff className="w-3.5 h-3.5" />
+                      ) : (
+                        <Eye className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
                   {isLoading ? (
                     <Skeleton className="h-7 w-24 mt-2" />
                   ) : (
                     <h4 className="text-2xl font-bold font-mono text-foreground mt-1">
-                      ₱
-                      {(summary?.netBalance || 0).toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                      })}
+                      {showBalance ? (
+                        <>
+                          ₱
+                          {(summary?.netBalance || 0).toLocaleString(
+                            "en-US",
+                            { minimumFractionDigits: 2 },
+                          )}
+                        </>
+                      ) : (
+                        "₱ ••••••••"
+                      )}
                     </h4>
                   )}
                   <p className="text-[11px] text-muted-foreground mt-2">
