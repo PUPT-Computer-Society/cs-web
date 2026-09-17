@@ -269,3 +269,12 @@
   content-visibility: auto;
   contain-intrinsic-size: 0 140px;
 }
+
+@keyframes toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}

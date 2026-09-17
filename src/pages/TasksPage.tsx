@@ -765,9 +765,38 @@ export const TasksPage: React.FC = () => {
 
   const handleUpdateStatus = useCallback(
     (taskId: string, newStatus: TaskStatus) => {
-      updateStatusMutation.mutate({ taskId, newStatus });
+      const current = tasks.find((t) => t.id === taskId);
+      const oldStatus = current?.status;
+      if (!current || oldStatus === newStatus) return;
+
+      updateStatusMutation.mutate(
+        { taskId, newStatus },
+        {
+          onSuccess: () => {
+            if (oldStatus) {
+              const statusLabel =
+                newStatus === "in_progress"
+                  ? "In Progress"
+                  : newStatus === "under_review"
+                    ? "Under Review"
+                    : newStatus === "done"
+                      ? "Done"
+                      : "To Do";
+              toastSuccess(`Status moved to ${statusLabel}`, {
+                label: "Undo",
+                onClick: () => {
+                  updateStatusMutation.mutate({
+                    taskId,
+                    newStatus: oldStatus,
+                  });
+                },
+              });
+            }
+          },
+        },
+      );
     },
-    [updateStatusMutation],
+    [tasks, updateStatusMutation, toastSuccess],
   );
 
   const deleteTaskMutation = useMutation({
@@ -777,7 +806,6 @@ export const TasksPage: React.FC = () => {
       setDetailModalOpen(false);
       setSelectedTask(null);
       setTaskToDelete(null);
-      toastSuccess("Action item deleted successfully.");
     },
     onError: (err: any) => {
       toastError(err.message || "Failed to delete task");
@@ -786,7 +814,31 @@ export const TasksPage: React.FC = () => {
 
   const handleConfirmDeleteTask = () => {
     if (!taskToDelete) return;
-    deleteTaskMutation.mutate(taskToDelete.id);
+    const taskBackup: Task = { ...taskToDelete };
+    deleteTaskMutation.mutate(taskToDelete.id, {
+      onSuccess: () => {
+        toastSuccess("Action item deleted.", {
+          label: "Undo",
+          onClick: async () => {
+            try {
+              await api.post("/tasks", {
+                title: taskBackup.title,
+                description: taskBackup.description || "",
+                status: taskBackup.status,
+                dueDate: taskBackup.dueDate || null,
+                department: taskBackup.department || null,
+                assignedToId: taskBackup.assignedToId || null,
+                gpoaEventId: taskBackup.gpoaEventId || null,
+              });
+              queryClient.invalidateQueries({ queryKey: queryKeys.tasks });
+              toastSuccess("Action item restored.");
+            } catch (err: any) {
+              toastError(err.message || "Failed to restore action item");
+            }
+          },
+        });
+      },
+    });
   };
 
   const handleOpenEditDialog = (t: Task) => {
@@ -831,7 +883,6 @@ export const TasksPage: React.FC = () => {
       }
       setEditDialogOpen(false);
       setIsStaleWarningVisible(false);
-      toastSuccess("Action item updated successfully.");
     },
     onError: (err: any) => {
       if (
@@ -852,19 +903,51 @@ export const TasksPage: React.FC = () => {
   const handleEditTaskSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTask || !editTitle.trim()) return;
-    updateTaskMutation.mutate({
-      taskId: selectedTask.id,
-      payload: {
-        title: editTitle.trim(),
-        description: editDescription,
-        status: editStatus,
-        dueDate: editDueDate ? toISOStringUTC8(editDueDate) : null,
-        department: editDepartment || null,
-        assignedToId: editAssignedToId,
-        gpoaEventId: editGpoaEventId,
-        version: selectedTask.version,
+    const taskBackup: Task = { ...selectedTask };
+    const taskId = selectedTask.id;
+
+    updateTaskMutation.mutate(
+      {
+        taskId,
+        payload: {
+          title: editTitle.trim(),
+          description: editDescription,
+          status: editStatus,
+          dueDate: editDueDate ? toISOStringUTC8(editDueDate) : null,
+          department: editDepartment || null,
+          assignedToId: editAssignedToId,
+          gpoaEventId: editGpoaEventId,
+          version: selectedTask.version,
+        },
       },
-    });
+      {
+        onSuccess: (updatedTask) => {
+          toastSuccess("Action item updated.", {
+            label: "Undo",
+            onClick: async () => {
+              try {
+                await api.patch(`/tasks/${taskId}`, {
+                  title: taskBackup.title,
+                  description: taskBackup.description || "",
+                  status: taskBackup.status,
+                  dueDate: taskBackup.dueDate
+                    ? toISOStringUTC8(taskBackup.dueDate)
+                    : null,
+                  department: taskBackup.department || null,
+                  assignedToId: taskBackup.assignedToId || null,
+                  gpoaEventId: taskBackup.gpoaEventId || null,
+                  version: updatedTask.version,
+                });
+                queryClient.invalidateQueries({ queryKey: queryKeys.tasks });
+                toastSuccess("Changes reverted.");
+              } catch (err: any) {
+                toastError(err.message || "Failed to revert changes");
+              }
+            },
+          });
+        },
+      },
+    );
   };
 
   const createTaskMutation = useMutation({
@@ -995,7 +1078,6 @@ export const TasksPage: React.FC = () => {
       if (selectedTask && selectedTask.id === vars.taskId) {
         setSelectedTask(updatedTask);
       }
-      toastSuccess("Subtask deliverable removed.");
       setSubtaskToDelete(null);
     },
     onError: (err: any) => {
@@ -1005,10 +1087,27 @@ export const TasksPage: React.FC = () => {
 
   const handleConfirmDeleteSubtask = () => {
     if (!subtaskToDelete) return;
-    deleteSubtaskMutation.mutate({
-      taskId: subtaskToDelete.taskId,
-      subtaskId: subtaskToDelete.subtaskId,
-    });
+    const backup = { ...subtaskToDelete };
+    deleteSubtaskMutation.mutate(
+      {
+        taskId: subtaskToDelete.taskId,
+        subtaskId: subtaskToDelete.subtaskId,
+      },
+      {
+        onSuccess: () => {
+          toastSuccess("Subtask deliverable removed.", {
+            label: "Undo",
+            onClick: () => {
+              addSubtaskMutation.mutate({
+                taskId: backup.taskId,
+                title: backup.title,
+                assignedToId: null,
+              });
+            },
+          });
+        },
+      },
+    );
   };
 
   const isDeleting =
