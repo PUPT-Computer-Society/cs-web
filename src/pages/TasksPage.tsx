@@ -56,7 +56,7 @@ import {
 import type { GPOAEvent, Task, TaskStatus, User } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryClient";
-import { type } from "os";
+import { cn } from "@/lib/utils";
 
 const TASK_SORT_OPTIONS = [
   { value: "created_at:desc", label: "Date (Newest first)" },
@@ -85,6 +85,10 @@ interface KanbanColumnDef {
   status: TaskStatus;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  colorClass: string;
+  badgeClass: string;
+  borderClass: string;
+  dotClass: string;
 }
 
 const columns: KanbanColumnDef[] = [
@@ -92,21 +96,41 @@ const columns: KanbanColumnDef[] = [
     status: "todo",
     label: "To Do",
     icon: Circle,
+    colorClass: "text-slate-500 dark:text-slate-400",
+    badgeClass:
+      "text-slate-600 dark:text-slate-300 bg-slate-500/10 border-slate-500/20",
+    borderClass: "border-t-slate-400/80",
+    dotClass: "bg-slate-400",
   },
   {
     status: "in_progress",
     label: "In Progress",
     icon: Clock,
+    colorClass: "text-amber-500 dark:text-amber-400",
+    badgeClass:
+      "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20",
+    borderClass: "border-t-amber-500",
+    dotClass: "bg-amber-500",
   },
   {
     status: "under_review",
     label: "Under Review",
     icon: AlertCircle,
+    colorClass: "text-blue-500 dark:text-blue-400",
+    badgeClass:
+      "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20",
+    borderClass: "border-t-blue-500",
+    dotClass: "bg-blue-500",
   },
   {
     status: "done",
     label: "Done",
     icon: CheckCircle2,
+    colorClass: "text-emerald-500 dark:text-emerald-400",
+    badgeClass:
+      "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+    borderClass: "border-t-emerald-500",
+    dotClass: "bg-emerald-500",
   },
 ];
 
@@ -148,12 +172,13 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
         onDragLeave={onDragLeave}
         onDrop={(e) => onDrop(e, col.status)}
         className={
-          "rounded-xl border p-3 flex flex-col " +
+          "rounded-xl border border-white/[0.08] p-3 flex flex-col " +
+          `border-t-2 ${col.borderClass} ` +
           "max-h-[calc(100vh-270px)] min-h-[460px] " +
           `transition-colors duration-100 ${
             isOver
-              ? "border-primary ring-1 ring-primary/40 bg-primary/10"
-              : "border-white/[0.08] bg-card/40"
+              ? "ring-1 ring-primary/40 bg-primary/10"
+              : "bg-card/40"
           }`
         }
       >
@@ -164,7 +189,8 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
           }
         >
           <div className="flex items-center gap-2">
-            <col.icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            <span className={cn("w-2 h-2 rounded-full", col.dotClass)} />
+            <col.icon className={cn("w-3.5 h-3.5 shrink-0", col.colorClass)} />
             <span
               className={
                 "text-[12px] font-semibold tracking-[-0.01em] text-foreground"
@@ -174,10 +200,11 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
             </span>
           </div>
           <span
-            className={
-              "text-[11px] font-mono text-muted-foreground px-1.5 py-0.5 " +
-              "rounded bg-muted/40 border border-white/[0.08]"
-            }
+            className={cn(
+              "text-[11px] font-mono font-medium px-1.5 py-0.5 " +
+                "rounded border",
+              col.badgeClass,
+            )}
           >
             {tasks.length}
           </span>
@@ -279,14 +306,15 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
                   {task.department && (
                     <span
                       className={
-                        "inline-flex items-center gap-1 bg-secondary/60 " +
-                        "border border-white/[0.06] text-muted-foreground " +
-                        "px-1.5 py-0.5 rounded truncate max-w-[130px]"
+                        "inline-flex items-center gap-1 bg-amber-500/10 " +
+                        "text-amber-600 dark:text-amber-400 border " +
+                        "border-amber-500/20 px-1.5 py-0.5 rounded " +
+                        "truncate max-w-[130px]"
                       }
                       title={`Department: ${task.department}`}
                     >
                       <Building2
-                        className={"w-3 h-3 shrink-0 text-muted-foreground/80"}
+                        className={"w-3 h-3 shrink-0 text-amber-500/80"}
                       />
                       <span className="truncate">{task.department}</span>
                     </span>
@@ -295,13 +323,14 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
                   {task.gpoaEventTitle && (
                     <span
                       className={
-                        "inline-flex items-center gap-1 bg-secondary/60 " +
-                        "border border-white/[0.06] text-muted-foreground " +
-                        "px-1.5 py-0.5 rounded truncate max-w-[150px]"
+                        "inline-flex items-center gap-1 bg-blue-500/10 " +
+                        "text-blue-600 dark:text-blue-400 border " +
+                        "border-blue-500/20 px-1.5 py-0.5 rounded " +
+                        "truncate max-w-[150px]"
                       }
                     >
                       <Calendar
-                        className={"w-3 h-3 shrink-0 text-muted-foreground/80"}
+                        className={"w-3 h-3 shrink-0 text-blue-500/80"}
                       />
                       <span className="truncate">{task.gpoaEventTitle}</span>
                     </span>
