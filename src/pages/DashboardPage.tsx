@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   ArrowUpRight,
   Boxes,
