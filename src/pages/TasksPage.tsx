@@ -627,6 +627,12 @@ export const TasksPage: React.FC = () => {
     [canManage, user],
   );
 
+  const officerDepartment = useMemo(() => {
+    if (!user) return null;
+    const found = users.find((u) => u.id === user.id);
+    return found?.role?.committee || null;
+  }, [user, users]);
+
   const departmentFilterOptions = useMemo(
     () => [
       { value: "all", label: "All Departments" },
@@ -642,14 +648,23 @@ export const TasksPage: React.FC = () => {
   const assigneeFilterOptions = useMemo(
     () => [
       { value: "all", label: "All Assignees" },
-      ...(user ? [{ value: "my", label: "Assigned to Me" }] : []),
+      ...(user
+        ? [
+            {
+              value: "my",
+              label: officerDepartment
+                ? `Assigned to Me & ${officerDepartment}`
+                : "Assigned to Me",
+            },
+          ]
+        : []),
       { value: "unassigned", label: "Unassigned (Shared)" },
       ...users.map((u) => ({
         value: String(u.id),
         label: u.fullName || u.username || `Officer #${u.id}`,
       })),
     ],
-    [users, user],
+    [users, user, officerDepartment],
   );
 
   const eventFilterOptions = useMemo(
@@ -1154,7 +1169,14 @@ export const TasksPage: React.FC = () => {
 
       if (filterAssigneeId !== "all") {
         if (filterAssigneeId === "my") {
-          if (!user || t.assignedToId !== user.id) return false;
+          const isDirect = Boolean(user && t.assignedToId === user.id);
+          const isSubtask = Boolean(
+            user && t.subtasks?.some((st) => st.assignedToId === user.id),
+          );
+          const isDept = Boolean(
+            officerDepartment && t.department === officerDepartment,
+          );
+          if (!isDirect && !isSubtask && !isDept) return false;
         } else if (filterAssigneeId === "unassigned") {
           if (t.assignedToId) return false;
         } else {
@@ -1186,6 +1208,7 @@ export const TasksPage: React.FC = () => {
     showConcludedEvents,
     eventStatusMap,
     user,
+    officerDepartment,
   ]);
 
   const tasksByStatus = useMemo(() => {
