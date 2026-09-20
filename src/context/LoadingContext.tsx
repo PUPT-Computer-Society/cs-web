@@ -11,6 +11,7 @@ import { LiquidSphereLoader } from "@/components/ui/LiquidSphereLoader";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { BASE_SERVER_URL } from "@/api/client";
+import { queryClient } from "@/lib/queryClient";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
 const COLD_START_POLL_INTERVAL_MS = 2500;
@@ -36,7 +37,7 @@ interface LoadingContextType {
     isError?: boolean,
   ) => void;
   hideLoader: (success?: boolean, completionMsg?: string) => Promise<void>;
-  wakeBackend: () => Promise<boolean>;
+  wakeBackend: (immediate?: boolean) => Promise<boolean>;
   showConnectionError: () => void;
   isLoading: boolean;
   message: string;
@@ -48,7 +49,7 @@ const LoadingContext = createContext<LoadingContextType>({
   showLoader: () => {},
   updateProgress: () => {},
   hideLoader: async () => {},
-  wakeBackend: async () => false,
+  wakeBackend: async (_immediate?: boolean) => false,
   showConnectionError: () => {},
   isLoading: false,
   message: "INITIALIZING...",
@@ -66,6 +67,8 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({
   const [progress, setProgress] = useState(0);
   const [isError, setIsError] = useState(false);
   const [isConnectionErrorOpen, setIsConnectionErrorOpen] = useState(false);
+  const [isWaking, setIsWaking] = useState(false);
+  const cancelWakeRef = useRef(false);
 
   const shownAtRef = useRef<number>(0);
   const progressRef = useRef(0);
@@ -160,106 +163,113 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   // Render cold-start wake poller & retry mechanism
-  const wakeBackend = useCallback(async (): Promise<boolean> => {
-    const startTime = Date.now();
-    let hasShownLoader = false;
+  const wakeBackend = useCallback(
+    async (immediate = false): Promise<boolean> => {
+      cancelWakeRef.current = false;
+      setIsWaking(true);
+      const startTime = Date.now();
+      let hasShownLoader = false;
+      let coldStartTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const coldStartTimer = setTimeout(() => {
-      hasShownLoader = true;
-      showLoader("CONNECTING TO SERVER CORE...", DEFAULT_INITIAL_PROGRESS);
-    }, PING_DEBOUNCE_MS);
-
-    const isProd =
-      typeof window !== "undefined" &&
-      window.location.hostname !== "localhost" &&
-      window.location.hostname !== "127.0.0.1";
-
-    if (isProd && !BASE_SERVER_URL) {
-      console.error(
-        "[wakeBackend] {ValidateConfig}: " +
-          "CRITICAL: VITE_API_URL is missing in production!",
-      );
-      clearTimeout(coldStartTimer);
-      setIsConnectionErrorOpen(true);
-      return false;
-    }
-
-    while (Date.now() - startTime < MAX_COLD_START_TIMEOUT_MS) {
-      const elapsed = Date.now() - startTime;
-
-      if (hasShownLoader) {
-        let dynamicMsg = "CONNECTING TO BACKEND CLUSTER...";
-        if (elapsed > 35000) {
-          dynamicMsg = "ALMOST READY...";
-        } else if (elapsed > 20000) {
-          dynamicMsg = "SPINNING UP PYTHON RUNTIME & DATABASE...";
-        } else if (elapsed > 8000) {
-          dynamicMsg = "SERVER INSTANCE WAKING UP...";
-        }
-        updateProgress(progressRef.current, dynamicMsg);
+      if (immediate) {
+        hasShownLoader = true;
+        showLoader("CONNECTING TO SERVER CORE...", DEFAULT_INITIAL_PROGRESS);
+      } else {
+        coldStartTimer = setTimeout(() => {
+          hasShownLoader = true;
+          showLoader("CONNECTING TO SERVER CORE...", DEFAULT_INITIAL_PROGRESS);
+        }, PING_DEBOUNCE_MS);
       }
 
-      try {
-        const pingWithTimeout = async (url: string) => {
-          const ctrl = new AbortController();
-          const timer = setTimeout(
-            () => ctrl.abort(),
-            PING_PER_REQUEST_TIMEOUT_MS,
-          );
-          try {
-            return await fetch(url, { signal: ctrl.signal });
-          } finally {
-            clearTimeout(timer);
-          }
-        };
+      const isProd =
+        typeof window !== "undefined" &&
+        window.location.hostname !== "localhost" &&
+        window.location.hostname !== "127.0.0.1";
 
-        let res: Response | null = null;
-        try {
-          res = await pingWithTimeout(`${BASE_SERVER_URL}/api/v1/healthz`);
-        } catch {
-          try {
-            res = await pingWithTimeout(`${BASE_SERVER_URL}/healthz`);
-          } catch {
-            res = null;
-          }
-        }
+      if (isProd && !BASE_SERVER_URL) {
+        console.warn(
+          "[wakeBackend] {ValidateConfig}: " +
+            "VITE_API_URL not set; attempting relative endpoint ping.",
+        );
+      }
 
-        if (res && res.status === 404) {
-          console.error(
-            `[wakeBackend] {HealthCheck}: 404 on ${res.url}. ` +
-              "Verify VITE_API_URL config.",
-          );
-          clearTimeout(coldStartTimer);
+      while (Date.now() - startTime < MAX_COLD_START_TIMEOUT_MS) {
+        if (cancelWakeRef.current) {
+          if (coldStartTimer) clearTimeout(coldStartTimer);
           if (hasShownLoader) {
-            await hideLoader(false, "BACKEND NOT FOUND // 404");
+            await hideLoader(false, "WAKEUP CANCELLED");
           }
-          setIsConnectionErrorOpen(true);
+          setIsWaking(false);
           return false;
         }
 
-        if (res && res.ok) {
-          clearTimeout(coldStartTimer);
-          if (hasShownLoader) {
-            await hideLoader(true, "SERVER ONLINE // READY");
+        const elapsed = Date.now() - startTime;
+
+        if (hasShownLoader) {
+          let dynamicMsg = "CONNECTING TO BACKEND CLUSTER...";
+          if (elapsed > 35000) {
+            dynamicMsg = "ALMOST READY...";
+          } else if (elapsed > 20000) {
+            dynamicMsg = "SPINNING UP PYTHON RUNTIME & DATABASE...";
+          } else if (elapsed > 8000) {
+            dynamicMsg = "SERVER INSTANCE WAKING UP...";
           }
-          return true;
+          setMessage(dynamicMsg);
         }
-      } catch {
-        // Render container is provisioning or 502 gateway; continue polling
+
+        try {
+          const pingWithTimeout = async (url: string) => {
+            const ctrl = new AbortController();
+            const timer = setTimeout(
+              () => ctrl.abort(),
+              PING_PER_REQUEST_TIMEOUT_MS,
+            );
+            try {
+              return await fetch(url, { signal: ctrl.signal });
+            } finally {
+              clearTimeout(timer);
+            }
+          };
+
+          let res: Response | null = null;
+          try {
+            res = await pingWithTimeout(`${BASE_SERVER_URL}/api/v1/healthz`);
+          } catch {
+            try {
+              res = await pingWithTimeout(`${BASE_SERVER_URL}/healthz`);
+            } catch {
+              res = null;
+            }
+          }
+
+          if (res && res.ok) {
+            if (coldStartTimer) clearTimeout(coldStartTimer);
+            if (hasShownLoader) {
+              await hideLoader(true, "SERVER ONLINE // READY");
+            }
+            setIsWaking(false);
+            queryClient.invalidateQueries();
+            return true;
+          }
+        } catch {
+          // Render container is provisioning or 502 gateway; continue polling
+        }
+
+        await new Promise((resolve) => {
+          setTimeout(resolve, COLD_START_POLL_INTERVAL_MS);
+        });
       }
 
-      await new Promise((resolve) => {
-        setTimeout(resolve, COLD_START_POLL_INTERVAL_MS);
-      });
-    }
-
-    clearTimeout(coldStartTimer);
-    if (hasShownLoader) {
-      await hideLoader(false, "SERVER WAKEUP TIMED OUT // TAP TO RETRY");
-    }
-    setIsConnectionErrorOpen(true);
-    return false;
-  }, [showLoader, hideLoader, updateProgress]);
+      if (coldStartTimer) clearTimeout(coldStartTimer);
+      if (hasShownLoader) {
+        await hideLoader(false, "SERVER WAKEUP TIMED OUT // TAP TO RETRY");
+      }
+      setIsWaking(false);
+      setIsConnectionErrorOpen(true);
+      return false;
+    },
+    [showLoader, hideLoader],
+  );
 
   const showConnectionError = useCallback(() => {
     setIsConnectionErrorOpen(true);
@@ -323,9 +333,10 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({
       {isLoading && (
         <div
           className={
-            "fixed inset-0 z-50 flex items-center justify-center " +
-            "bg-background/85 backdrop-blur-md transition-opacity " +
-            "duration-300 animate-in fade-in-0 touch-none select-none"
+            "fixed inset-0 z-[100] flex flex-col items-center " +
+            "justify-center bg-background/85 backdrop-blur-md " +
+            "transition-opacity duration-300 animate-in fade-in-0 " +
+            "touch-none select-none"
           }
           onTouchMove={(e) => e.preventDefault()}
           onWheel={(e) => e.preventDefault()}
@@ -334,8 +345,28 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({
           <LiquidSphereLoader
             progress={progress}
             message={message}
+            subMessage={isWaking ? "SERVER INSTANCE WAKEUP" : undefined}
             isError={isError}
           />
+          {isWaking && (
+            <button
+              type="button"
+              onClick={() => {
+                cancelWakeRef.current = true;
+                hideLoader(false, "WAKEUP CANCELLED");
+                setIsWaking(false);
+                setIsConnectionErrorOpen(true);
+              }}
+              className={
+                "mt-6 px-4 py-2 min-h-[44px] rounded-lg border " +
+                "border-border/80 bg-secondary/60 hover:bg-secondary " +
+                "text-xs font-mono text-muted-foreground " +
+                "hover:text-foreground transition-colors cursor-pointer"
+              }
+            >
+              Cancel Wakeup
+            </button>
+          )}
         </div>
       )}
 
@@ -358,7 +389,11 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({
               <WifiOff className="w-5 h-5" />
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-foreground font-medium leading-relaxed">
+              <p
+                className={
+                  "text-xs text-foreground font-medium leading-relaxed"
+                }
+              >
                 Your browser cannot connect to the server. Kindly check your
                 network connection. If the issue persists, contact an
                 administrator
@@ -379,6 +414,7 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({
               variant="outline"
               size="sm"
               onClick={() => setIsConnectionErrorOpen(false)}
+              className="min-h-[44px]"
             >
               Dismiss
             </Button>
@@ -387,9 +423,12 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({
               size="sm"
               onClick={() => {
                 setIsConnectionErrorOpen(false);
-                wakeBackend();
+                wakeBackend(true);
               }}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              className={
+                "bg-primary text-primary-foreground hover:bg-primary/90 " +
+                "min-h-[44px]"
+              }
             >
               Retry Connection
             </Button>

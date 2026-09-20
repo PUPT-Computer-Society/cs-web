@@ -54,7 +54,9 @@ export const LiquidSphereLoader: React.FC<LiquidSphereLoaderProps> = ({
             className={
               "absolute -top-4 left-0 w-[200%] h-5 overflow-visible " +
               "pointer-events-none animate-wave-drift-slow fill-current " +
-              "text-blue-400/50 dark:text-blue-400/35"
+              (isError
+                ? "text-rose-400/50 dark:text-rose-400/35"
+                : "text-blue-400/50 dark:text-blue-400/35")
             }
           >
             <svg
@@ -76,7 +78,9 @@ export const LiquidSphereLoader: React.FC<LiquidSphereLoaderProps> = ({
             className={
               "absolute -top-3.5 left-0 w-[200%] h-4 overflow-visible " +
               "pointer-events-none animate-wave-drift fill-current " +
-              "text-blue-600 dark:text-primary"
+              (isError
+                ? "text-rose-600 dark:text-destructive"
+                : "text-blue-600 dark:text-primary")
             }
           >
             <svg
@@ -94,7 +98,12 @@ export const LiquidSphereLoader: React.FC<LiquidSphereLoaderProps> = ({
           </div>
 
           {/* Solid Liquid Fill Below Waves */}
-          <div className={"w-full h-full bg-blue-700"} />
+          <div
+            className={cn(
+              "w-full h-full",
+              isError ? "bg-rose-700 dark:bg-destructive" : "bg-blue-700",
+            )}
+          />
         </div>
       </div>
 
