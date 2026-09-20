@@ -37,12 +37,14 @@ const MATERIAL_CATEGORY_OPTIONS = [
   { value: "academic", label: "Academic Material" },
   { value: "creative", label: "Creative Material" },
   { value: "sports", label: "Sports Material" },
+  { value: "external_affairs", label: "External Affairs Material" },
 ];
 
 const MATERIAL_CATEGORY_TO_REGISTRY_KEY: Record<MaterialCategory, string> = {
   academic: "courseReviewers",
   creative: "pubmatsSourceFiles",
   sports: "sportsTournaments",
+  external_affairs: "externalPartnerships",
 };
 
 const MATERIAL_SORT_OPTIONS = [
@@ -210,7 +212,10 @@ export const MaterialsPage: React.FC = () => {
     <>
       <Header
         title="Materials Vault"
-        subtitle="Consolidated repositories for Academic, Creative, and Sports assets"
+        subtitle={
+          "Consolidated repositories for Academic, Creative, Sports, " +
+          "and External Affairs assets"
+        }
       />
 
       <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
@@ -224,6 +229,7 @@ export const MaterialsPage: React.FC = () => {
                   { id: "academic", label: "Academic" },
                   { id: "creative", label: "Creatives" },
                   { id: "sports", label: "Sports" },
+                  { id: "external_affairs", label: "External Affairs" },
                 ] as const
               ).map((tab) => (
                 <button
@@ -376,7 +382,7 @@ export const MaterialsPage: React.FC = () => {
                             variant="outline"
                             className="text-[9px] uppercase font-semibold"
                           >
-                            {mat.category}
+                            {mat.category.replace(/_/g, " ")}
                           </Badge>
                           {isOwner && (
                             <span className="text-[9px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
@@ -483,7 +489,7 @@ export const MaterialsPage: React.FC = () => {
                             variant="outline"
                             className="text-[9px] uppercase font-semibold"
                           >
-                            {mat.category}
+                            {mat.category.replace(/_/g, " ")}
                           </Badge>
                           {isOwner && (
                             <span className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
@@ -765,7 +771,9 @@ export const MaterialsPage: React.FC = () => {
         title={previewMaterial?.title || ""}
         subtitle={
           previewMaterial
-            ? `${previewMaterial.category.toUpperCase()} • ${previewMaterial.fileType}`
+            ? `${previewMaterial.category
+                .replace(/_/g, " ")
+                .toUpperCase()} • ${previewMaterial.fileType}`
             : undefined
         }
         url={previewMaterial?.driveUrl || ""}
@@ -775,7 +783,9 @@ export const MaterialsPage: React.FC = () => {
                 title: previewMaterial.title,
                 fileName: previewMaterial.title,
                 fileType: previewMaterial.fileType,
-                category: previewMaterial.category.toUpperCase(),
+                category: previewMaterial.category
+                  .replace(/_/g, " ")
+                  .toUpperCase(),
                 status: "Active Repository File",
                 dateUploaded: new Date(
                   previewMaterial.createdAt,

@@ -176,13 +176,10 @@ export const ReimbursementTracker: React.FC = () => {
       refNo: string;
       notes?: string;
     }) =>
-      api.post<ReimbursementRequest>(
-        `/finance/reimbursements/${id}/disburse`,
-        {
-          referenceNo: refNo,
-          notes: dNotes,
-        },
-      ),
+      api.post<ReimbursementRequest>(`/finance/reimbursements/${id}/disburse`, {
+        referenceNo: refNo,
+        notes: dNotes,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.reimbursements });
       queryClient.invalidateQueries({ queryKey: queryKeys.finance });
@@ -319,9 +316,7 @@ export const ReimbursementTracker: React.FC = () => {
                     "transition-colors duration-100 cursor-pointer"
                   }
                   title={showBalance ? "Hide balances" : "Show balances"}
-                  aria-label={
-                    showBalance ? "Hide balances" : "Show balances"
-                  }
+                  aria-label={showBalance ? "Hide balances" : "Show balances"}
                 >
                   {showBalance ? (
                     <EyeOff className="w-3.5 h-3.5" />
@@ -360,9 +355,7 @@ export const ReimbursementTracker: React.FC = () => {
                     "transition-colors duration-100 cursor-pointer"
                   }
                   title={showBalance ? "Hide balances" : "Show balances"}
-                  aria-label={
-                    showBalance ? "Hide balances" : "Show balances"
-                  }
+                  aria-label={showBalance ? "Hide balances" : "Show balances"}
                 >
                   {showBalance ? (
                     <EyeOff className="w-3.5 h-3.5" />
@@ -401,9 +394,7 @@ export const ReimbursementTracker: React.FC = () => {
                     "transition-colors duration-100 cursor-pointer"
                   }
                   title={showBalance ? "Hide balances" : "Show balances"}
-                  aria-label={
-                    showBalance ? "Hide balances" : "Show balances"
-                  }
+                  aria-label={showBalance ? "Hide balances" : "Show balances"}
                 >
                   {showBalance ? (
                     <EyeOff className="w-3.5 h-3.5" />

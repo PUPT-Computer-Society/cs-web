@@ -173,7 +173,11 @@ export interface InventoryItem {
   updatedAt: string;
 }
 
-export type MaterialCategory = "academic" | "creative" | "sports";
+export type MaterialCategory =
+  | "academic"
+  | "creative"
+  | "sports"
+  | "external_affairs";
 
 export interface Material {
   id: string;
