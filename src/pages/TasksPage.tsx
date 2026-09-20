@@ -11,6 +11,7 @@ import {
   Archive,
   Building2,
   Calendar,
+  CalendarDays,
   CheckCircle2,
   Circle,
   Clock,
@@ -19,6 +20,7 @@ import {
   ExternalLink,
   Filter,
   GripVertical,
+  Kanban,
   ListTodo,
   Plus,
   Search,
@@ -45,11 +47,15 @@ import { ConflictResolutionDialog } from "@/components/ui/ConflictResolutionDial
 import { Select } from "@/components/ui/Select";
 import { SearchBar } from "@/components/ui/SearchBar";
 import { DatePicker } from "@/components/ui/DatePicker";
+import { TimePicker } from "@/components/ui/TimePicker";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
+import { TaskCalendarView } from "@/components/tasks/TaskCalendarView";
 import { buildGoogleCalendarUrl } from "@/lib/calendar";
 import {
+  formatDateTimeUTC8,
   formatDateUTC8,
+  formatTimeUTC8,
   toDateTimeLocalUTC8,
   toISOStringUTC8,
 } from "@/lib/dateUtils";
@@ -176,9 +182,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = React.memo(
           `border-t-2 ${col.borderClass} ` +
           "max-h-[calc(100vh-270px)] min-h-[460px] " +
           `transition-colors duration-100 ${
-            isOver
-              ? "ring-1 ring-primary/40 bg-primary/10"
-              : "bg-card/40"
+            isOver ? "ring-1 ring-primary/40 bg-primary/10" : "bg-card/40"
           }`
         }
       >
@@ -516,6 +520,9 @@ export const TasksPage: React.FC = () => {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
+  // View toggle: Kanban Board vs Time-Blocking Week Calendar
+  const [activeView, setActiveView] = useState<"kanban" | "calendar">("kanban");
+
   // Drag and drop state
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<TaskStatus | null>(null);
@@ -525,6 +532,8 @@ export const TasksPage: React.FC = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [department, setDepartment] = useState<string>("");
   const [assignedToId, setAssignedToId] = useState<string | null>(null);
   const [gpoaEventId, setGpoaEventId] = useState<string | null>(null);
@@ -542,6 +551,8 @@ export const TasksPage: React.FC = () => {
   const [editDescription, setEditDescription] = useState("");
   const [editStatus, setEditStatus] = useState<TaskStatus>("todo");
   const [editDueDate, setEditDueDate] = useState("");
+  const [editStartTime, setEditStartTime] = useState("");
+  const [editEndTime, setEditEndTime] = useState("");
   const [editDepartment, setEditDepartment] = useState<string>("");
   const [editAssignedToId, setEditAssignedToId] = useState<string | null>(null);
   const [editGpoaEventId, setEditGpoaEventId] = useState<string | null>(null);
@@ -856,6 +867,24 @@ export const TasksPage: React.FC = () => {
     });
   };
 
+  const extractTimeLocal = (isoStr?: string | null) => {
+    if (!isoStr) return "";
+    try {
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return "";
+      const h = String(d.getHours()).padStart(2, "0");
+      const m = String(d.getMinutes()).padStart(2, "0");
+      return `${h}:${m}`;
+    } catch {
+      return "";
+    }
+  };
+
+  const buildIsoTime = (dateStr: string, timeStr: string) => {
+    if (!dateStr || !timeStr) return null;
+    return `${dateStr}T${timeStr}:00+08:00`;
+  };
+
   const handleOpenEditDialog = (t: Task) => {
     setEditTitle(t.title);
     setEditDescription(t.description || "");
@@ -864,6 +893,8 @@ export const TasksPage: React.FC = () => {
     setEditDueDate(
       t.dueDate ? toDateTimeLocalUTC8(t.dueDate).slice(0, 10) : "",
     );
+    setEditStartTime(extractTimeLocal(t.startTime));
+    setEditEndTime(extractTimeLocal(t.endTime));
     setEditAssignedToId(t.assignedToId || null);
     setEditGpoaEventId(t.gpoaEventId || null);
     setIsStaleWarningVisible(false);
@@ -881,6 +912,8 @@ export const TasksPage: React.FC = () => {
         description: string;
         status: TaskStatus;
         dueDate: string | null;
+        startTime?: string | null;
+        endTime?: string | null;
         department?: string | null;
         assignedToId: string | null;
         gpoaEventId: string | null;
@@ -920,6 +953,8 @@ export const TasksPage: React.FC = () => {
     if (!selectedTask || !editTitle.trim()) return;
     const taskBackup: Task = { ...selectedTask };
     const taskId = selectedTask.id;
+    const isoStart = buildIsoTime(editDueDate, editStartTime);
+    const isoEnd = buildIsoTime(editDueDate, editEndTime);
 
     updateTaskMutation.mutate(
       {
@@ -929,6 +964,8 @@ export const TasksPage: React.FC = () => {
           description: editDescription,
           status: editStatus,
           dueDate: editDueDate ? toISOStringUTC8(editDueDate) : null,
+          startTime: isoStart,
+          endTime: isoEnd,
           department: editDepartment || null,
           assignedToId: editAssignedToId,
           gpoaEventId: editGpoaEventId,
@@ -948,15 +985,17 @@ export const TasksPage: React.FC = () => {
                   dueDate: taskBackup.dueDate
                     ? toISOStringUTC8(taskBackup.dueDate)
                     : null,
+                  startTime: taskBackup.startTime || null,
+                  endTime: taskBackup.endTime || null,
                   department: taskBackup.department || null,
                   assignedToId: taskBackup.assignedToId || null,
                   gpoaEventId: taskBackup.gpoaEventId || null,
                   version: updatedTask.version,
                 });
                 queryClient.invalidateQueries({ queryKey: queryKeys.tasks });
-                toastSuccess("Changes reverted.");
+                toastSuccess("Action item changes reverted.");
               } catch (err: any) {
-                toastError(err.message || "Failed to revert changes");
+                toastError(err.message || "Failed to revert action item");
               }
             },
           });
@@ -969,8 +1008,10 @@ export const TasksPage: React.FC = () => {
     mutationFn: (payload: {
       title: string;
       description?: string;
-      status: TaskStatus;
+      status?: TaskStatus;
       dueDate?: string | null;
+      startTime?: string | null;
+      endTime?: string | null;
       department?: string | null;
       assignedToId?: string | null;
       gpoaEventId?: string | null;
@@ -982,6 +1023,8 @@ export const TasksPage: React.FC = () => {
       setTitle("");
       setDescription("");
       setDueDate("");
+      setStartTime("");
+      setEndTime("");
       setDepartment("");
       setAssignedToId(null);
       setGpoaEventId(null);
@@ -997,17 +1040,31 @@ export const TasksPage: React.FC = () => {
 
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
+    const isoStart = buildIsoTime(dueDate, startTime);
+    const isoEnd = buildIsoTime(dueDate, endTime);
     createTaskMutation.mutate({
       title,
       description,
       status: "todo",
       dueDate: dueDate ? toISOStringUTC8(dueDate) : null,
+      startTime: isoStart,
+      endTime: isoEnd,
       department: department || null,
       assignedToId,
       gpoaEventId,
       subtasks: draftSubtasks,
     });
   };
+
+  const handleCreateTaskAtSlot = useCallback(
+    (slotDate: string, slotStartTime: string, slotEndTime: string) => {
+      setDueDate(slotDate);
+      setStartTime(slotStartTime);
+      setEndTime(slotEndTime);
+      setDialogOpen(true);
+    },
+    [],
+  );
 
   const toggleSubtaskMutation = useMutation({
     mutationFn: ({
@@ -1395,14 +1452,57 @@ export const TasksPage: React.FC = () => {
             "sm:items-center gap-3"
           }
         >
-          <div
-            className={"flex items-center gap-2 text-xs text-muted-foreground"}
-          >
-            <span>Coordinated Action Items</span>
-            <span className="text-border">•</span>
-            <span className="hidden sm:inline">
-              Drag cards between columns to change state
-            </span>
+          <div className="flex items-center gap-3 flex-wrap">
+            <div
+              className={
+                "flex items-center p-0.5 rounded-lg bg-muted/60 " +
+                "border border-border/80"
+              }
+            >
+              <button
+                type="button"
+                onClick={() => setActiveView("kanban")}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1 rounded-md " +
+                    "text-xs font-semibold transition-all",
+                  activeView === "kanban"
+                    ? "bg-card text-foreground shadow-xs " +
+                        "border border-border/50"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Kanban className="w-3.5 h-3.5" />
+                <span>Board</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveView("calendar")}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1 rounded-md " +
+                    "text-xs font-semibold transition-all",
+                  activeView === "calendar"
+                    ? "bg-card text-foreground shadow-xs " +
+                        "border border-border/50"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <CalendarDays className="w-3.5 h-3.5" />
+                <span>Calendar</span>
+              </button>
+            </div>
+
+            <div
+              className={
+                "flex items-center gap-2 text-xs text-muted-foreground"
+              }
+            >
+              <span className="text-border">•</span>
+              <span className="hidden sm:inline">
+                {activeView === "kanban"
+                  ? "Drag cards between columns to change state"
+                  : "Click any empty time slot to time-block an action item"}
+              </span>
+            </div>
           </div>
 
           <div
@@ -1604,7 +1704,7 @@ export const TasksPage: React.FC = () => {
           </div>
         )}
 
-        {/* Drag and Drop Kanban Board */}
+        {/* Main Board View: Kanban or Week Calendar */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Skeleton className="h-64 w-full" />
@@ -1612,7 +1712,7 @@ export const TasksPage: React.FC = () => {
             <Skeleton className="h-64 w-full" />
             <Skeleton className="h-64 w-full" />
           </div>
-        ) : (
+        ) : activeView === "kanban" ? (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
             {columns.map((col) => (
               <KanbanColumn
@@ -1633,6 +1733,14 @@ export const TasksPage: React.FC = () => {
               />
             ))}
           </div>
+        ) : (
+          <TaskCalendarView
+            tasks={filteredTasks}
+            onSelectTask={handleSelectTask}
+            onCreateTaskAtSlot={handleCreateTaskAtSlot}
+            canManage={canManage}
+            usersMap={usersMap}
+          />
         )}
       </div>
 
@@ -1718,6 +1826,20 @@ export const TasksPage: React.FC = () => {
                     <Calendar className="w-3 h-3 text-primary" />
                     <ExternalLink className="w-2.5 h-2.5 text-muted-foreground" />
                   </a>
+                </div>
+              )}
+
+              {selectedTask.startTime && selectedTask.endTime && (
+                <div
+                  className={
+                    "flex items-center gap-1.5 text-xs text-muted-foreground"
+                  }
+                >
+                  <Clock className="w-3.5 h-3.5 text-primary" />
+                  <span>
+                    Block: {formatTimeUTC8(selectedTask.startTime)} –{" "}
+                    {formatTimeUTC8(selectedTask.endTime)}
+                  </span>
                 </div>
               )}
             </div>
@@ -2240,6 +2362,37 @@ export const TasksPage: React.FC = () => {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label
+                className={
+                  "block text-[11px] font-semibold " + "text-foreground mb-1"
+                }
+              >
+                Time Block Start (Optional)
+              </label>
+              <TimePicker
+                value={editStartTime}
+                onChange={setEditStartTime}
+                placeholder="Start time"
+              />
+            </div>
+            <div>
+              <label
+                className={
+                  "block text-[11px] font-semibold " + "text-foreground mb-1"
+                }
+              >
+                Time Block End (Optional)
+              </label>
+              <TimePicker
+                value={editEndTime}
+                onChange={setEditEndTime}
+                placeholder="End time"
+              />
+            </div>
+          </div>
+
           <div>
             <label
               className={
@@ -2419,6 +2572,37 @@ export const TasksPage: React.FC = () => {
               onChange={setDueDate}
               placeholder="Pick due date"
             />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label
+                className={
+                  "block text-[11px] font-semibold " + "text-foreground mb-1"
+                }
+              >
+                Time Block Start (Optional)
+              </label>
+              <TimePicker
+                value={startTime}
+                onChange={setStartTime}
+                placeholder="Start time"
+              />
+            </div>
+            <div>
+              <label
+                className={
+                  "block text-[11px] font-semibold " + "text-foreground mb-1"
+                }
+              >
+                Time Block End (Optional)
+              </label>
+              <TimePicker
+                value={endTime}
+                onChange={setEndTime}
+                placeholder="End time"
+              />
+            </div>
           </div>
 
           {/* Draft Subtasks Section */}
