@@ -9,6 +9,12 @@ export const API_BASE_URL = RAW_API_URL.endsWith("/api/v1")
     ? `${BASE_SERVER_URL}/api/v1`
     : "/api/v1";
 
+const MAX_NETWORK_RETRIES = 2;
+const RETRY_BACKOFF_MS = 1500;
+
+const delay = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
 export class ApiClientError extends Error {
   status: number;
   data: any;
@@ -24,6 +30,7 @@ export class ApiClientError extends Error {
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {},
+  retryCount = 0,
 ): Promise<T> {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("cs_token") : null;
@@ -44,11 +51,18 @@ export async function apiRequest<T>(
     });
 
     if (!response.ok) {
-      if (response.status >= 502 && response.status <= 504) {
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new CustomEvent("cs-server-offline"));
-        }
+      const isGatewayErr =
+        response.status >= 502 && response.status <= 504;
+
+      if (isGatewayErr && retryCount < MAX_NETWORK_RETRIES) {
+        await delay(RETRY_BACKOFF_MS * (retryCount + 1));
+        return apiRequest<T>(endpoint, options, retryCount + 1);
       }
+
+      if (isGatewayErr && typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("cs-server-offline"));
+      }
+
       let errorDetail = "An unexpected error occurred";
       try {
         const errJson = await response.json();
@@ -62,10 +76,19 @@ export async function apiRequest<T>(
 
     return response.json() as Promise<T>;
   } catch (err: any) {
+    if (err instanceof ApiClientError) {
+      throw err;
+    }
+
     const isNetworkErr =
       err?.name === "TypeError" ||
       err?.message?.toLowerCase().includes("failed to fetch") ||
       err?.message?.toLowerCase().includes("network");
+
+    if (isNetworkErr && retryCount < MAX_NETWORK_RETRIES) {
+      await delay(RETRY_BACKOFF_MS * (retryCount + 1));
+      return apiRequest<T>(endpoint, options, retryCount + 1);
+    }
 
     if (isNetworkErr && typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("cs-server-offline"));
