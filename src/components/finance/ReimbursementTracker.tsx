@@ -6,6 +6,7 @@ import {
   ExternalLink,
   FileText,
   HandCoins,
+  Pencil,
   Plus,
   XCircle,
 } from "lucide-react";
@@ -74,8 +75,9 @@ export const ReimbursementTracker: React.FC = () => {
 
   const [activeFilter, setActiveFilter] = useState("all");
   const [isFileModalOpen, setIsFileModalOpen] = useState(false);
-  const [reviewTarget, setReviewTarget] =
-    useState<ReimbursementRequest | null>(null);
+  const [reviewTarget, setReviewTarget] = useState<ReimbursementRequest | null>(
+    null,
+  );
   const [disburseTarget, setDisburseTarget] =
     useState<ReimbursementRequest | null>(null);
 
@@ -93,6 +95,17 @@ export const ReimbursementTracker: React.FC = () => {
   // Disburse states
   const [referenceNo, setReferenceNo] = useState("");
   const [disburseNotes, setDisburseNotes] = useState("");
+
+  // Edit states
+  const [editTarget, setEditTarget] =
+    useState<ReimbursementRequest | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editAmount, setEditAmount] = useState<number | "">("");
+  const [editCategory, setEditCategory] = useState(DEFAULT_CATEGORY);
+  const [editReceiptUrl, setEditReceiptUrl] = useState("");
+  const [editProofFileId, setEditProofFileId] =
+    useState<string | null>(null);
+  const [editNotes, setEditNotes] = useState("");
 
   const { data: claims = [], isLoading } = useQuery<ReimbursementRequest[]>({
     queryKey: queryKeys.reimbursementsFiltered(activeFilter),
@@ -113,16 +126,12 @@ export const ReimbursementTracker: React.FC = () => {
     }) => api.post<ReimbursementRequest>("/finance/reimbursements", payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.reimbursements });
-      toastSuccess(
-        "Claim submitted. Queued for finance review.",
-      );
+      toastSuccess("Claim submitted. Queued for finance review.");
       resetFileForm();
       setIsFileModalOpen(false);
     },
     onError: (err: any) => {
-      toastError(
-        err.message || "Failed to submit reimbursement claim.",
-      );
+      toastError(err.message || "Failed to submit reimbursement claim.");
     },
   });
 
@@ -142,9 +151,7 @@ export const ReimbursementTracker: React.FC = () => {
       }),
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.reimbursements });
-      toastSuccess(
-        `Claim status updated to ${updated.status.toUpperCase()}.`,
-      );
+      toastSuccess(`Claim status updated to ${updated.status.toUpperCase()}.`);
       setReviewTarget(null);
       setRejectionReason("");
     },
@@ -163,30 +170,82 @@ export const ReimbursementTracker: React.FC = () => {
       refNo?: string;
       notes?: string;
     }) =>
-      api.post<ReimbursementRequest>(
-        `/finance/reimbursements/${id}/disburse`,
-        {
-          referenceNo: refNo || undefined,
-          notes: notes || undefined,
-        },
-      ),
+      api.post<ReimbursementRequest>(`/finance/reimbursements/${id}/disburse`, {
+        referenceNo: refNo || undefined,
+        notes: notes || undefined,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.reimbursements });
       queryClient.invalidateQueries({ queryKey: queryKeys.finance });
       queryClient.invalidateQueries({ queryKey: queryKeys.financeSummary });
-      toastSuccess(
-        "Disbursement recorded and ledger expense generated.",
-      );
+      toastSuccess("Disbursement recorded and ledger expense generated.");
       setDisburseTarget(null);
       setReferenceNo("");
       setDisburseNotes("");
     },
     onError: (err: any) => {
-      toastError(
-        err.message || "Failed to finalize disbursement.",
-      );
+      toastError(err.message || "Failed to finalize disbursement.");
     },
   });
+
+  const editMutation = useMutation({
+    mutationFn: (payload: {
+      id: string;
+      title: string;
+      amount: number;
+      category: string;
+      receiptUrl?: string | null;
+      proofFileId?: string | null;
+      notes?: string;
+    }) =>
+      api.put<ReimbursementRequest>(
+        `/finance/reimbursements/${payload.id}`,
+        {
+          title: payload.title,
+          amount: payload.amount,
+          category: payload.category,
+          receiptUrl: payload.receiptUrl,
+          proofFileId: payload.proofFileId,
+          notes: payload.notes,
+        },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.reimbursements });
+      toastSuccess("Claim details updated successfully.");
+      setEditTarget(null);
+    },
+    onError: (err: any) => {
+      toastError(err.message || "Failed to update claim details.");
+    },
+  });
+
+  const handleOpenEdit = (claim: ReimbursementRequest) => {
+    setEditTarget(claim);
+    setEditTitle(claim.title);
+    setEditAmount(Number(claim.amount));
+    setEditCategory(claim.category);
+    setEditReceiptUrl(claim.receiptUrl || "");
+    setEditProofFileId(claim.proofFileId || null);
+    setEditNotes(claim.notes || "");
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editTarget) return;
+    if (typeof editAmount !== "number" || editAmount <= 0) {
+      toastError("Amount must be greater than zero.");
+      return;
+    }
+    editMutation.mutate({
+      id: editTarget.id,
+      title: editTitle.trim(),
+      amount: editAmount,
+      category: editCategory.trim(),
+      receiptUrl: editReceiptUrl || null,
+      proofFileId: editProofFileId,
+      notes: editNotes.trim(),
+    });
+  };
 
   const resetFileForm = () => {
     setTitle("");
@@ -455,6 +514,19 @@ export const ReimbursementTracker: React.FC = () => {
                           </a>
                         )}
 
+                        {(isClaimant || canManageFinance) &&
+                          claim.status === "pending" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleOpenEdit(claim)}
+                              className="min-h-[44px] gap-1.5"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                              Edit
+                            </Button>
+                          )}
+
                         {canManageFinance && claim.status === "pending" && (
                           <Button
                             size="sm"
@@ -518,9 +590,7 @@ export const ReimbursementTracker: React.FC = () => {
                 min="0.01"
                 value={amount}
                 onChange={(e) =>
-                  setAmount(
-                    e.target.value === "" ? "" : Number(e.target.value),
-                  )
+                  setAmount(e.target.value === "" ? "" : Number(e.target.value))
                 }
                 required
                 placeholder="0.00"
@@ -586,6 +656,112 @@ export const ReimbursementTracker: React.FC = () => {
             </Button>
           </div>
         </form>
+      </Dialog>
+
+      {/* Edit Reimbursement Modal */}
+      <Dialog
+        open={Boolean(editTarget)}
+        onOpenChange={(open) => !open && setEditTarget(null)}
+        title="Edit Reimbursement Claim"
+        description="Update out-of-pocket claim details while pending review."
+      >
+        {editTarget && (
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div>
+              <label className="block text-[11px] font-semibold text-foreground mb-1">
+                Expense Title / Purpose *
+              </label>
+              <Input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                required
+                placeholder="e.g. Venue sound system rental / Marker pens"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-foreground mb-1">
+                  Amount (PHP) *
+                </label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={editAmount}
+                  onChange={(e) =>
+                    setEditAmount(
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
+                  required
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-foreground mb-1">
+                  Category *
+                </label>
+                <Input
+                  type="text"
+                  value={editCategory}
+                  onChange={(e) => setEditCategory(e.target.value)}
+                  required
+                  placeholder="e.g. Logistics, Food, Materials"
+                />
+              </div>
+            </div>
+
+            <DriveDropzone
+              label="Upload Proof of Official Receipt (OR)"
+              moduleType="finance"
+              title={editTitle}
+              merchant={editTitle}
+              amount={
+                typeof editAmount === "number" ? editAmount : undefined
+              }
+              category={editCategory}
+              value={editReceiptUrl}
+              fileId={editProofFileId}
+              onUploaded={(url, fid) => {
+                setEditReceiptUrl(url);
+                if (fid) setEditProofFileId(fid);
+              }}
+              onCleared={() => {
+                setEditReceiptUrl("");
+                setEditProofFileId(null);
+              }}
+            />
+
+            <MarkdownTextarea
+              label="Justification & Breakdown Notes"
+              value={editNotes}
+              onChange={setEditNotes}
+              placeholder="Details on why this out-of-pocket expense was made..."
+              minHeight="min-h-[85px]"
+            />
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditTarget(null)}
+                className="min-h-[44px]"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={editMutation.isPending}
+                className="min-h-[44px]"
+              >
+                {editMutation.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </form>
+        )}
       </Dialog>
 
       {/* Review Modal (Finance Officer) */}

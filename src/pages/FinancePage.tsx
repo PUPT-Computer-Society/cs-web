@@ -58,8 +58,9 @@ export const FinancePage: React.FC = () => {
   const canEditFinance = canManage || canAudit || isPresident;
 
   // Tab state: Treasury Ledger vs Reimbursements
-  const [activeTab, setActiveTab] =
-    useState<"ledger" | "reimbursements">("ledger");
+  const [activeTab, setActiveTab] = useState<"ledger" | "reimbursements">(
+    "ledger",
+  );
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -290,365 +291,369 @@ export const FinancePage: React.FC = () => {
           <>
             {/* Monochromatic Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-5">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-xs font-mono font-semibold text-muted-foreground">
-                    TOTAL DISBURSEMENTS
-                  </p>
-                  {isLoading ? (
-                    <Skeleton className="h-7 w-24 mt-2" />
-                  ) : (
-                    <h4 className="text-2xl font-bold font-mono text-foreground mt-1">
-                      {showBalance ? (
-                        <>
-                          ₱
-                          {(summary?.totalExpense || 0).toLocaleString(
-                            "en-US",
-                            { minimumFractionDigits: 2 },
+              <Card>
+                <CardContent className="p-5">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-xs font-mono font-semibold text-muted-foreground">
+                        TOTAL DISBURSEMENTS
+                      </p>
+                      {isLoading ? (
+                        <Skeleton className="h-7 w-24 mt-2" />
+                      ) : (
+                        <h4 className="text-2xl font-bold font-mono text-foreground mt-1">
+                          {showBalance ? (
+                            <>
+                              ₱
+                              {(summary?.totalExpense || 0).toLocaleString(
+                                "en-US",
+                                { minimumFractionDigits: 2 },
+                              )}
+                            </>
+                          ) : (
+                            "₱ ••••••••"
                           )}
-                        </>
-                      ) : (
-                        "₱ ••••••••"
+                        </h4>
                       )}
-                    </h4>
-                  )}
-                  <p className="text-[11px] text-muted-foreground mt-2">
-                    Expenses & allocations
-                  </p>
-                </div>
-                <div className="p-2 rounded-md border border-border bg-secondary/50">
-                  <ArrowDownRight className="w-4 h-4 text-foreground" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-5">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-xs font-mono font-semibold text-muted-foreground">
-                    TOTAL COLLECTIONS
-                  </p>
-                  {isLoading ? (
-                    <Skeleton className="h-7 w-24 mt-2" />
-                  ) : (
-                    <h4 className="text-2xl font-bold font-mono text-foreground mt-1">
-                      {showBalance ? (
-                        <>
-                          ₱
-                          {(summary?.totalIncome || 0).toLocaleString(
-                            "en-US",
-                            { minimumFractionDigits: 2 },
-                          )}
-                        </>
-                      ) : (
-                        "₱ ••••••••"
-                      )}
-                    </h4>
-                  )}
-                  <p className="text-[11px] text-muted-foreground mt-2">
-                    Sponsorships & dues
-                  </p>
-                </div>
-                <div className="p-2 rounded-md border border-border bg-secondary/50">
-                  <ArrowUpRight className="w-4 h-4 text-foreground" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-5">
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-xs font-mono font-semibold text-muted-foreground">
-                      NET TREASURY BALANCE
-                    </p>
-                    <button
-                      type="button"
-                      onClick={toggleShowBalance}
-                      className={
-                        "p-1 rounded text-muted-foreground " +
-                        "hover:text-foreground hover:bg-secondary/80 " +
-                        "transition-colors duration-100 cursor-pointer"
-                      }
-                      title={
-                        showBalance ? "Hide balances" : "Show balances"
-                      }
-                      aria-label={
-                        showBalance ? "Hide balances" : "Show balances"
-                      }
-                    >
-                      {showBalance ? (
-                        <EyeOff className="w-3.5 h-3.5" />
-                      ) : (
-                        <Eye className="w-3.5 h-3.5" />
-                      )}
-                    </button>
+                      <p className="text-[11px] text-muted-foreground mt-2">
+                        Expenses & allocations
+                      </p>
+                    </div>
+                    <div className="p-2 rounded-md border border-border bg-secondary/50">
+                      <ArrowDownRight className="w-4 h-4 text-foreground" />
+                    </div>
                   </div>
-                  {isLoading ? (
-                    <Skeleton className="h-7 w-24 mt-2" />
-                  ) : (
-                    <h4 className="text-2xl font-bold font-mono text-foreground mt-1">
-                      {showBalance ? (
-                        <>
-                          ₱
-                          {(summary?.netBalance || 0).toLocaleString(
-                            "en-US",
-                            { minimumFractionDigits: 2 },
-                          )}
-                        </>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-5">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-xs font-mono font-semibold text-muted-foreground">
+                        TOTAL COLLECTIONS
+                      </p>
+                      {isLoading ? (
+                        <Skeleton className="h-7 w-24 mt-2" />
                       ) : (
-                        "₱ ••••••••"
+                        <h4 className="text-2xl font-bold font-mono text-foreground mt-1">
+                          {showBalance ? (
+                            <>
+                              ₱
+                              {(summary?.totalIncome || 0).toLocaleString(
+                                "en-US",
+                                { minimumFractionDigits: 2 },
+                              )}
+                            </>
+                          ) : (
+                            "₱ ••••••••"
+                          )}
+                        </h4>
                       )}
-                    </h4>
-                  )}
-                  <p className="text-[11px] text-muted-foreground mt-2">
-                    Audited available funds
-                  </p>
-                </div>
-                <div className="p-2 rounded-md border border-border bg-secondary/50">
-                  <Receipt className="w-4 h-4 text-foreground" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                      <p className="text-[11px] text-muted-foreground mt-2">
+                        Sponsorships & dues
+                      </p>
+                    </div>
+                    <div className="p-2 rounded-md border border-border bg-secondary/50">
+                      <ArrowUpRight className="w-4 h-4 text-foreground" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-        {/* Ledger Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <div className="flex items-center gap-3">
-            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
-              Treasury Ledger
-            </h3>
-            <div className="w-48 shrink-0">
-              <Select
-                value={sortBy}
-                onValueChange={(val) => {
-                  setSortBy(val);
-                  setCurrentPage(1);
-                }}
-                options={FINANCE_SORT_OPTIONS}
-                size="sm"
-              />
-            </div>
-          </div>
-
-          {canManage && (
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => setCreateOpen(true)}
-              className="font-mono text-[11px]"
-            >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Record Entry
-            </Button>
-          )}
-        </div>
-
-        {/* Monochromatic Table */}
-        <Card className="overflow-hidden">
-          {isLoading ? (
-            <div className="p-5 space-y-2">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          ) : transactions.length === 0 ? (
-            <div className="p-10 text-center text-xs text-muted-foreground font-mono">
-              No transactions recorded in the ledger yet.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead
-                  className={
-                    "border-b border-border bg-secondary/40 font-mono " +
-                    "text-[10px] uppercase text-muted-foreground"
-                  }
-                >
-                  <tr>
-                    <th className="p-3 sm:p-3.5 hidden sm:table-cell">Date</th>
-                    <th className="p-3 sm:p-3.5">Description</th>
-                    <th className="p-3 sm:p-3.5 hidden md:table-cell">
-                      Category
-                    </th>
-                    <th className="p-3 sm:p-3.5 hidden md:table-cell">Flow</th>
-                    <th className="p-3 sm:p-3.5 hidden lg:table-cell">
-                      Reference No
-                    </th>
-                    <th className="p-3 sm:p-3.5">Proof / Receipt</th>
-                    <th className="p-3 sm:p-3.5 text-right">Amount</th>
-                    {canEditFinance && (
-                      <th className="p-3 sm:p-3.5 text-right">Actions</th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {paginatedTransactions.map((tx) => (
-                    <tr
-                      key={tx.id}
-                      className="hover:bg-secondary/30 transition-colors"
-                    >
-                      <td
-                        className={
-                          "p-3 sm:p-3.5 font-mono text-muted-foreground " +
-                          "whitespace-nowrap hidden sm:table-cell"
-                        }
-                      >
-                        {new Date(tx.createdAt).toLocaleDateString()}
-                      </td>
-                      <td
-                        className="p-3 sm:p-3.5 font-semibold text-foreground"
-                      >
-                        <div>{tx.title}</div>
-                        <div
+              <Card>
+                <CardContent className="p-5">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs font-mono font-semibold text-muted-foreground">
+                          NET TREASURY BALANCE
+                        </p>
+                        <button
+                          type="button"
+                          onClick={toggleShowBalance}
                           className={
-                            "sm:hidden flex items-center gap-1.5 mt-0.5 " +
-                            "text-[10px] text-muted-foreground font-normal"
+                            "p-1 rounded text-muted-foreground " +
+                            "hover:text-foreground hover:bg-secondary/80 " +
+                            "transition-colors duration-100 cursor-pointer"
+                          }
+                          title={
+                            showBalance ? "Hide balances" : "Show balances"
+                          }
+                          aria-label={
+                            showBalance ? "Hide balances" : "Show balances"
                           }
                         >
-                          <span>
-                            {new Date(tx.createdAt).toLocaleDateString()}
-                          </span>
-                          <span>•</span>
-                          <span className="truncate">{tx.category}</span>
-                        </div>
-                      </td>
-                      <td
-                        className={
-                          "p-3 sm:p-3.5 text-muted-foreground " +
-                          "hidden md:table-cell"
-                        }
-                      >
-                        {tx.category}
-                      </td>
-                      <td className="p-3 sm:p-3.5 hidden md:table-cell">
-                        <Badge
-                          variant="outline"
-                          className="font-mono text-[9px] uppercase"
+                          {showBalance ? (
+                            <EyeOff className="w-3.5 h-3.5" />
+                          ) : (
+                            <Eye className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </div>
+                      {isLoading ? (
+                        <Skeleton className="h-7 w-24 mt-2" />
+                      ) : (
+                        <h4 className="text-2xl font-bold font-mono text-foreground mt-1">
+                          {showBalance ? (
+                            <>
+                              ₱
+                              {(summary?.netBalance || 0).toLocaleString(
+                                "en-US",
+                                { minimumFractionDigits: 2 },
+                              )}
+                            </>
+                          ) : (
+                            "₱ ••••••••"
+                          )}
+                        </h4>
+                      )}
+                      <p className="text-[11px] text-muted-foreground mt-2">
+                        Audited available funds
+                      </p>
+                    </div>
+                    <div className="p-2 rounded-md border border-border bg-secondary/50">
+                      <Receipt className="w-4 h-4 text-foreground" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Ledger Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="flex items-center gap-3">
+                <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
+                  Treasury Ledger
+                </h3>
+                <div className="w-48 shrink-0">
+                  <Select
+                    value={sortBy}
+                    onValueChange={(val) => {
+                      setSortBy(val);
+                      setCurrentPage(1);
+                    }}
+                    options={FINANCE_SORT_OPTIONS}
+                    size="sm"
+                  />
+                </div>
+              </div>
+
+              {canManage && (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => setCreateOpen(true)}
+                  className="font-mono text-[11px]"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  Record Entry
+                </Button>
+              )}
+            </div>
+
+            {/* Monochromatic Table */}
+            <Card className="overflow-hidden">
+              {isLoading ? (
+                <div className="p-5 space-y-2">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ) : transactions.length === 0 ? (
+                <div className="p-10 text-center text-xs text-muted-foreground font-mono">
+                  No transactions recorded in the ledger yet.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead
+                      className={
+                        "border-b border-border bg-secondary/40 font-mono " +
+                        "text-[10px] uppercase text-muted-foreground"
+                      }
+                    >
+                      <tr>
+                        <th className="p-3 sm:p-3.5 hidden sm:table-cell">
+                          Date
+                        </th>
+                        <th className="p-3 sm:p-3.5">Description</th>
+                        <th className="p-3 sm:p-3.5 hidden md:table-cell">
+                          Category
+                        </th>
+                        <th className="p-3 sm:p-3.5 hidden md:table-cell">
+                          Flow
+                        </th>
+                        <th className="p-3 sm:p-3.5 hidden lg:table-cell">
+                          Reference No
+                        </th>
+                        <th className="p-3 sm:p-3.5">Proof / Receipt</th>
+                        <th className="p-3 sm:p-3.5 text-right">Amount</th>
+                        {canEditFinance && (
+                          <th className="p-3 sm:p-3.5 text-right">Actions</th>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {paginatedTransactions.map((tx) => (
+                        <tr
+                          key={tx.id}
+                          className="hover:bg-secondary/30 transition-colors"
                         >
-                          {tx.transactionType}
-                        </Badge>
-                      </td>
-                      <td
-                        className={
-                          "p-3 sm:p-3.5 font-mono text-[11px] " +
-                          "text-muted-foreground hidden lg:table-cell"
-                        }
-                      >
-                        {tx.referenceNo || "—"}
-                      </td>
-                      <td className="p-3 sm:p-3.5">
-                        {tx.receiptUrl ? (
-                          <div className="flex items-center gap-1">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => setPreviewReceipt(tx)}
-                              className={
-                                "gap-1 border border-primary/30 " +
-                                "bg-primary/10 text-primary " +
-                                "hover:bg-primary/20"
-                              }
-                              title="Preview receipt in portal"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                              <span className="hidden sm:inline">Receipt</span>
-                            </Button>
-                            <a
-                              href={tx.receiptUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={
-                                "p-2 min-h-[36px] min-w-[36px] flex " +
-                                "items-center justify-center rounded-lg " +
-                                "text-muted-foreground hover:text-foreground " +
-                                "transition-colors"
-                              }
-                              title="Open original Drive link"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </a>
-                          </div>
-                        ) : (
-                          <span
+                          <td
                             className={
-                              "text-muted-foreground font-mono text-[11px]"
+                              "p-3 sm:p-3.5 font-mono text-muted-foreground " +
+                              "whitespace-nowrap hidden sm:table-cell"
                             }
                           >
-                            —
-                          </span>
-                        )}
-                      </td>
-                      <td
-                        className={
-                          "p-3 sm:p-3.5 text-right font-mono font-bold " +
-                          "text-xs sm:text-sm whitespace-nowrap " +
-                          (tx.transactionType === "income"
-                            ? "text-emerald-600 dark:text-emerald-400"
-                            : "text-rose-600 dark:text-rose-400")
-                        }
-                      >
-                        {tx.transactionType === "income" ? "+" : "-"}₱
-                        {tx.amount.toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </td>
-                      {canEditFinance && (
-                        <td
-                          className={
-                            "p-3 sm:p-3.5 text-right whitespace-nowrap"
-                          }
-                        >
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              type="button"
+                            {new Date(tx.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="p-3 sm:p-3.5 font-semibold text-foreground">
+                            <div>{tx.title}</div>
+                            <div
+                              className={
+                                "sm:hidden flex items-center gap-1.5 mt-0.5 " +
+                                "text-[10px] text-muted-foreground font-normal"
+                              }
+                            >
+                              <span>
+                                {new Date(tx.createdAt).toLocaleDateString()}
+                              </span>
+                              <span>•</span>
+                              <span className="truncate">{tx.category}</span>
+                            </div>
+                          </td>
+                          <td
+                            className={
+                              "p-3 sm:p-3.5 text-muted-foreground " +
+                              "hidden md:table-cell"
+                            }
+                          >
+                            {tx.category}
+                          </td>
+                          <td className="p-3 sm:p-3.5 hidden md:table-cell">
+                            <Badge
                               variant="outline"
-                              size="icon"
-                              onClick={() => openEditDialog(tx)}
-                              title="Edit transaction / receipt"
+                              className="font-mono text-[9px] uppercase"
                             >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="icon"
-                              onClick={() => setDeletingTx(tx)}
-                              title="Delete transaction"
+                              {tx.transactionType}
+                            </Badge>
+                          </td>
+                          <td
+                            className={
+                              "p-3 sm:p-3.5 font-mono text-[11px] " +
+                              "text-muted-foreground hidden lg:table-cell"
+                            }
+                          >
+                            {tx.referenceNo || "—"}
+                          </td>
+                          <td className="p-3 sm:p-3.5">
+                            {tx.receiptUrl ? (
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() => setPreviewReceipt(tx)}
+                                  className={
+                                    "gap-1 border border-primary/30 " +
+                                    "bg-primary/10 text-primary " +
+                                    "hover:bg-primary/20"
+                                  }
+                                  title="Preview receipt in portal"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                  <span className="hidden sm:inline">
+                                    Receipt
+                                  </span>
+                                </Button>
+                                <a
+                                  href={tx.receiptUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={
+                                    "p-2 min-h-[36px] min-w-[36px] flex " +
+                                    "items-center justify-center rounded-lg " +
+                                    "text-muted-foreground hover:text-foreground " +
+                                    "transition-colors"
+                                  }
+                                  title="Open original Drive link"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </a>
+                              </div>
+                            ) : (
+                              <span
+                                className={
+                                  "text-muted-foreground font-mono text-[11px]"
+                                }
+                              >
+                                —
+                              </span>
+                            )}
+                          </td>
+                          <td
+                            className={
+                              "p-3 sm:p-3.5 text-right font-mono font-bold " +
+                              "text-xs sm:text-sm whitespace-nowrap " +
+                              (tx.transactionType === "income"
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : "text-rose-600 dark:text-rose-400")
+                            }
+                          >
+                            {tx.transactionType === "income" ? "+" : "-"}₱
+                            {tx.amount.toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                            })}
+                          </td>
+                          {canEditFinance && (
+                            <td
+                              className={
+                                "p-3 sm:p-3.5 text-right whitespace-nowrap"
+                              }
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => openEditDialog(tx)}
+                                  title="Edit transaction / receipt"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="icon"
+                                  onClick={() => setDeletingTx(tx)}
+                                  title="Delete transaction"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
-          {transactions.length > 0 && (
-            <div className="p-4 border-t border-border">
-              <Pagination
-                currentPage={currentPage}
-                totalItems={transactions.length}
-                pageSize={PAGE_SIZE}
-                onPageChange={setCurrentPage}
-              />
-            </div>
-          )}
-        </Card>
-      </>
-    )}
-  </div>
+              {transactions.length > 0 && (
+                <div className="p-4 border-t border-border">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalItems={transactions.length}
+                    pageSize={PAGE_SIZE}
+                    onPageChange={setCurrentPage}
+                  />
+                </div>
+              )}
+            </Card>
+          </>
+        )}
+      </div>
 
       {/* Record Dialog */}
       <Dialog

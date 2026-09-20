@@ -1094,6 +1094,39 @@ export const TasksPage: React.FC = () => {
     toggleSubtaskMutation.mutate({ taskId, subtaskId });
   };
 
+  const updateSubtaskMutation = useMutation({
+    mutationFn: ({
+      taskId,
+      subtaskId,
+      assignedToId,
+      title: subTitle,
+    }: {
+      taskId: string;
+      subtaskId: string;
+      assignedToId?: string | null;
+      title?: string;
+    }) =>
+      api.patch<Task>(`/tasks/${taskId}/subtasks/${subtaskId}`, {
+        assignedToId: assignedToId === "" ? null : assignedToId,
+        title: subTitle,
+      }),
+    onSuccess: (updatedTask) => {
+      queryClient.setQueriesData<Task[]>(
+        { queryKey: queryKeys.tasks },
+        (old = []) =>
+          old.map((t) => (t.id === updatedTask.id ? updatedTask : t)),
+      );
+      if (selectedTask && selectedTask.id === updatedTask.id) {
+        setSelectedTask(updatedTask);
+      }
+      toastSuccess("Subtask assignment updated.");
+    },
+    onError: (err: any) => {
+      toastError(err.message || "Failed to update subtask");
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks });
+    },
+  });
+
   const addSubtaskMutation = useMutation({
     mutationFn: ({
       taskId,
@@ -1982,7 +2015,24 @@ export const TasksPage: React.FC = () => {
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        {st.assignedToName ? (
+                        {canEditTask(selectedTask) ? (
+                          <div className="w-32 sm:w-40">
+                            <Select
+                              size="sm"
+                              value={st.assignedToId || ""}
+                              onValueChange={(newAssignee) =>
+                                updateSubtaskMutation.mutate({
+                                  taskId: selectedTask.id,
+                                  subtaskId: st.id,
+                                  assignedToId: newAssignee || null,
+                                })
+                              }
+                              options={subtaskAssigneeOptions}
+                              placeholder="Unassigned"
+                              triggerClassName="h-7 text-[11px] py-0 px-2"
+                            />
+                          </div>
+                        ) : st.assignedToName ? (
                           <Pill
                             size="sm"
                             className={
