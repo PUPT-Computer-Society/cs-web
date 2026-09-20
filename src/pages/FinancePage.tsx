@@ -228,7 +228,32 @@ export const FinancePage: React.FC = () => {
       <Header
         title="Finance Monitoring & Audit"
         subtitle="Treasury ledger, fund disbursement records, and audited balances"
-      />
+      >
+        <button
+          type="button"
+          onClick={toggleShowBalance}
+          className={
+            "min-h-[44px] inline-flex items-center gap-2 px-3 py-1.5 " +
+            "rounded-lg border border-border/80 bg-secondary/40 " +
+            "hover:bg-secondary text-xs font-semibold text-foreground " +
+            "transition-colors cursor-pointer"
+          }
+          title={showBalance ? "Hide balances" : "Show balances"}
+          aria-label={showBalance ? "Hide balances" : "Show balances"}
+        >
+          {showBalance ? (
+            <>
+              <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="hidden sm:inline">Hide Balances</span>
+            </>
+          ) : (
+            <>
+              <Eye className="w-3.5 h-3.5 text-primary" />
+              <span className="hidden sm:inline">Show Balances</span>
+            </>
+          )}
+        </button>
+      </Header>
 
       <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
         {/* Tab Switcher: Treasury Ledger vs Reimbursement Tracker */}
@@ -278,11 +303,38 @@ export const FinancePage: React.FC = () => {
             </button>
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            {activeTab === "ledger"
-              ? "Official organizational cash flow and audited entries"
-              : "Officer out-of-pocket claims, verification, and disbursement"}
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="hidden md:block text-xs text-muted-foreground">
+              {activeTab === "ledger"
+                ? "Official organizational cash flow and audited entries"
+                : "Officer out-of-pocket claims, verification, and disbursement"}
+            </p>
+
+            <button
+              type="button"
+              onClick={toggleShowBalance}
+              className={
+                "min-h-[44px] flex items-center gap-2 px-3 py-1.5 " +
+                "rounded-lg border border-border/80 bg-card hover:bg-muted " +
+                "text-xs font-semibold text-foreground transition-colors " +
+                "cursor-pointer shrink-0"
+              }
+              title={showBalance ? "Hide balances" : "Show balances"}
+              aria-label={showBalance ? "Hide balances" : "Show balances"}
+            >
+              {showBalance ? (
+                <>
+                  <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span>Hide Balance</span>
+                </>
+              ) : (
+                <>
+                  <Eye className="w-3.5 h-3.5 text-primary" />
+                  <span>Show Balance</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {activeTab === "reimbursements" ? (
@@ -295,13 +347,45 @@ export const FinancePage: React.FC = () => {
                 <CardContent className="p-5">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-xs font-mono font-semibold text-muted-foreground">
-                        TOTAL DISBURSEMENTS
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p
+                          className={
+                            "text-xs font-mono font-semibold " +
+                            "text-muted-foreground"
+                          }
+                        >
+                          TOTAL DISBURSEMENTS
+                        </p>
+                        <button
+                          type="button"
+                          onClick={toggleShowBalance}
+                          className={
+                            "p-1 rounded text-muted-foreground " +
+                            "hover:text-foreground hover:bg-secondary/80 " +
+                            "transition-colors duration-100 cursor-pointer"
+                          }
+                          title={
+                            showBalance ? "Hide balances" : "Show balances"
+                          }
+                          aria-label={
+                            showBalance ? "Hide balances" : "Show balances"
+                          }
+                        >
+                          {showBalance ? (
+                            <EyeOff className="w-3.5 h-3.5" />
+                          ) : (
+                            <Eye className="w-3.5 h-3.5 text-primary" />
+                          )}
+                        </button>
+                      </div>
                       {isLoading ? (
                         <Skeleton className="h-7 w-24 mt-2" />
                       ) : (
-                        <h4 className="text-2xl font-bold font-mono text-foreground mt-1">
+                        <h4
+                          className={
+                            "text-2xl font-bold font-mono text-foreground mt-1"
+                          }
+                        >
                           {showBalance ? (
                             <>
                               ₱
@@ -319,7 +403,11 @@ export const FinancePage: React.FC = () => {
                         Expenses & allocations
                       </p>
                     </div>
-                    <div className="p-2 rounded-md border border-border bg-secondary/50">
+                    <div
+                      className={
+                        "p-2 rounded-md border border-border bg-secondary/50"
+                      }
+                    >
                       <ArrowDownRight className="w-4 h-4 text-foreground" />
                     </div>
                   </div>
@@ -330,13 +418,45 @@ export const FinancePage: React.FC = () => {
                 <CardContent className="p-5">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-xs font-mono font-semibold text-muted-foreground">
-                        TOTAL COLLECTIONS
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p
+                          className={
+                            "text-xs font-mono font-semibold " +
+                            "text-muted-foreground"
+                          }
+                        >
+                          TOTAL COLLECTIONS
+                        </p>
+                        <button
+                          type="button"
+                          onClick={toggleShowBalance}
+                          className={
+                            "p-1 rounded text-muted-foreground " +
+                            "hover:text-foreground hover:bg-secondary/80 " +
+                            "transition-colors duration-100 cursor-pointer"
+                          }
+                          title={
+                            showBalance ? "Hide balances" : "Show balances"
+                          }
+                          aria-label={
+                            showBalance ? "Hide balances" : "Show balances"
+                          }
+                        >
+                          {showBalance ? (
+                            <EyeOff className="w-3.5 h-3.5" />
+                          ) : (
+                            <Eye className="w-3.5 h-3.5 text-primary" />
+                          )}
+                        </button>
+                      </div>
                       {isLoading ? (
                         <Skeleton className="h-7 w-24 mt-2" />
                       ) : (
-                        <h4 className="text-2xl font-bold font-mono text-foreground mt-1">
+                        <h4
+                          className={
+                            "text-2xl font-bold font-mono text-foreground mt-1"
+                          }
+                        >
                           {showBalance ? (
                             <>
                               ₱
@@ -354,7 +474,11 @@ export const FinancePage: React.FC = () => {
                         Sponsorships & dues
                       </p>
                     </div>
-                    <div className="p-2 rounded-md border border-border bg-secondary/50">
+                    <div
+                      className={
+                        "p-2 rounded-md border border-border bg-secondary/50"
+                      }
+                    >
                       <ArrowUpRight className="w-4 h-4 text-foreground" />
                     </div>
                   </div>
@@ -366,7 +490,12 @@ export const FinancePage: React.FC = () => {
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <p className="text-xs font-mono font-semibold text-muted-foreground">
+                        <p
+                          className={
+                            "text-xs font-mono font-semibold " +
+                            "text-muted-foreground"
+                          }
+                        >
                           NET TREASURY BALANCE
                         </p>
                         <button
@@ -394,7 +523,11 @@ export const FinancePage: React.FC = () => {
                       {isLoading ? (
                         <Skeleton className="h-7 w-24 mt-2" />
                       ) : (
-                        <h4 className="text-2xl font-bold font-mono text-foreground mt-1">
+                        <h4
+                          className={
+                            "text-2xl font-bold font-mono text-foreground mt-1"
+                          }
+                        >
                           {showBalance ? (
                             <>
                               ₱
@@ -412,7 +545,11 @@ export const FinancePage: React.FC = () => {
                         Audited available funds
                       </p>
                     </div>
-                    <div className="p-2 rounded-md border border-border bg-secondary/50">
+                    <div
+                      className={
+                        "p-2 rounded-md border border-border bg-secondary/50"
+                      }
+                    >
                       <Receipt className="w-4 h-4 text-foreground" />
                     </div>
                   </div>
@@ -600,10 +737,16 @@ export const FinancePage: React.FC = () => {
                                 : "text-rose-600 dark:text-rose-400")
                             }
                           >
-                            {tx.transactionType === "income" ? "+" : "-"}₱
-                            {tx.amount.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                            })}
+                            {showBalance ? (
+                              <>
+                                {tx.transactionType === "income" ? "+" : "-"}₱
+                                {tx.amount.toLocaleString("en-US", {
+                                  minimumFractionDigits: 2,
+                                })}
+                              </>
+                            ) : (
+                              "₱ ••••••••"
+                            )}
                           </td>
                           {canEditFinance && (
                             <td

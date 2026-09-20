@@ -4,6 +4,8 @@ import {
   CheckCircle2,
   Clock,
   ExternalLink,
+  Eye,
+  EyeOff,
   FileText,
   HandCoins,
   Pencil,
@@ -14,6 +16,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/api/client";
 import { queryClient, queryKeys } from "@/lib/queryClient";
 import { useAuth } from "@/context/AuthContext";
+import { usePrivacyBalance } from "@/lib/usePrivacyBalance";
 import { useToast } from "@/context/ToastContext";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -67,6 +70,7 @@ const STATUS_CONFIG: Record<
 
 export const ReimbursementTracker: React.FC = () => {
   const { user, isPresident, hasPermission } = useAuth();
+  const { showBalance, toggleShowBalance } = usePrivacyBalance();
   const { success: toastSuccess, error: toastError } = useToast();
   const canManageFinance =
     hasPermission("manage_finance") ||
@@ -97,14 +101,14 @@ export const ReimbursementTracker: React.FC = () => {
   const [disburseNotes, setDisburseNotes] = useState("");
 
   // Edit states
-  const [editTarget, setEditTarget] =
-    useState<ReimbursementRequest | null>(null);
+  const [editTarget, setEditTarget] = useState<ReimbursementRequest | null>(
+    null,
+  );
   const [editTitle, setEditTitle] = useState("");
   const [editAmount, setEditAmount] = useState<number | "">("");
   const [editCategory, setEditCategory] = useState(DEFAULT_CATEGORY);
   const [editReceiptUrl, setEditReceiptUrl] = useState("");
-  const [editProofFileId, setEditProofFileId] =
-    useState<string | null>(null);
+  const [editProofFileId, setEditProofFileId] = useState<string | null>(null);
   const [editNotes, setEditNotes] = useState("");
 
   const { data: claims = [], isLoading } = useQuery<ReimbursementRequest[]>({
@@ -142,21 +146,23 @@ export const ReimbursementTracker: React.FC = () => {
       reason,
     }: {
       id: string;
-      status: ReimbursementStatus;
+      status: "approved" | "rejected";
       reason?: string;
     }) =>
       api.patch<ReimbursementRequest>(`/finance/reimbursements/${id}/review`, {
         status,
-        rejectionReason: reason || undefined,
+        rejectionReason: reason,
       }),
-    onSuccess: (updated) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.reimbursements });
-      toastSuccess(`Claim status updated to ${updated.status.toUpperCase()}.`);
+      toastSuccess(
+        `Claim ${variables.status === "approved" ? "approved" : "rejected"}.`,
+      );
       setReviewTarget(null);
       setRejectionReason("");
     },
     onError: (err: any) => {
-      toastError(err.message || "Failed to update review.");
+      toastError(err.message || "Failed to submit review.");
     },
   });
 
@@ -164,51 +170,51 @@ export const ReimbursementTracker: React.FC = () => {
     mutationFn: ({
       id,
       refNo,
-      notes,
+      notes: dNotes,
     }: {
       id: string;
-      refNo?: string;
+      refNo: string;
       notes?: string;
     }) =>
-      api.post<ReimbursementRequest>(`/finance/reimbursements/${id}/disburse`, {
-        referenceNo: refNo || undefined,
-        notes: notes || undefined,
-      }),
+      api.post<ReimbursementRequest>(
+        `/finance/reimbursements/${id}/disburse`,
+        {
+          referenceNo: refNo,
+          notes: dNotes,
+        },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.reimbursements });
       queryClient.invalidateQueries({ queryKey: queryKeys.finance });
       queryClient.invalidateQueries({ queryKey: queryKeys.financeSummary });
-      toastSuccess("Disbursement recorded and ledger expense generated.");
+      toastSuccess("Claim disbursed and recorded in treasury ledger.");
       setDisburseTarget(null);
       setReferenceNo("");
       setDisburseNotes("");
     },
     onError: (err: any) => {
-      toastError(err.message || "Failed to finalize disbursement.");
+      toastError(err.message || "Failed to disburse claim.");
     },
   });
 
   const editMutation = useMutation({
     mutationFn: (payload: {
       id: string;
-      title: string;
-      amount: number;
-      category: string;
+      title?: string;
+      amount?: number;
+      category?: string;
       receiptUrl?: string | null;
       proofFileId?: string | null;
       notes?: string;
     }) =>
-      api.put<ReimbursementRequest>(
-        `/finance/reimbursements/${payload.id}`,
-        {
-          title: payload.title,
-          amount: payload.amount,
-          category: payload.category,
-          receiptUrl: payload.receiptUrl,
-          proofFileId: payload.proofFileId,
-          notes: payload.notes,
-        },
-      ),
+      api.put<ReimbursementRequest>(`/finance/reimbursements/${payload.id}`, {
+        title: payload.title,
+        amount: payload.amount,
+        category: payload.category,
+        receiptUrl: payload.receiptUrl,
+        proofFileId: payload.proofFileId,
+        notes: payload.notes,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.reimbursements });
       toastSuccess("Claim details updated successfully.");
@@ -222,7 +228,7 @@ export const ReimbursementTracker: React.FC = () => {
   const handleOpenEdit = (claim: ReimbursementRequest) => {
     setEditTarget(claim);
     setEditTitle(claim.title);
-    setEditAmount(Number(claim.amount));
+    setEditAmount(claim.amount);
     setEditCategory(claim.category);
     setEditReceiptUrl(claim.receiptUrl || "");
     setEditProofFileId(claim.proofFileId || null);
@@ -296,11 +302,36 @@ export const ReimbursementTracker: React.FC = () => {
         <Card className="border-border/60 bg-card/60 backdrop-blur-sm">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-mono text-muted-foreground uppercase">
-                Pending Approval
-              </p>
+              <div className="flex items-center gap-1.5">
+                <p
+                  className={
+                    "text-[11px] font-mono text-muted-foreground uppercase"
+                  }
+                >
+                  Pending Approval
+                </p>
+                <button
+                  type="button"
+                  onClick={toggleShowBalance}
+                  className={
+                    "p-1 rounded text-muted-foreground " +
+                    "hover:text-foreground hover:bg-secondary/80 " +
+                    "transition-colors duration-100 cursor-pointer"
+                  }
+                  title={showBalance ? "Hide balances" : "Show balances"}
+                  aria-label={
+                    showBalance ? "Hide balances" : "Show balances"
+                  }
+                >
+                  {showBalance ? (
+                    <EyeOff className="w-3.5 h-3.5" />
+                  ) : (
+                    <Eye className="w-3.5 h-3.5 text-primary" />
+                  )}
+                </button>
+              </div>
               <p className="text-xl font-bold font-mono text-amber-500 mt-1">
-                {formatCurrency(totalPending)}
+                {showBalance ? formatCurrency(totalPending) : "₱ ••••••••"}
               </p>
             </div>
             <div className="p-2.5 rounded-full bg-amber-500/10 text-amber-500">
@@ -312,11 +343,36 @@ export const ReimbursementTracker: React.FC = () => {
         <Card className="border-border/60 bg-card/60 backdrop-blur-sm">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-mono text-muted-foreground uppercase">
-                Approved // Ready for Payout
-              </p>
+              <div className="flex items-center gap-1.5">
+                <p
+                  className={
+                    "text-[11px] font-mono text-muted-foreground uppercase"
+                  }
+                >
+                  Approved // Ready for Payout
+                </p>
+                <button
+                  type="button"
+                  onClick={toggleShowBalance}
+                  className={
+                    "p-1 rounded text-muted-foreground " +
+                    "hover:text-foreground hover:bg-secondary/80 " +
+                    "transition-colors duration-100 cursor-pointer"
+                  }
+                  title={showBalance ? "Hide balances" : "Show balances"}
+                  aria-label={
+                    showBalance ? "Hide balances" : "Show balances"
+                  }
+                >
+                  {showBalance ? (
+                    <EyeOff className="w-3.5 h-3.5" />
+                  ) : (
+                    <Eye className="w-3.5 h-3.5 text-primary" />
+                  )}
+                </button>
+              </div>
               <p className="text-xl font-bold font-mono text-blue-500 mt-1">
-                {formatCurrency(totalApproved)}
+                {showBalance ? formatCurrency(totalApproved) : "₱ ••••••••"}
               </p>
             </div>
             <div className="p-2.5 rounded-full bg-blue-500/10 text-blue-500">
@@ -328,11 +384,36 @@ export const ReimbursementTracker: React.FC = () => {
         <Card className="border-border/60 bg-card/60 backdrop-blur-sm">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-mono text-muted-foreground uppercase">
-                Total Disbursed
-              </p>
+              <div className="flex items-center gap-1.5">
+                <p
+                  className={
+                    "text-[11px] font-mono text-muted-foreground uppercase"
+                  }
+                >
+                  Total Disbursed
+                </p>
+                <button
+                  type="button"
+                  onClick={toggleShowBalance}
+                  className={
+                    "p-1 rounded text-muted-foreground " +
+                    "hover:text-foreground hover:bg-secondary/80 " +
+                    "transition-colors duration-100 cursor-pointer"
+                  }
+                  title={showBalance ? "Hide balances" : "Show balances"}
+                  aria-label={
+                    showBalance ? "Hide balances" : "Show balances"
+                  }
+                >
+                  {showBalance ? (
+                    <EyeOff className="w-3.5 h-3.5" />
+                  ) : (
+                    <Eye className="w-3.5 h-3.5 text-primary" />
+                  )}
+                </button>
+              </div>
               <p className="text-xl font-bold font-mono text-emerald-500 mt-1">
-                {formatCurrency(totalDisbursed)}
+                {showBalance ? formatCurrency(totalDisbursed) : "₱ ••••••••"}
               </p>
             </div>
             <div
@@ -371,13 +452,40 @@ export const ReimbursementTracker: React.FC = () => {
           ))}
         </div>
 
-        <Button
-          onClick={() => setIsFileModalOpen(true)}
-          className="min-h-[44px] gap-2 shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          File Reimbursement
-        </Button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleShowBalance}
+            className={
+              "min-h-[44px] flex items-center gap-2 px-3 py-1.5 " +
+              "rounded-lg border border-border/80 bg-card hover:bg-muted " +
+              "text-xs font-semibold text-foreground transition-colors " +
+              "cursor-pointer shrink-0"
+            }
+            title={showBalance ? "Hide balances" : "Show balances"}
+            aria-label={showBalance ? "Hide balances" : "Show balances"}
+          >
+            {showBalance ? (
+              <>
+                <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="hidden sm:inline">Hide Balance</span>
+              </>
+            ) : (
+              <>
+                <Eye className="w-3.5 h-3.5 text-primary" />
+                <span className="hidden sm:inline">Show Balance</span>
+              </>
+            )}
+          </button>
+
+          <Button
+            onClick={() => setIsFileModalOpen(true)}
+            className="min-h-[44px] gap-2 shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            File Reimbursement
+          </Button>
+        </div>
       </div>
 
       {/* Claims List Table / View */}
@@ -493,7 +601,9 @@ export const ReimbursementTracker: React.FC = () => {
                       }
                     >
                       <span className="text-lg sm:text-xl font-bold font-mono text-foreground">
-                        {formatCurrency(Number(claim.amount))}
+                        {showBalance
+                          ? formatCurrency(Number(claim.amount))
+                          : "₱ ••••••••"}
                       </span>
 
                       <div className="flex items-center gap-2">
@@ -719,9 +829,7 @@ export const ReimbursementTracker: React.FC = () => {
               moduleType="finance"
               title={editTitle}
               merchant={editTitle}
-              amount={
-                typeof editAmount === "number" ? editAmount : undefined
-              }
+              amount={typeof editAmount === "number" ? editAmount : undefined}
               category={editCategory}
               value={editReceiptUrl}
               fileId={editProofFileId}
@@ -771,9 +879,11 @@ export const ReimbursementTracker: React.FC = () => {
         title="Review Reimbursement Claim"
         description={
           reviewTarget
-            ? `Review claim "${reviewTarget.title}" for ${formatCurrency(
-                Number(reviewTarget.amount),
-              )}`
+            ? `Review claim "${reviewTarget.title}" for ${
+                showBalance
+                  ? formatCurrency(Number(reviewTarget.amount))
+                  : "₱ ••••••••"
+              }`
             : ""
         }
       >
@@ -869,7 +979,9 @@ export const ReimbursementTracker: React.FC = () => {
               <div>
                 <span className="text-muted-foreground">Amount:</span>{" "}
                 <strong className="text-foreground font-mono">
-                  {formatCurrency(Number(disburseTarget.amount))}
+                  {showBalance
+                    ? formatCurrency(Number(disburseTarget.amount))
+                    : "₱ ••••••••"}
                 </strong>
               </div>
               <div>
