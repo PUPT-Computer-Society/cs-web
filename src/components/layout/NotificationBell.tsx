@@ -1,12 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Check, CheckCheck } from "lucide-react";
+import { Bell, BellRing, Check, CheckCheck, Loader2 } from "lucide-react";
 import { api } from "@/api/client";
 import { usePresence } from "@/lib/usePresence";
 import { useSSE } from "@/context/SSEContext";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Badge, Pill } from "@/components/ui/Badge";
+import {
+  isPushSupported,
+  getExistingPushSubscription,
+  registerPushSubscription,
+} from "@/lib/pushNotifications";
 import type { AppNotification, NotificationListResponse } from "@/types";
 
 export interface NotificationBellProps {
@@ -44,6 +49,67 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef<number>(0);
   const navigate = useNavigate();
+
+  // Web Push states
+  const [pushSupported] = useState<boolean>(() => isPushSupported());
+  const [pushPermission, setPushPermission] = useState<NotificationPermission>(
+    () => {
+      return typeof window !== "undefined" && "Notification" in window
+        ? Notification.permission
+        : "default";
+    },
+  );
+  const [isPushSubscribed, setIsPushSubscribed] = useState(false);
+  const [isPushLoading, setIsPushLoading] = useState(false);
+  const [isPushDismissed, setIsPushDismissed] = useState<boolean>(() => {
+    const dismissed = localStorage.getItem("cs_push_dismissed");
+    if (!dismissed) return false;
+    const days = (Date.now() - Number(dismissed)) / (1000 * 60 * 60 * 24);
+    return days < 7;
+  });
+
+  useEffect(() => {
+    if (pushSupported) {
+      getExistingPushSubscription().then((sub) => {
+        setIsPushSubscribed(!!sub);
+      });
+    }
+  }, [pushSupported]);
+
+  const handleEnablePush = async () => {
+    setIsPushLoading(true);
+    try {
+      const perm = await Notification.requestPermission();
+      setPushPermission(perm);
+      if (perm !== "granted") return;
+
+      const data = await api.get<{ vapidPublicKey: string }>(
+        "/notifications/vapid-public-key",
+      );
+      if (!data.vapidPublicKey) {
+        console.warn("VAPID public key unset on server");
+        return;
+      }
+
+      const sub = await registerPushSubscription(data.vapidPublicKey);
+      const json = sub.toJSON();
+      await api.post("/notifications/push-subscription", {
+        endpoint: sub.endpoint,
+        p256dhKey: json.keys?.p256dh,
+        authKey: json.keys?.auth,
+      });
+      setIsPushSubscribed(true);
+    } catch (err) {
+      console.error("Failed to enable push notifications", err);
+    } finally {
+      setIsPushLoading(false);
+    }
+  };
+
+  const handleDismissPushBanner = () => {
+    setIsPushDismissed(true);
+    localStorage.setItem("cs_push_dismissed", String(Date.now()));
+  };
 
   const fetchNotifications = async () => {
     try {
@@ -270,6 +336,17 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                     {unreadCount} Unread {!isTouched ? "• New" : "• Seen"}
                   </Pill>
                 )}
+                {isPushSubscribed && (
+                  <Pill
+                    size="sm"
+                    className={
+                      "font-mono text-[9px] bg-emerald-500/10 " +
+                      "text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                    }
+                  >
+                    Push Active
+                  </Pill>
+                )}
               </div>
 
               {unreadCount > 0 && (
@@ -289,6 +366,64 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                 </Button>
               )}
             </div>
+
+            {/* Guided Web Push Opt-In Banner */}
+            {pushSupported &&
+              !isPushSubscribed &&
+              pushPermission !== "denied" &&
+              !isPushDismissed && (
+                <div className="p-3.5 bg-primary/5 border-b border-border flex flex-col gap-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0 mt-0.5">
+                      <BellRing className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-foreground">
+                        Turn on Desktop Alerts
+                      </span>
+                      <span className="text-[11px] text-muted-foreground leading-tight">
+                        Receive instant notifications for tasks and resolutions
+                        even when your browser tab is closed.
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleEnablePush}
+                      disabled={isPushLoading}
+                      className="min-h-[44px] px-3.5 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center gap-1.5 grow transition-colors"
+                    >
+                      {isPushLoading ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Enabling...</span>
+                        </>
+                      ) : (
+                        <span>Enable Alerts</span>
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleDismissPushBanner}
+                      className="min-h-[44px] px-3 py-2 text-xs font-medium rounded-lg text-muted-foreground hover:bg-muted transition-colors"
+                    >
+                      Later
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+            {pushSupported && pushPermission === "denied" && (
+              <div className="p-2.5 bg-destructive/10 border-b border-destructive/20 text-[11px] text-destructive flex items-center gap-2">
+                <span>
+                  Desktop alerts are blocked in your browser site permissions.
+                </span>
+              </div>
+            )}
 
             <div
               className={
