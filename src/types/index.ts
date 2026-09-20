@@ -135,6 +135,31 @@ export interface FinanceSummary {
   transactionCount: number;
 }
 
+export type ReimbursementStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "disbursed";
+
+export interface ReimbursementRequest {
+  id: string;
+  title: string;
+  amount: number;
+  category: string;
+  status: ReimbursementStatus;
+  receiptUrl?: string | null;
+  proofFileId?: string | null;
+  notes: string;
+  rejectionReason?: string | null;
+  claimantId: string;
+  claimantName?: string | null;
+  reviewedById?: string | null;
+  reviewerName?: string | null;
+  financeTxId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface InventoryItem {
   id: string;
   itemName: string;

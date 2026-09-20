@@ -5,6 +5,7 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
+  HandCoins,
   Pencil,
   Plus,
   Receipt,
@@ -16,6 +17,7 @@ import { queryClient, queryKeys } from "@/lib/queryClient";
 import { useAuth } from "@/context/AuthContext";
 import { usePrivacyBalance } from "@/lib/usePrivacyBalance";
 import { useToast } from "@/context/ToastContext";
+import { cn } from "@/lib/utils";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -30,6 +32,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
 import { DriveLinkInput } from "@/components/ui/DriveLinkInput";
 import { DriveDropzone } from "@/components/ui/DriveDropzone";
+import { ReimbursementTracker } from "@/components/finance/ReimbursementTracker";
 import type { FinanceSummary, FinanceTransaction } from "@/types";
 
 const PAGE_SIZE = 10;
@@ -53,6 +56,10 @@ export const FinancePage: React.FC = () => {
   const canManage = hasPermission("manage_finance");
   const canAudit = hasPermission("audit_finance");
   const canEditFinance = canManage || canAudit || isPresident;
+
+  // Tab state: Treasury Ledger vs Reimbursements
+  const [activeTab, setActiveTab] =
+    useState<"ledger" | "reimbursements">("ledger");
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -223,8 +230,66 @@ export const FinancePage: React.FC = () => {
       />
 
       <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
-        {/* Monochromatic Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Tab Switcher: Treasury Ledger vs Reimbursement Tracker */}
+        <div
+          className={
+            "flex flex-col sm:flex-row sm:items-center " +
+            "justify-between gap-3 pb-2 border-b border-border/40"
+          }
+        >
+          <div
+            className={
+              "flex items-center gap-1 p-1 bg-muted/60 " +
+              "border border-border/80 rounded-lg shrink-0"
+            }
+          >
+            <button
+              type="button"
+              onClick={() => setActiveTab("ledger")}
+              className={cn(
+                "min-h-[44px] flex items-center gap-2 px-3.5 py-1.5 " +
+                  "rounded-md text-xs font-semibold transition-all " +
+                  "cursor-pointer",
+                activeTab === "ledger"
+                  ? "bg-card text-foreground shadow-xs border " +
+                      "border-border/50"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Receipt className="w-4 h-4" />
+              <span>Treasury Ledger</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("reimbursements")}
+              className={cn(
+                "min-h-[44px] flex items-center gap-2 px-3.5 py-1.5 " +
+                  "rounded-md text-xs font-semibold transition-all " +
+                  "cursor-pointer",
+                activeTab === "reimbursements"
+                  ? "bg-card text-foreground shadow-xs border " +
+                      "border-border/50"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <HandCoins className="w-4 h-4" />
+              <span>Reimbursement Tracker</span>
+            </button>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            {activeTab === "ledger"
+              ? "Official organizational cash flow and audited entries"
+              : "Officer out-of-pocket claims, verification, and disbursement"}
+          </p>
+        </div>
+
+        {activeTab === "reimbursements" ? (
+          <ReimbursementTracker />
+        ) : (
+          <>
+            {/* Monochromatic Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card>
             <CardContent className="p-5">
               <div className="flex justify-between items-start">
@@ -581,7 +646,9 @@ export const FinancePage: React.FC = () => {
             </div>
           )}
         </Card>
-      </div>
+      </>
+    )}
+  </div>
 
       {/* Record Dialog */}
       <Dialog

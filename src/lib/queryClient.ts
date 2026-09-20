@@ -25,6 +25,9 @@ export const queryKeys = {
   financeFiltered: (params?: Record<string, unknown>) =>
     ["finance", params || {}] as const,
   financeSummary: ["finance", "summary"] as const,
+  reimbursements: ["reimbursements"] as const,
+  reimbursementsFiltered: (status?: string) =>
+    ["reimbursements", status || "all"] as const,
   inventory: ["inventory"] as const,
   inventoryFiltered: (params?: Record<string, unknown>) =>
     ["inventory", params || {}] as const,
