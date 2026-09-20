@@ -239,7 +239,11 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 "hover:bg-primary/90 transition-colors shadow-xs",
               )}
             >
-              <span>Open in Drive</span>
+              <span>
+                {effectiveUrl.includes("canva.com")
+                  ? "Open in Canva"
+                  : "Open in Drive"}
+              </span>
               <ExternalLink className="w-3 h-3" />
             </a>
           </div>
@@ -439,8 +443,16 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
               <div className="flex items-center gap-1.5 truncate">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">
-                  Requires <strong>"Anyone with the link"</strong> on Google
-                  Drive. If blank, open directly.
+                  {effectiveUrl.includes("canva.com") ? (
+                    <>
+                      Canva design preview. Requires public view/template link.
+                    </>
+                  ) : (
+                    <>
+                      Requires <strong>"Anyone with the link"</strong> on Google
+                      Drive. If blank, open directly.
+                    </>
+                  )}
                 </span>
               </div>
               <a

@@ -63,5 +63,12 @@ export function getGooglePreviewUrl(
     return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
   }
 
+  // 8. Canva Design / Template Embed (/design/{ID}/...)
+  const canvaMatch = url.match(/canva\.com\/design\/([a-zA-Z0-9_-]+)/);
+  if (canvaMatch) {
+    return `https://www.canva.com/design/${canvaMatch[1]}/view?embed`;
+  }
+
   return null;
 }
+
