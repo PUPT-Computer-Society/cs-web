@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { Input } from "@/components/ui/Input";
 import { PasswordInput } from "@/components/ui/PasswordInput";
+import type { ForgotPasswordRequest, ResetPasswordRequest } from "@/types";
 
 interface ForgotPasswordModalProps {
   open: boolean;
@@ -64,10 +65,9 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      const res = await api.post<{ message: string }>(
-        "/auth/forgot-password",
-        { email: cleanEmail },
-      );
+      const res = await api.post<{ message: string }>("/auth/forgot-password", {
+        email: cleanEmail,
+      });
       setSuccessMessage(
         res.message || "A verification code has been dispatched to your email.",
       );
@@ -88,10 +88,9 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      const res = await api.post<{ message: string }>(
-        "/auth/forgot-password",
-        { email: email.trim() },
-      );
+      const res = await api.post<{ message: string }>("/auth/forgot-password", {
+        email: email.trim(),
+      });
       setSuccessMessage(res.message || "Verification code resent.");
       setCooldown(RESEND_COOLDOWN_SECONDS);
     } catch (err: any) {
@@ -121,14 +120,11 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      const res = await api.post<{ message: string }>(
-        "/auth/reset-password",
-        {
-          email: email.trim(),
-          otp: otp.trim(),
-          newPassword,
-        },
-      );
+      const res = await api.post<{ message: string }>("/auth/reset-password", {
+        email: email.trim(),
+        otp: otp.trim(),
+        newPassword,
+      });
       setSuccessMessage(res.message || "Password reset successfully!");
       setTimeout(() => {
         onOpenChange(false);
