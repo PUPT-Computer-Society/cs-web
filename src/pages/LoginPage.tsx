@@ -13,6 +13,8 @@ import {
   CardDescription,
 } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { PasswordInput } from "@/components/ui/PasswordInput";
+import { ForgotPasswordModal } from "@/components/auth/ForgotPasswordModal";
 import { WaveBackground } from "@/components/ui/WaveBackground";
 import { useGlobalLoader } from "@/context/LoadingContext";
 import type { AuthResponse } from "@/types";
@@ -36,6 +38,7 @@ export const LoginPage: React.FC = () => {
   const [infoMessage, setInfoMessage] = useState("");
   const [isPendingVerification, setIsPendingVerification] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [cardHeight, setCardHeight] = useState<number | undefined>(undefined);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -340,9 +343,27 @@ export const LoginPage: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className={LABEL_CLS}>Password</label>
-                      <Input
-                        type="password"
+                      <div className="flex items-center justify-between mb-1">
+                        <label
+                          className={
+                            "text-[11px] font-semibold text-foreground"
+                          }
+                        >
+                          Password
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setShowForgotPassword(true)}
+                          className={
+                            "text-[11px] font-medium text-muted-foreground " +
+                            "hover:text-foreground underline " +
+                            "underline-offset-2 transition-colors"
+                          }
+                        >
+                          Forgot password?
+                        </button>
+                      </div>
+                      <PasswordInput
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
                         required
@@ -445,8 +466,7 @@ export const LoginPage: React.FC = () => {
                         <label className={LABEL_CLS}>
                           Password <span className="text-rose-500">*</span>
                         </label>
-                        <Input
-                          type="password"
+                        <PasswordInput
                           value={registerPassword}
                           onChange={(e) => setRegisterPassword(e.target.value)}
                           required
@@ -459,8 +479,7 @@ export const LoginPage: React.FC = () => {
                           Confirm Password{" "}
                           <span className="text-rose-500">*</span>
                         </label>
-                        <Input
-                          type="password"
+                        <PasswordInput
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           required
@@ -533,6 +552,11 @@ export const LoginPage: React.FC = () => {
           </CardContent>
         </div>
       </Card>
+      <ForgotPasswordModal
+        open={showForgotPassword}
+        onOpenChange={setShowForgotPassword}
+        initialEmail={loginIdentifier.includes("@") ? loginIdentifier : ""}
+      />
     </div>
   );
 };
