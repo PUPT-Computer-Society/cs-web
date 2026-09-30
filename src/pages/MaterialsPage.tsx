@@ -115,6 +115,7 @@ export const MaterialsPage: React.FC = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<MaterialCategory | "">("");
+  const [createFolderId, setCreateFolderId] = useState<string>("root");
   const [driveUrl, setDriveUrl] = useState("");
   const [fileId, setFileId] = useState<string | null>(null);
   const [fileType, setFileType] = useState("");
@@ -124,6 +125,7 @@ export const MaterialsPage: React.FC = () => {
   const [editDescription, setEditDescription] = useState("");
   const [editCategory, setEditCategory] =
     useState<MaterialCategory>("academic");
+  const [editFolderId, setEditFolderId] = useState<string>("root");
   const [editDriveUrl, setEditDriveUrl] = useState("");
   const [editFileId, setEditFileId] = useState<string | null>(null);
   const [editFileType, setEditFileType] = useState("Google Drive Document");
@@ -144,6 +146,7 @@ export const MaterialsPage: React.FC = () => {
       setFileId(null);
       setCategory("");
       setFileType("");
+      setCreateFolderId("root");
       toastSuccess("Material uploaded successfully.");
     },
     onError: (err: any) => {
@@ -246,6 +249,7 @@ export const MaterialsPage: React.FC = () => {
       driveUrl,
       fileId: fileId || null,
       fileType: fileType || "Google Drive Document",
+      folderId: createFolderId === "root" ? null : createFolderId,
     });
   };
 
@@ -257,6 +261,7 @@ export const MaterialsPage: React.FC = () => {
     setEditDriveUrl(mat.driveUrl);
     setEditFileId(mat.fileId || null);
     setEditFileType(mat.fileType || "Google Drive Document");
+    setEditFolderId(mat.folderId || "root");
   };
 
   const handleUpdateMaterial = (e: React.FormEvent) => {
@@ -271,6 +276,7 @@ export const MaterialsPage: React.FC = () => {
         driveUrl: editDriveUrl,
         fileId: editFileId || null,
         fileType: editFileType,
+        folderId: editFolderId === "root" ? null : editFolderId,
       },
     });
   };
@@ -300,12 +306,17 @@ export const MaterialsPage: React.FC = () => {
     [materials],
   );
 
+  const rootFilesCount = useMemo(
+    () => fileMaterials.filter((m) => !m.folderId).length,
+    [fileMaterials],
+  );
+
   const displayFiles = useMemo(() => {
     if (selectedFolder) {
       return fileMaterials.filter((m) => m.folderId === selectedFolder.id);
     }
     if (resourceTypeFilter === "folders") return [];
-    return fileMaterials;
+    return fileMaterials.filter((m) => !m.folderId);
   }, [resourceTypeFilter, fileMaterials, selectedFolder]);
 
   const showFoldersShelf =
@@ -376,25 +387,27 @@ export const MaterialsPage: React.FC = () => {
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                All ({materials.length})
+                All ({selectedFolder ? displayFiles.length : materials.length})
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setResourceTypeFilter("folders");
-                  setCurrentPage(1);
-                }}
-                className={cn(
-                  "px-2.5 py-1 rounded-md text-xs font-medium transition-all",
-                  "flex items-center gap-1.5",
-                  resourceTypeFilter === "folders"
-                    ? "bg-background text-amber-500 shadow-xs font-semibold"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Folder className="w-3.5 h-3.5" />
-                <span>Folders ({folderMaterials.length})</span>
-              </button>
+              {!selectedFolder && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResourceTypeFilter("folders");
+                    setCurrentPage(1);
+                  }}
+                  className={cn(
+                    "px-2.5 py-1 rounded-md text-xs font-medium transition-all",
+                    "flex items-center gap-1.5",
+                    resourceTypeFilter === "folders"
+                      ? "bg-background text-amber-500 shadow-xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Folder className="w-3.5 h-3.5" />
+                  <span>Folders ({folderMaterials.length})</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {
@@ -410,7 +423,11 @@ export const MaterialsPage: React.FC = () => {
                 )}
               >
                 <FileText className="w-3.5 h-3.5" />
-                <span>Files ({fileMaterials.length})</span>
+                <span>
+                  {selectedFolder
+                    ? `Files (${displayFiles.length})`
+                    : `Root Files (${rootFilesCount})`}
+                </span>
               </button>
             </div>
 
@@ -476,7 +493,19 @@ export const MaterialsPage: React.FC = () => {
               <Button
                 type="button"
                 size="sm"
-                onClick={() => setCreateOpen(true)}
+                onClick={() => {
+                  setCreateFolderId(
+                    selectedFolder ? selectedFolder.id : "root",
+                  );
+                  setCategory(
+                    selectedFolder
+                      ? selectedFolder.category
+                      : activeTab === "all"
+                        ? "academic"
+                        : activeTab,
+                  );
+                  setCreateOpen(true);
+                }}
                 className="text-[11px] font-semibold"
               >
                 <Plus className="w-3.5 h-3.5 mr-1" />
@@ -806,7 +835,7 @@ export const MaterialsPage: React.FC = () => {
             {/* 2. Files Section */}
             {resourceTypeFilter !== "folders" && (
               <div className="space-y-3">
-                {showFoldersShelf && displayFiles.length > 0 && (
+                {selectedFolder ? (
                   <div
                     className={
                       "flex items-center gap-2 pt-2 border-t " +
@@ -820,22 +849,68 @@ export const MaterialsPage: React.FC = () => {
                         "text-muted-foreground"
                       }
                     >
-                      Files & Documents ({displayFiles.length})
+                      Files in {selectedFolder.title} ({displayFiles.length})
                     </h3>
                   </div>
-                )}
-
-                {displayFiles.length === 0 ? (
+                ) : displayFiles.length > 0 ? (
                   <div
                     className={
-                      "p-8 text-center rounded-xl border border-dashed " +
-                      "border-border bg-card"
+                      "flex items-center justify-between gap-2 pt-2 " +
+                      "border-t border-border/60"
                     }
                   >
-                    <p className="text-xs text-muted-foreground">
-                      No individual document files in this category.
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-primary" />
+                      <h3
+                        className={
+                          "text-xs font-bold uppercase tracking-wider " +
+                          "text-muted-foreground"
+                        }
+                      >
+                        Root Files & Documents ({displayFiles.length})
+                      </h3>
+                    </div>
+                    <span
+                      className={
+                        "text-[11px] text-muted-foreground hidden " +
+                        "sm:inline"
+                      }
+                    >
+                      Drag files into folders above to organize
+                    </span>
                   </div>
+                ) : null}
+
+                {displayFiles.length === 0 ? (
+                  selectedFolder ? (
+                    <div
+                      className={
+                        "p-8 text-center rounded-xl border border-dashed " +
+                        "border-border bg-card"
+                      }
+                    >
+                      <Folder
+                        className="w-8 h-8 text-amber-500/50 mx-auto mb-2"
+                      />
+                      <p className="text-xs font-semibold text-foreground">
+                        This folder is empty.
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Upload a new file or drag a root file into this folder.
+                      </p>
+                    </div>
+                  ) : folderMaterials.length === 0 ? (
+                    <div
+                      className={
+                        "p-8 text-center rounded-xl border border-dashed " +
+                        "border-border bg-card"
+                      }
+                    >
+                      <p className="text-xs text-muted-foreground">
+                        No materials or folders registered in this vault.
+                      </p>
+                    </div>
+                  ) : null
                 ) : viewMode === "grid" ? (
                   /* Google Drive Tiled Cards with Live Preview */
                   <div
@@ -1407,6 +1482,26 @@ export const MaterialsPage: React.FC = () => {
             />
           </div>
 
+          <div>
+            <label
+              className="block text-[11px] font-semibold text-foreground mb-1"
+            >
+              Parent Folder
+            </label>
+            <Select
+              value={createFolderId}
+              onValueChange={setCreateFolderId}
+              options={[
+                { value: "root", label: "No Folder (Root Vault)" },
+                ...folderMaterials.map((f) => ({
+                  value: f.id,
+                  label: `📁 ${f.title}`,
+                })),
+              ]}
+              placeholder="Select parent folder..."
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-semibold text-foreground mb-1">
@@ -1570,6 +1665,30 @@ export const MaterialsPage: React.FC = () => {
               required
             />
           </div>
+
+          {editingMaterial && !isFolder(editingMaterial) && (
+            <div>
+              <label
+                className="block text-[11px] font-semibold text-foreground mb-1"
+              >
+                Parent Folder
+              </label>
+              <Select
+                value={editFolderId}
+                onValueChange={setEditFolderId}
+                options={[
+                  { value: "root", label: "No Folder (Root Vault)" },
+                  ...folderMaterials
+                    .filter((f) => f.id !== editingMaterial.id)
+                    .map((f) => ({
+                      value: f.id,
+                      label: `📁 ${f.title}`,
+                    })),
+                ]}
+                placeholder="Select parent folder..."
+              />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
