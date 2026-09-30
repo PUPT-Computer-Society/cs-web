@@ -6,6 +6,7 @@ import {
   ExternalLink,
   FileCode,
   FileText,
+  Folder,
   Info,
   Layers,
   PanelLeftClose,
@@ -85,6 +86,9 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   const effectiveFileMeta = fileMeta ?? cachedPropsRef.current.fileMeta;
 
   const previewUrl = getGooglePreviewUrl(effectiveUrl);
+  const isFolderResource =
+    effectiveFileMeta?.fileType?.toLowerCase() === "folder" ||
+    effectiveUrl.includes("/folders/");
 
   useEffect(() => {
     if (open) {
@@ -495,13 +499,46 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                     className="w-full h-full border-0 absolute inset-0"
                     title={displayTitle}
                     onLoad={() => setIsLoadingIframe(false)}
-                    allow="autoplay"
-                    sandbox={cn(
-                      "allow-scripts allow-same-origin",
-                      "allow-popups allow-forms",
-                    )}
+                    allow="autoplay; fullscreen"
                   />
                 </>
+              ) : isFolderResource ? (
+                <div
+                  className={cn(
+                    "flex flex-col items-center justify-center h-full p-8",
+                    "text-center space-y-3",
+                  )}
+                >
+                  <Folder className="w-12 h-12 text-primary/80" />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      Google Drive Folder Collection
+                    </p>
+                    <p
+                      className={cn(
+                        "text-xs text-muted-foreground mt-1 max-w-sm mx-auto",
+                      )}
+                    >
+                      Google Drive does not allow embedded folder previews.
+                      Access the folder directly in Google Drive to view or add
+                      files.
+                    </p>
+                  </div>
+                  <a
+                    href={effectiveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg",
+                      "bg-primary text-primary-foreground text-xs",
+                      "font-semibold hover:bg-primary/90 transition-colors",
+                      "shadow-xs",
+                    )}
+                  >
+                    <span>Open Drive Folder</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
               ) : (
                 <div
                   className={cn(

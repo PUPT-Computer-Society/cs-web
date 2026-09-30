@@ -51,11 +51,12 @@ export function getGooglePreviewUrl(
   }
 
   // 6. Google Drive Folder (/drive/folders/{ID} or /drive/u/0/folders/{ID})
+  // Google deprecated embeddedfolderview; folders must be opened directly.
   const folderMatch = url.match(
     /drive\.google\.com\/drive\/(?:u\/\d+\/)?folders\/([a-zA-Z0-9_-]+)/,
   );
   if (folderMatch) {
-    return `https://drive.google.com/embeddedfolderview?id=${folderMatch[1]}#grid`;
+    return null;
   }
 
   // 7. Direct remote PDF URL fallback using Google Docs Viewer
