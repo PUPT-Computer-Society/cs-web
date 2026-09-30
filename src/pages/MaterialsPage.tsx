@@ -670,46 +670,47 @@ export const MaterialsPage: React.FC = () => {
                   className="group flex flex-col justify-between overflow-hidden border border-border/80 hover:border-primary/40 hover:shadow-md transition-all duration-200 bg-card"
                 >
                   {/* Google Drive Preview Thumbnail Area */}
-                  <div className="relative w-full h-44 bg-secondary/30 border-b border-border overflow-hidden select-none">
-                    {previewUrl ? (
-                      <>
-                        <iframe
-                          src={previewUrl}
-                          className="w-full h-full border-0 pointer-events-none select-none scale-[1.02] transform-gpu origin-top-left"
-                          title={mat.title}
-                          loading="lazy"
-                        />
-                        {/* Interactive Click-to-Expand Overlay */}
-                        <div
-                          onClick={() => setPreviewMaterial(mat)}
-                          className="absolute inset-0 bg-background/0 hover:bg-background/40 transition-all flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 backdrop-blur-2xs"
-                        >
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-background/95 border border-border shadow-xs text-xs font-semibold text-foreground hover:text-primary transition-colors">
-                            <Eye className="w-3.5 h-3.5 text-primary" />
-                            Expand Preview
-                          </span>
-                        </div>
-                      </>
-                    ) : (
-                      <div
-                        onClick={() => setPreviewMaterial(mat)}
-                        className="w-full h-full flex flex-col items-center justify-center gap-2 p-4 text-center cursor-pointer bg-secondary/15 hover:bg-secondary/25 transition-colors"
-                      >
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                          {isFolderResource ? (
-                            <Folder className="w-5 h-5" />
-                          ) : (
-                            <FileText className="w-5 h-5" />
-                          )}
-                        </div>
-                        <span className="text-[11px] text-muted-foreground font-medium line-clamp-1">
-                          {mat.fileType || "Resource File"}
-                        </span>
-                        <span className="text-[10px] text-primary/80 font-semibold">
-                          Click to inspect
-                        </span>
-                      </div>
+                  <div
+                    onClick={() => setPreviewMaterial(mat)}
+                    className={cn(
+                      "relative w-full h-36 bg-secondary/20",
+                      "hover:bg-secondary/35 border-b border-border flex",
+                      "flex-col items-center justify-center gap-2 p-4",
+                      "text-center cursor-pointer transition-colors",
+                      "group/thumb select-none"
                     )}
+                  >
+                    <div
+                      className={cn(
+                        "w-11 h-11 rounded-xl bg-primary/10 border",
+                        "border-primary/20 flex items-center justify-center",
+                        "text-primary group-hover/thumb:scale-110",
+                        "transition-transform"
+                      )}
+                    >
+                      {isFolderResource ? (
+                        <Folder className="w-5 h-5 text-amber-500" />
+                      ) : (
+                        <FileText className="w-5 h-5 text-primary" />
+                      )}
+                    </div>
+                    <span
+                      className={cn(
+                        "text-[11px] text-muted-foreground font-medium",
+                        "line-clamp-1 max-w-[85%]"
+                      )}
+                    >
+                      {mat.fileType || (isFolderResource ? "Folder" : "File")}
+                    </span>
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 text-[11px]",
+                        "text-primary font-semibold"
+                      )}
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      {isFolderResource ? "Open Folder" : "Preview Material"}
+                    </span>
                   </div>
 
                   {/* Metadata and Actions */}

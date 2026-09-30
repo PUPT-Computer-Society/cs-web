@@ -31,6 +31,7 @@ import { DriveGuideModal } from "@/components/ui/DriveGuideModal";
 import { DriveLinkInput } from "@/components/ui/DriveLinkInput";
 import { DriveDropzone } from "@/components/ui/DriveDropzone";
 import { getGooglePreviewUrl } from "@/lib/preview";
+import { cn } from "@/lib/utils";
 import type { InternalDocumentType, Resolution } from "@/types";
 
 const PAGE_SIZE = 8;
@@ -356,47 +357,54 @@ export const ResolutionsPage: React.FC = () => {
                   key={res.id}
                   className="group flex flex-col justify-between overflow-hidden border border-border/80 hover:border-primary/40 hover:shadow-md transition-all duration-200 bg-card"
                 >
-                  {/* Google Drive Preview Thumbnail Area */}
-                  <div className="relative w-full h-44 bg-secondary/30 border-b border-border overflow-hidden select-none">
-                    {previewUrl ? (
-                      <>
-                        <iframe
-                          src={previewUrl}
-                          className="w-full h-full border-0 pointer-events-none select-none scale-[1.02] transform-gpu origin-top-left"
-                          title={res.title}
-                          loading="lazy"
-                        />
-                        {/* Interactive Click-to-Expand Overlay */}
-                        <div
-                          onClick={() => setPreviewResolution(res)}
-                          className="absolute inset-0 bg-background/0 hover:bg-background/40 transition-all flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 backdrop-blur-2xs"
-                        >
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-background/95 border border-border shadow-xs text-xs font-semibold text-foreground hover:text-primary transition-colors">
-                            <Eye className="w-3.5 h-3.5 text-primary" />
-                            Expand Preview
-                          </span>
-                        </div>
-                      </>
-                    ) : (
-                      /* Document Ledger Watermark Thumbnail for non-Google Docs records */
-                      <div className="w-full h-full p-3.5 flex flex-col justify-between bg-card/60 relative overflow-hidden">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-mono font-bold text-foreground/80 bg-secondary px-1.5 py-0.5 rounded">
-                            {res.resolutionNo}
-                          </span>
-                          <ScrollText className="w-4 h-4 text-muted-foreground/60" />
-                        </div>
-                        <p className="text-[10px] text-muted-foreground line-clamp-4 leading-relaxed font-serif italic select-none">
-                          "{res.body}"
-                        </p>
-                        <div className="flex items-center justify-between text-[9px] text-muted-foreground/80 border-t border-border/40 pt-1">
-                          <span>Council Record</span>
-                          <span className="font-semibold text-primary/80">
-                            Internal
-                          </span>
-                        </div>
-                      </div>
+                  {/* Resolution Document Ledger Thumbnail Area */}
+                  <div
+                    onClick={() => setPreviewResolution(res)}
+                    className={cn(
+                      "w-full h-44 p-3.5 flex flex-col justify-between",
+                      "bg-card/60 hover:bg-secondary/20 cursor-pointer",
+                      "border-b border-border transition-colors relative",
+                      "overflow-hidden select-none group/thumb"
                     )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={cn(
+                          "text-[10px] font-mono font-bold text-foreground/80",
+                          "bg-secondary px-1.5 py-0.5 rounded"
+                        )}
+                      >
+                        {res.resolutionNo}
+                      </span>
+                      <ScrollText className="w-4 h-4 text-primary" />
+                    </div>
+                    <p
+                      className={cn(
+                        "text-[10px] text-muted-foreground line-clamp-4",
+                        "leading-relaxed font-serif italic select-none"
+                      )}
+                    >
+                      "{res.body || res.title}"
+                    </p>
+                    <div
+                      className={cn(
+                        "flex items-center justify-between text-[10px]",
+                        "border-t border-border/40 pt-1 text-primary",
+                        "font-semibold"
+                      )}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        <Eye className="w-3.5 h-3.5" />
+                        Preview Resolution
+                      </span>
+                      <span
+                        className={cn(
+                          "text-[9px] text-muted-foreground font-normal"
+                        )}
+                      >
+                        {previewUrl ? "Google Doc" : "Internal"}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Metadata and Actions */}
