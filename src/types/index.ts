@@ -198,6 +198,7 @@ export interface Material {
   fileId?: string | null;
   fileType: string;
   uploadedById: string | null;
+  folderId?: string | null;
   createdAt: string;
 }
 

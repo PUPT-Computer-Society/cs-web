@@ -1,10 +1,14 @@
 import React, { useMemo, useState } from "react";
 import {
+  ArrowLeft,
+  ChevronRight,
   ExternalLink,
   Eye,
   FileText,
   Folder,
+  FolderInput,
   FolderOpen,
+  GripVertical,
   LayoutGrid,
   List,
   Loader2,
@@ -96,6 +100,17 @@ export const MaterialsPage: React.FC = () => {
     null,
   );
 
+  // Folder Navigation and Drag-and-Drop States
+  const [selectedFolder, setSelectedFolder] = useState<Material | null>(null);
+  const [draggingMaterialId, setDraggingMaterialId] = useState<string | null>(
+    null,
+  );
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
+  const [isDragOverRootZone, setIsDragOverRootZone] = useState(false);
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [materialToMove, setMaterialToMove] = useState<Material | null>(null);
+  const [targetFolderSelect, setTargetFolderSelect] = useState<string>("root");
+
   // Create Form
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -179,6 +194,39 @@ export const MaterialsPage: React.FC = () => {
     },
   });
 
+  const moveMaterialMutation = useMutation({
+    mutationFn: ({
+      materialId,
+      targetFolderId,
+    }: {
+      materialId: string;
+      targetFolderId: string | null;
+    }) =>
+      api.patch(`/materials/${materialId}/move`, {
+        folderId: targetFolderId,
+      }),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["materials"] });
+      if (variables.targetFolderId) {
+        const dest = materials.find((m) => m.id === variables.targetFolderId);
+        toastSuccess(`Moved material into "${dest?.title || "folder"}".`);
+      } else {
+        toastSuccess("Moved material to root vault.");
+      }
+      setDraggingMaterialId(null);
+      setDragOverFolderId(null);
+      setIsDragOverRootZone(false);
+      setMoveDialogOpen(false);
+      setMaterialToMove(null);
+    },
+    onError: (err: any) => {
+      toastError(err.message || "Failed to move material");
+      setDraggingMaterialId(null);
+      setDragOverFolderId(null);
+      setIsDragOverRootZone(false);
+    },
+  });
+
   const handleCreateFolder = (e: React.FormEvent) => {
     e.preventDefault();
     if (!folderTitle.trim()) return;
@@ -234,6 +282,7 @@ export const MaterialsPage: React.FC = () => {
 
   const handleTabChange = (tab: "all" | MaterialCategory) => {
     setActiveTab(tab);
+    setSelectedFolder(null);
     setCurrentPage(1);
   };
 
@@ -252,19 +301,21 @@ export const MaterialsPage: React.FC = () => {
   );
 
   const displayFiles = useMemo(() => {
+    if (selectedFolder) {
+      return fileMaterials.filter((m) => m.folderId === selectedFolder.id);
+    }
     if (resourceTypeFilter === "folders") return [];
     return fileMaterials;
-  }, [resourceTypeFilter, fileMaterials]);
+  }, [resourceTypeFilter, fileMaterials, selectedFolder]);
 
   const showFoldersShelf =
-    resourceTypeFilter !== "files" && folderMaterials.length > 0;
+    !selectedFolder &&
+    resourceTypeFilter !== "files" &&
+    folderMaterials.length > 0;
 
   const totalFiles = displayFiles.length;
   const startIndex = (currentPage - 1) * PAGE_SIZE;
-  const paginatedFiles = displayFiles.slice(
-    startIndex,
-    startIndex + PAGE_SIZE,
-  );
+  const paginatedFiles = displayFiles.slice(startIndex, startIndex + PAGE_SIZE);
 
   return (
     <>
@@ -461,9 +512,7 @@ export const MaterialsPage: React.FC = () => {
               "border-border bg-card"
             }
           >
-            <Folder
-              className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40"
-            />
+            <Folder className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
             <p className="text-xs text-muted-foreground">
               No folders cataloged under this category.
             </p>
@@ -475,15 +524,103 @@ export const MaterialsPage: React.FC = () => {
               "border-border bg-card"
             }
           >
-            <FileText
-              className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40"
-            />
+            <FileText className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
             <p className="text-xs text-muted-foreground">
               No individual document files cataloged under this category.
             </p>
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Breadcrumb Navigation when inside a Folder */}
+            {selectedFolder && (
+              <div
+                className={cn(
+                  "flex flex-col sm:flex-row items-start sm:items-center",
+                  "justify-between gap-3 p-4 rounded-xl border",
+                  "border-amber-500/30 bg-amber-500/5",
+                )}
+              >
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedFolder(null);
+                      setCurrentPage(1);
+                    }}
+                    className="text-xs font-semibold gap-1.5"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    Back to All Folders
+                  </Button>
+                  <div
+                    className={cn(
+                      "flex items-center gap-1.5 text-xs text-muted-foreground",
+                    )}
+                  >
+                    <span>Vault</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                    <span
+                      className={cn(
+                        "font-semibold text-foreground flex items-center",
+                        "gap-1.5",
+                      )}
+                    >
+                      <Folder
+                        className="w-3.5 h-3.5 text-amber-500 fill-amber-500/20"
+                      />
+                      {selectedFolder.title}
+                    </span>
+                    <Badge variant="outline" className="text-[9px] uppercase">
+                      {displayFiles.length}{" "}
+                      {displayFiles.length === 1 ? "file" : "files"}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Drop Zone to Detach/Move Back to Root Vault */}
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                    setIsDragOverRootZone(true);
+                  }}
+                  onDragLeave={() => setIsDragOverRootZone(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragOverRootZone(false);
+                    const data = e.dataTransfer.getData("application/json");
+                    let droppedId: string | null = null;
+                    try {
+                      const parsed = JSON.parse(data);
+                      droppedId = parsed.id;
+                    } catch {
+                      droppedId = e.dataTransfer.getData("text/plain");
+                    }
+                    if (droppedId) {
+                      moveMaterialMutation.mutate({
+                        materialId: droppedId,
+                        targetFolderId: null,
+                      });
+                    }
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg border text-xs font-medium",
+                    "transition-all flex items-center gap-1.5 select-none",
+                    isDragOverRootZone
+                      ? "border-primary bg-primary/10 text-primary scale-105"
+                      : "border-dashed border-border text-muted-foreground" +
+                        " bg-background/50 hover:bg-background",
+                  )}
+                  title="Drop a file here to detach from this folder"
+                >
+                  <FolderInput className="w-3.5 h-3.5 text-primary" />
+                  <span>Drop here to move back to Root</span>
+                </div>
+              </div>
+            )}
+
             {/* 1. Folders Shelf */}
             {showFoldersShelf && (
               <div className="space-y-3">
@@ -500,7 +637,7 @@ export const MaterialsPage: React.FC = () => {
                     </h3>
                   </div>
                   <span className="text-[11px] text-muted-foreground hidden sm:inline">
-                    Organized collections and repositories
+                    Drag files onto a folder to organize
                   </span>
                 </div>
 
@@ -512,13 +649,55 @@ export const MaterialsPage: React.FC = () => {
                 >
                   {folderMaterials.map((mat) => {
                     const userCanEdit = canEdit(mat);
+                    const isOver = dragOverFolderId === mat.id;
+                    const childCount = materials.filter(
+                      (m) => m.folderId === mat.id,
+                    ).length;
+
                     return (
                       <Card
                         key={mat.id}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                          if (dragOverFolderId !== mat.id) {
+                            setDragOverFolderId(mat.id);
+                          }
+                        }}
+                        onDragLeave={(e) => {
+                          if (
+                            !e.currentTarget.contains(e.relatedTarget as Node)
+                          ) {
+                            setDragOverFolderId(null);
+                          }
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setDragOverFolderId(null);
+                          const data = e.dataTransfer.getData(
+                            "application/json",
+                          );
+                          let droppedId: string | null = null;
+                          try {
+                            const parsed = JSON.parse(data);
+                            droppedId = parsed.id;
+                          } catch {
+                            droppedId = e.dataTransfer.getData("text/plain");
+                          }
+                          if (droppedId && droppedId !== mat.id) {
+                            moveMaterialMutation.mutate({
+                              materialId: droppedId,
+                              targetFolderId: mat.id,
+                            });
+                          }
+                        }}
                         className={cn(
-                          "group border border-border/80",
-                          "hover:border-amber-500/50 hover:shadow-xs",
-                          "transition-all bg-card/70 hover:bg-card",
+                          "group border transition-all select-none",
+                          isOver
+                            ? "border-amber-500 border-dashed bg-amber-500/15" +
+                              " ring-2 ring-amber-500/30 scale-[1.03] shadow-md"
+                            : "border-border/80 hover:border-amber-500/50" +
+                              " hover:shadow-xs bg-card/70 hover:bg-card",
                         )}
                       >
                         <CardContent
@@ -528,7 +707,10 @@ export const MaterialsPage: React.FC = () => {
                         >
                           <button
                             type="button"
-                            onClick={() => setPreviewMaterial(mat)}
+                            onClick={() => {
+                              setSelectedFolder(mat);
+                              setCurrentPage(1);
+                            }}
                             className={
                               "flex items-center gap-2.5 min-w-0 " +
                               "flex-1 group/link text-left cursor-pointer"
@@ -562,6 +744,10 @@ export const MaterialsPage: React.FC = () => {
                                 >
                                   {mat.category.replace(/_/g, " ")}
                                 </Badge>
+                                <span className="text-[10px] text-muted-foreground font-medium">
+                                  {childCount}{" "}
+                                  {childCount === 1 ? "file" : "files"}
+                                </span>
                               </div>
                             </div>
                           </button>
@@ -604,7 +790,7 @@ export const MaterialsPage: React.FC = () => {
                                 "text-muted-foreground hover:text-amber-500",
                                 "transition-colors",
                               )}
-                              title="View Folder"
+                              title="Preview in Google Drive"
                             >
                               <Eye className="w-3.5 h-3.5" />
                             </button>
@@ -659,239 +845,476 @@ export const MaterialsPage: React.FC = () => {
                     }
                   >
                     {paginatedFiles.map((mat) => {
-              const isOwner = user?.id === mat.uploadedById;
-              const userCanEdit = canEdit(mat);
-              const previewUrl = getGooglePreviewUrl(mat.driveUrl);
-              const isFolderResource = isFolder(mat);
+                      const isOwner = user?.id === mat.uploadedById;
+                      const userCanEdit = canEdit(mat);
+                      const isFolderResource = isFolder(mat);
+                      const parentFolder = mat.folderId
+                        ? materials.find((m) => m.id === mat.folderId)
+                        : null;
 
-              return (
-                <Card
-                  key={mat.id}
-                  className="group flex flex-col justify-between overflow-hidden border border-border/80 hover:border-primary/40 hover:shadow-md transition-all duration-200 bg-card"
-                >
-                  {/* Google Drive Preview Thumbnail Area */}
-                  <div
-                    onClick={() => setPreviewMaterial(mat)}
-                    className={cn(
-                      "relative w-full h-36 bg-secondary/20",
-                      "hover:bg-secondary/35 border-b border-border flex",
-                      "flex-col items-center justify-center gap-2 p-4",
-                      "text-center cursor-pointer transition-colors",
-                      "group/thumb select-none"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "w-11 h-11 rounded-xl bg-primary/10 border",
-                        "border-primary/20 flex items-center justify-center",
-                        "text-primary group-hover/thumb:scale-110",
-                        "transition-transform"
-                      )}
-                    >
-                      {isFolderResource ? (
-                        <Folder className="w-5 h-5 text-amber-500" />
-                      ) : (
-                        <FileText className="w-5 h-5 text-primary" />
-                      )}
-                    </div>
-                    <span
-                      className={cn(
-                        "text-[11px] text-muted-foreground font-medium",
-                        "line-clamp-1 max-w-[85%]"
-                      )}
-                    >
-                      {mat.fileType || (isFolderResource ? "Folder" : "File")}
-                    </span>
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1 text-[11px]",
-                        "text-primary font-semibold"
-                      )}
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      {isFolderResource ? "Open Folder" : "Preview Material"}
-                    </span>
+                      return (
+                        <Card
+                          key={mat.id}
+                          draggable={canEdit(mat)}
+                          onDragStart={(e) => {
+                            setDraggingMaterialId(mat.id);
+                            e.dataTransfer.setData(
+                              "application/json",
+                              JSON.stringify({
+                                id: mat.id,
+                                title: mat.title,
+                              }),
+                            );
+                            e.dataTransfer.setData("text/plain", mat.id);
+                            e.dataTransfer.effectAllowed = "move";
+                          }}
+                          onDragEnd={() => {
+                            setDraggingMaterialId(null);
+                            setDragOverFolderId(null);
+                            setIsDragOverRootZone(false);
+                          }}
+                          className={cn(
+                            "group flex flex-col justify-between",
+                            "overflow-hidden border border-border/80",
+                            "hover:border-primary/40 hover:shadow-md",
+                            "transition-all duration-200 bg-card",
+                            draggingMaterialId === mat.id &&
+                              "opacity-40 ring-2 ring-primary/40 scale-95",
+                            canEdit(mat) &&
+                              "cursor-grab active:cursor-grabbing",
+                          )}
+                        >
+                          {/* Google Drive Preview Thumbnail Area */}
+                          <div
+                            onClick={() => setPreviewMaterial(mat)}
+                            className={cn(
+                              "relative w-full h-36 bg-secondary/20",
+                              "hover:bg-secondary/35 border-b border-border flex",
+                              "flex-col items-center justify-center gap-2 p-4",
+                              "text-center cursor-pointer transition-colors",
+                              "group/thumb select-none",
+                            )}
+                          >
+                            <div
+                              className={cn(
+                                "w-11 h-11 rounded-xl bg-primary/10 border",
+                                "border-primary/20 flex items-center",
+                                "justify-center text-primary",
+                                "group-hover/thumb:scale-110",
+                                "transition-transform",
+                              )}
+                            >
+                              {isFolderResource ? (
+                                <Folder className="w-5 h-5 text-amber-500" />
+                              ) : (
+                                <FileText className="w-5 h-5 text-primary" />
+                              )}
+                            </div>
+                            <span
+                              className={cn(
+                                "text-[11px] text-muted-foreground",
+                                "font-medium line-clamp-1 max-w-[85%]",
+                              )}
+                            >
+                              {mat.fileType ||
+                                (isFolderResource ? "Folder" : "File")}
+                            </span>
+                            <span
+                              className={cn(
+                                "inline-flex items-center gap-1 text-[11px]",
+                                "text-primary font-semibold",
+                              )}
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              {isFolderResource
+                                ? "Open Folder"
+                                : "Preview Material"}
+                            </span>
+                          </div>
+
+                          {/* Metadata and Actions */}
+                          <CardContent
+                            className={
+                              "p-4 flex flex-col justify-between flex-1 gap-3"
+                            }
+                          >
+                            <div className="space-y-1.5">
+                              <div
+                                className={
+                                  "flex flex-wrap items-center " +
+                                  "justify-between gap-1"
+                                }
+                              >
+                                <div
+                                  className={
+                                    "flex items-center gap-1.5 flex-wrap"
+                                  }
+                                >
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[9px] uppercase font-semibold"
+                                  >
+                                    {mat.category.replace(/_/g, " ")}
+                                  </Badge>
+                                  {parentFolder && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedFolder(parentFolder);
+                                        setCurrentPage(1);
+                                      }}
+                                      className={cn(
+                                        "inline-flex items-center gap-1",
+                                        "text-[9px] font-semibold text-amber-500",
+                                        "bg-amber-500/10 px-1.5 py-0.5 rounded",
+                                        "border border-amber-500/20",
+                                        "hover:bg-amber-500/20 transition-colors",
+                                      )}
+                                      title={`In: ${parentFolder.title}`}
+                                    >
+                                      <Folder
+                                        className="w-2.5 h-2.5 fill-amber-500/20"
+                                      />
+                                      <span className="truncate max-w-[80px]">
+                                        {parentFolder.title}
+                                      </span>
+                                    </button>
+                                  )}
+                                  {isOwner && (
+                                    <span
+                                      className={cn(
+                                        "text-[9px] font-medium text-primary",
+                                        "bg-primary/10 px-1.5 py-0.5 rounded",
+                                        "border border-primary/20",
+                                      )}
+                                    >
+                                      Uploader
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <span
+                                    className={cn(
+                                      "text-[10px] text-muted-foreground",
+                                      "font-medium line-clamp-1 max-w-[95px]",
+                                    )}
+                                  >
+                                    {mat.fileType}
+                                  </span>
+                                  {canEdit(mat) && (
+                                    <span title="Drag onto a folder">
+                                      <GripVertical
+                                        className={cn(
+                                          "w-3.5 h-3.5 text-muted-foreground/40",
+                                          "group-hover:text-muted-foreground",
+                                        )}
+                                      />
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <h4
+                                className={cn(
+                                  "text-xs font-bold text-foreground",
+                                  "line-clamp-1 hover:text-primary",
+                                  "transition-colors cursor-pointer",
+                                )}
+                                onClick={() => setPreviewMaterial(mat)}
+                                title={mat.title}
+                              >
+                                {mat.title}
+                              </h4>
+                              <p
+                                className={cn(
+                                  "text-[11px] text-muted-foreground",
+                                  "line-clamp-2 leading-relaxed",
+                                )}
+                              >
+                                {mat.description || "No description provided."}
+                              </p>
+                            </div>
+
+                            <div
+                              className={cn(
+                                "pt-2 border-t border-border/80 flex",
+                                "items-center justify-between gap-1",
+                              )}
+                            >
+                              <span
+                                className="text-[10px] text-muted-foreground"
+                              >
+                                {new Date(mat.createdAt).toLocaleDateString()}
+                              </span>
+
+                              <div className="flex items-center gap-1">
+                                {userCanEdit && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setMaterialToMove(mat);
+                                        setTargetFolderSelect(
+                                          mat.folderId || "root",
+                                        );
+                                        setMoveDialogOpen(true);
+                                      }}
+                                      className={cn(
+                                        "p-1 rounded-md border border-border",
+                                        "bg-background hover:bg-secondary",
+                                        "text-foreground text-xs transition-colors",
+                                      )}
+                                      title="Move to Folder"
+                                    >
+                                      <FolderInput
+                                        className="w-3.5 h-3.5 text-amber-500"
+                                      />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => openEditDialog(mat)}
+                                      className={cn(
+                                        "p-1 rounded-md border border-border",
+                                        "bg-background hover:bg-secondary",
+                                        "text-foreground text-xs transition-colors",
+                                      )}
+                                      title="Edit Material"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setDeletingMaterial(mat)}
+                                      className={cn(
+                                        "p-1 rounded-md border",
+                                        "border-destructive/30 bg-destructive/10",
+                                        "hover:bg-destructive/20",
+                                        "text-destructive text-xs",
+                                        "transition-colors",
+                                      )}
+                                      title="Delete Material"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </>
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewMaterial(mat)}
+                                  className={cn(
+                                    "p-1 rounded-md border border-primary/30",
+                                    "bg-primary/10 hover:bg-primary/20",
+                                    "text-primary text-xs transition-colors",
+                                  )}
+                                  title="Preview Material"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <a
+                                  href={mat.driveUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={cn(
+                                    "p-1 rounded-md border border-border",
+                                    "bg-background text-muted-foreground",
+                                    "hover:text-foreground hover:bg-secondary",
+                                    "transition-colors",
+                                  )}
+                                  title="Open Original in Google Drive"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </a>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
+                ) : (
+                  /* Compact List View */
+                  <div className="space-y-3">
+                    {paginatedFiles.map((mat) => {
+                      const isOwner = user?.id === mat.uploadedById;
+                      const userCanEdit = canEdit(mat);
+                      const isFolderResource = isFolder(mat);
+                      const parentFolder = mat.folderId
+                        ? materials.find((m) => m.id === mat.folderId)
+                        : null;
 
-                  {/* Metadata and Actions */}
-                  <CardContent className="p-4 flex flex-col justify-between flex-1 gap-3">
-                    <div className="space-y-1.5">
-                      <div className="flex flex-wrap items-center justify-between gap-1">
-                        <div className="flex items-center gap-1.5">
-                          <Badge
-                            variant="outline"
-                            className="text-[9px] uppercase font-semibold"
-                          >
-                            {mat.category.replace(/_/g, " ")}
-                          </Badge>
-                          {isOwner && (
-                            <span className="text-[9px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
-                              Uploader
-                            </span>
+                      return (
+                        <Card
+                          key={mat.id}
+                          draggable={canEdit(mat)}
+                          onDragStart={(e) => {
+                            setDraggingMaterialId(mat.id);
+                            e.dataTransfer.setData(
+                              "application/json",
+                              JSON.stringify({
+                                id: mat.id,
+                                title: mat.title,
+                              }),
+                            );
+                            e.dataTransfer.setData("text/plain", mat.id);
+                            e.dataTransfer.effectAllowed = "move";
+                          }}
+                          onDragEnd={() => {
+                            setDraggingMaterialId(null);
+                            setDragOverFolderId(null);
+                            setIsDragOverRootZone(false);
+                          }}
+                          className={cn(
+                            "hover:border-primary/30 transition-all select-none",
+                            draggingMaterialId === mat.id &&
+                              "opacity-40 ring-2 ring-primary/40",
+                            canEdit(mat) &&
+                              "cursor-grab active:cursor-grabbing",
                           )}
-                        </div>
-                        <span className="text-[10px] text-muted-foreground font-medium line-clamp-1 max-w-[110px]">
-                          {mat.fileType}
-                        </span>
-                      </div>
-
-                      <h4
-                        className="text-xs font-bold text-foreground line-clamp-1 hover:text-primary transition-colors cursor-pointer"
-                        onClick={() => setPreviewMaterial(mat)}
-                        title={mat.title}
-                      >
-                        {mat.title}
-                      </h4>
-                      <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
-                        {mat.description || "No description provided."}
-                      </p>
-                    </div>
-
-                    <div className="pt-2 border-t border-border/80 flex items-center justify-between gap-1">
-                      <span className="text-[10px] text-muted-foreground">
-                        {new Date(mat.createdAt).toLocaleDateString()}
-                      </span>
-
-                      <div className="flex items-center gap-1">
-                        {userCanEdit && (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => openEditDialog(mat)}
-                              className="p-1 rounded-md border border-border bg-background hover:bg-secondary text-foreground text-xs transition-colors"
-                              title="Edit Material"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setDeletingMaterial(mat)}
-                              className="p-1 rounded-md border border-destructive/30 bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs transition-colors"
-                              title="Delete Material"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </>
-                        )}
-
-                        <button
-                          type="button"
-                          onClick={() => setPreviewMaterial(mat)}
-                          className="p-1 rounded-md border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary text-xs transition-colors"
-                          title="Preview Material"
                         >
-                          <Eye className="w-3.5 h-3.5" />
-                        </button>
-                        <a
-                          href={mat.driveUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1 rounded-md border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                          title="Open Original in Google Drive"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
-          /* Compact List View */
-          <div className="space-y-3">
-            {paginatedFiles.map((mat) => {
-              const isOwner = user?.id === mat.uploadedById;
-              const userCanEdit = canEdit(mat);
-              const isFolderResource = isFolder(mat);
-
-              return (
-                <Card
-                  key={mat.id}
-                  className="hover:border-primary/30 transition-all"
-                >
-                  <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0 mt-0.5">
-                        {isFolderResource ? (
-                          <Folder className="w-5 h-5" />
-                        ) : (
-                          <FileText className="w-5 h-5" />
-                        )}
-                      </div>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-foreground">
-                            {mat.title}
-                          </span>
-                          <Badge
-                            variant="outline"
-                            className="text-[9px] uppercase font-semibold"
+                          <CardContent
+                            className={
+                              "p-4 flex flex-col sm:flex-row " +
+                              "justify-between items-start sm:items-center gap-4"
+                            }
                           >
-                            {mat.category.replace(/_/g, " ")}
-                          </Badge>
-                          {isOwner && (
-                            <span className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
-                              Uploader
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground line-clamp-1">
-                          {mat.description || "No description provided."}
-                        </p>
-                      </div>
-                    </div>
+                            <div className="flex items-start gap-3">
+                              <div
+                                className={cn(
+                                  "w-10 h-10 rounded-lg bg-primary/10 border",
+                                  "border-primary/20 flex items-center",
+                                  "justify-center text-primary shrink-0 mt-0.5",
+                                )}
+                              >
+                                {isFolderResource ? (
+                                  <Folder className="w-5 h-5 text-amber-500" />
+                                ) : (
+                                  <FileText className="w-5 h-5" />
+                                )}
+                              </div>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-xs font-bold text-foreground">
+                                    {mat.title}
+                                  </span>
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[9px] uppercase font-semibold"
+                                  >
+                                    {mat.category.replace(/_/g, " ")}
+                                  </Badge>
+                                  {parentFolder && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedFolder(parentFolder);
+                                        setCurrentPage(1);
+                                      }}
+                                      className={cn(
+                                        "inline-flex items-center gap-1",
+                                        "text-[9px] font-semibold text-amber-500",
+                                        "bg-amber-500/10 px-1.5 py-0.5 rounded",
+                                        "border border-amber-500/20",
+                                        "hover:bg-amber-500/20 transition-colors",
+                                      )}
+                                      title={`Inside: ${parentFolder.title}`}
+                                    >
+                                      <Folder
+                                        className="w-2.5 h-2.5 fill-amber-500/20"
+                                      />
+                                      <span className="truncate max-w-[90px]">
+                                        {parentFolder.title}
+                                      </span>
+                                    </button>
+                                  )}
+                                  {isOwner && (
+                                    <span
+                                      className={cn(
+                                        "text-[10px] font-medium text-primary",
+                                        "bg-primary/10 px-1.5 py-0.5 rounded",
+                                        "border border-primary/20",
+                                      )}
+                                    >
+                                      Uploader
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-muted-foreground line-clamp-1">
+                                  {mat.description ||
+                                    "No description provided."}
+                                </p>
+                              </div>
+                            </div>
 
-                    <div className="flex items-center gap-2 self-end sm:self-center">
-                      <span className="text-[10px] text-muted-foreground mr-2">
-                        {new Date(mat.createdAt).toLocaleDateString()}
-                      </span>
+                            <div className="flex items-center gap-2 self-end sm:self-center">
+                              <span className="text-[10px] text-muted-foreground mr-2">
+                                {new Date(mat.createdAt).toLocaleDateString()}
+                              </span>
 
-                      {userCanEdit && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => openEditDialog(mat)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-border bg-background hover:bg-secondary text-foreground text-[11px] font-semibold transition-colors"
-                            title="Edit Material"
-                          >
-                            <Pencil className="w-3 h-3" />
-                            <span>Edit</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeletingMaterial(mat)}
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-destructive/30 bg-destructive/10 hover:bg-destructive/20 text-destructive text-[11px] font-semibold transition-colors"
-                            title="Delete Material"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </>
-                      )}
+                              {userCanEdit && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setMaterialToMove(mat);
+                                      setTargetFolderSelect(
+                                        mat.folderId || "root",
+                                      );
+                                      setMoveDialogOpen(true);
+                                    }}
+                                    className={cn(
+                                      "inline-flex items-center gap-1 px-2.5 py-1",
+                                      "rounded-md border border-border bg-background",
+                                      "hover:bg-secondary text-foreground text-[11px]",
+                                      "font-semibold transition-colors",
+                                    )}
+                                    title="Move to Folder"
+                                  >
+                                    <FolderInput className="w-3 h-3 text-amber-500" />
+                                    <span>Move</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => openEditDialog(mat)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-border bg-background hover:bg-secondary text-foreground text-[11px] font-semibold transition-colors"
+                                    title="Edit Material"
+                                  >
+                                    <Pencil className="w-3 h-3" />
+                                    <span>Edit</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeletingMaterial(mat)}
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-destructive/30 bg-destructive/10 hover:bg-destructive/20 text-destructive text-[11px] font-semibold transition-colors"
+                                    title="Delete Material"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </>
+                              )}
 
-                      <button
-                        type="button"
-                        onClick={() => setPreviewMaterial(mat)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary text-[11px] font-semibold transition-colors"
-                      >
-                        <Eye className="w-3 h-3" />
-                        <span>Preview</span>
-                      </button>
-                      <a
-                        href={mat.driveUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-border bg-background text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                      >
-                        <span>Drive</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                              <button
+                                type="button"
+                                onClick={() => setPreviewMaterial(mat)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary text-[11px] font-semibold transition-colors"
+                              >
+                                <Eye className="w-3 h-3" />
+                                <span>Preview</span>
+                              </button>
+                              <a
+                                href={mat.driveUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-border bg-background text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                              >
+                                <span>Drive</span>
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -1017,9 +1440,7 @@ export const MaterialsPage: React.FC = () => {
       >
         <form onSubmit={handleCreateFolder} className="space-y-3">
           <div>
-            <label
-              className="block text-[11px] font-semibold text-foreground mb-1"
-            >
+            <label className="block text-[11px] font-semibold text-foreground mb-1">
               Folder Name
             </label>
             <Input
@@ -1032,9 +1453,7 @@ export const MaterialsPage: React.FC = () => {
           </div>
 
           <div>
-            <label
-              className="block text-[11px] font-semibold text-foreground mb-1"
-            >
+            <label className="block text-[11px] font-semibold text-foreground mb-1">
               Council Wing / Category
             </label>
             <Select
@@ -1185,6 +1604,75 @@ export const MaterialsPage: React.FC = () => {
         onClose={() => setDeletingMaterial(null)}
       />
 
+      {/* Move Material to Folder Dialog (Tactile Parity & Accessibility) */}
+      <Dialog
+        open={moveDialogOpen}
+        onOpenChange={(isOpen) => {
+          setMoveDialogOpen(isOpen);
+          if (!isOpen) setMaterialToMove(null);
+        }}
+        title="Move Material to Folder"
+        description={
+          `Select target folder for "${materialToMove?.title || "material"}".`
+        }
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!materialToMove) return;
+            moveMaterialMutation.mutate({
+              materialId: materialToMove.id,
+              targetFolderId:
+                targetFolderSelect === "root" ? null : targetFolderSelect,
+            });
+          }}
+          className="space-y-4 pt-2"
+        >
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">
+              Destination Folder
+            </label>
+            <Select
+              value={targetFolderSelect}
+              onValueChange={setTargetFolderSelect}
+              options={[
+                { value: "root", label: "Root Vault (No Folder)" },
+                ...folderMaterials
+                  .filter((f) => f.id !== materialToMove?.id)
+                  .map((f) => ({
+                    value: f.id,
+                    label: `📁 ${f.title} (${f.category.replace(/_/g, " ")})`,
+                  })),
+              ]}
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-border">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setMoveDialogOpen(false);
+                setMaterialToMove(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={moveMaterialMutation.isPending}
+            >
+              {moveMaterialMutation.isPending && (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              )}
+              Confirm Move
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+
       {/* Portal Document Preview with Left Information Sidebar */}
       <DocumentPreviewModal
         open={Boolean(previewMaterial)}
@@ -1192,9 +1680,7 @@ export const MaterialsPage: React.FC = () => {
         title={previewMaterial?.title || ""}
         subtitle={
           previewMaterial
-            ? `${previewMaterial.category
-                .replace(/_/g, " ")
-                .toUpperCase()} • ${
+            ? `${previewMaterial.category.replace(/_/g, " ").toUpperCase()} • ${
                 isFolder(previewMaterial) ? "FOLDER" : previewMaterial.fileType
               }`
             : undefined
