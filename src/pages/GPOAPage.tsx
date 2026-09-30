@@ -67,7 +67,7 @@ const GPOA_STATUS_OPTIONS = [
   {
     value: "completed",
     label: "Completed",
-    description: "Concluded with documentation and terminal report",
+    description: "Concluded with documentation and accomplishment report",
   },
   {
     value: "cancelled",
@@ -114,6 +114,67 @@ const GPOA_STATUS_BADGES: Record<
       "bg-rose-500/10 text-rose-500 border-rose-500/20 dark:bg-rose-500/15",
   },
 };
+
+interface GPOADriveDeliverableConfig {
+  key: keyof Pick<
+    GPOAEvent,
+    | "driveFolderUrl"
+    | "proposalDocUrl"
+    | "materialsUrl"
+    | "documentationUrl"
+    | "evaluationsUrl"
+    | "terminalReportUrl"
+  >;
+  label: string;
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  colorClass: string;
+}
+
+const GPOA_DRIVE_DELIVERABLES: GPOADriveDeliverableConfig[] = [
+  {
+    key: "driveFolderUrl",
+    label: "Folder",
+    title: "Open Event Folder in Google Drive",
+    icon: Folder,
+    colorClass: "text-primary",
+  },
+  {
+    key: "proposalDocUrl",
+    label: "Proposal",
+    title: "Open Proposals & Permits in Google Drive",
+    icon: FileText,
+    colorClass: "text-amber-500",
+  },
+  {
+    key: "materialsUrl",
+    label: "Program",
+    title: "Open Program & Materials in Google Drive",
+    icon: FileSpreadsheet,
+    colorClass: "text-blue-500",
+  },
+  {
+    key: "documentationUrl",
+    label: "Docs",
+    title: "Open Documentation in Google Drive",
+    icon: Camera,
+    colorClass: "text-emerald-500",
+  },
+  {
+    key: "evaluationsUrl",
+    label: "Evals",
+    title: "Open Evaluations in Google Drive",
+    icon: BarChart2,
+    colorClass: "text-purple-500",
+  },
+  {
+    key: "terminalReportUrl",
+    label: "Accomplishment",
+    title: "Open Accomplishment Report in Google Drive",
+    icon: CheckCircle2,
+    colorClass: "text-teal-500",
+  },
+];
 
 interface EventDriveSectionProps {
   isOpen: boolean;
@@ -208,8 +269,8 @@ const EventDriveSection: React.FC<EventDriveSectionProps> = ({
     {
       id: "terminal",
       num: "05",
-      shortLabel: "Report",
-      fullLabel: "05 Terminal Report",
+      shortLabel: "Accomplishment",
+      fullLabel: "05 Accomplishment Report",
       docType: "05_Terminal_Report",
       value: terminalReportUrl,
       onChange: onTerminalReportChange,
@@ -279,10 +340,13 @@ const EventDriveSection: React.FC<EventDriveSectionProps> = ({
                   href={driveFolderUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  title="Open Main Folder in Google Drive"
                   className={
-                    "inline-flex items-center gap-1 px-2.5 py-1 text-xs " +
-                    "rounded font-semibold bg-secondary text-foreground " +
-                    "hover:text-primary transition-colors"
+                    "inline-flex items-center gap-1.5 px-2.5 py-1 text-xs " +
+                    "rounded-md font-semibold border border-border/80 " +
+                    "bg-secondary/40 text-foreground hover:bg-secondary " +
+                    "hover:border-primary/50 hover:text-primary " +
+                    "hover:underline transition-all"
                   }
                 >
                   <span>Open Folder</span>
@@ -496,7 +560,7 @@ const EventDriveSection: React.FC<EventDriveSectionProps> = ({
                   registryKey="eventTerminalReport"
                   value={terminalReportUrl}
                   onChange={onTerminalReportChange}
-                  label="Terminal Report URL"
+                  label="Accomplishment Report URL"
                   placeholder="https://docs.google.com/document/d/..."
                   onOpenSopModal={onOpenSopModal}
                 />
@@ -885,13 +949,8 @@ export const GPOAPage: React.FC = () => {
                 GPOA_STATUS_BADGES[currentStatus] ||
                 GPOA_STATUS_BADGES["proposal"];
 
-              const hasDriveAssets = Boolean(
-                event.driveFolderUrl ||
-                  event.proposalDocUrl ||
-                  event.materialsUrl ||
-                  event.documentationUrl ||
-                  event.evaluationsUrl ||
-                  event.terminalReportUrl,
+              const hasDriveAssets = GPOA_DRIVE_DELIVERABLES.some(
+                (deliv) => Boolean(event[deliv.key]),
               );
 
               return (
@@ -958,113 +1017,71 @@ export const GPOAPage: React.FC = () => {
                         {event.description}
                       </p>
 
-                      {/* Drive Deliverables Quick Links */}
+                      {/* Drive Deliverables Redirect Links */}
                       {hasDriveAssets && (
-                        <div
-                          className={
-                            "flex flex-wrap items-center gap-1.5 mt-3 pt-2.5 " +
-                            "border-t border-border/50 text-[10px]"
-                          }
-                        >
-                          <span className="font-semibold text-muted-foreground mr-0.5">
-                            Drive:
+                        <div className="mt-3 pt-2.5 border-t border-border/50">
+                          <span
+                            className={
+                              "block text-[10px] font-semibold uppercase " +
+                              "tracking-wider text-muted-foreground mb-1.5"
+                            }
+                          >
+                            Drive Deliverables
                           </span>
-                          {event.driveFolderUrl && (
-                            <a
-                              href={event.driveFolderUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="Open Main Event Folder"
-                              className={
-                                "inline-flex items-center gap-1 px-1.5 py-0.5 " +
-                                "rounded bg-secondary text-foreground " +
-                                "hover:text-primary transition-colors"
-                              }
-                            >
-                              <Folder className="w-3 h-3 text-primary" />
-                              <span>Folder</span>
-                            </a>
-                          )}
-                          {event.proposalDocUrl && (
-                            <a
-                              href={event.proposalDocUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="01 Proposals & Permits"
-                              className={
-                                "inline-flex items-center gap-1 px-1.5 py-0.5 " +
-                                "rounded bg-secondary text-foreground " +
-                                "hover:text-amber-500 transition-colors"
-                              }
-                            >
-                              <FileText className="w-3 h-3 text-amber-500" />
-                              <span>Proposal</span>
-                            </a>
-                          )}
-                          {event.materialsUrl && (
-                            <a
-                              href={event.materialsUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="02 Program & Materials"
-                              className={
-                                "inline-flex items-center gap-1 px-1.5 py-0.5 " +
-                                "rounded bg-secondary text-foreground " +
-                                "hover:text-blue-500 transition-colors"
-                              }
-                            >
-                              <FileSpreadsheet className="w-3 h-3 text-blue-500" />
-                              <span>Materials</span>
-                            </a>
-                          )}
-                          {event.documentationUrl && (
-                            <a
-                              href={event.documentationUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="03 Documentation"
-                              className={
-                                "inline-flex items-center gap-1 px-1.5 py-0.5 " +
-                                "rounded bg-secondary text-foreground " +
-                                "hover:text-emerald-500 transition-colors"
-                              }
-                            >
-                              <Camera className="w-3 h-3 text-emerald-500" />
-                              <span>Docs</span>
-                            </a>
-                          )}
-                          {event.evaluationsUrl && (
-                            <a
-                              href={event.evaluationsUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="04 Evaluations"
-                              className={
-                                "inline-flex items-center gap-1 px-1.5 py-0.5 " +
-                                "rounded bg-secondary text-foreground " +
-                                "hover:text-purple-500 transition-colors"
-                              }
-                            >
-                              <BarChart2 className="w-3 h-3 text-purple-500" />
-                              <span>Eval</span>
-                            </a>
-                          )}
-                          {event.terminalReportUrl && (
-                            <a
-                              href={event.terminalReportUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="05 Terminal Report"
-                              className={
-                                "inline-flex items-center gap-1 px-1.5 py-0.5 " +
-                                "rounded bg-secondary text-foreground " +
-                                "hover:text-teal-500 transition-colors"
-                              }
-                            >
-                              <CheckCircle2 className="w-3 h-3 text-teal-500" />
-                              <span>Terminal</span>
-                            </a>
-                          )}
+                          <div
+                            className={
+                              "flex flex-wrap items-center gap-1.5"
+                            }
+                          >
+                            {GPOA_DRIVE_DELIVERABLES.map((deliv) => {
+                              const url = event[deliv.key];
+                              if (!url) return null;
+                              const DelivIcon = deliv.icon;
+
+                              return (
+                                <a
+                                  key={deliv.key}
+                                  href={url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title={deliv.title}
+                                  aria-label={
+                                    `Open ${deliv.label} in Google Drive`
+                                  }
+                                  className={cn(
+                                    "group inline-flex items-center gap-1.5",
+                                    "px-2 py-1 rounded-md border",
+                                    "border-border/80 bg-secondary/30",
+                                    "text-[11px] font-medium text-foreground",
+                                    "hover:bg-secondary",
+                                    "hover:border-primary/50",
+                                    "hover:underline hover:text-primary",
+                                    "transition-all duration-150",
+                                    "min-h-[28px] shrink-0",
+                                    "focus-visible:outline-hidden",
+                                    "focus-visible:ring-1",
+                                    "focus-visible:ring-ring",
+                                  )}
+                                >
+                                  <DelivIcon
+                                    className={cn(
+                                      "w-3 h-3 shrink-0",
+                                      deliv.colorClass,
+                                    )}
+                                  />
+                                  <span>{deliv.label}</span>
+                                  <ExternalLink
+                                    className={
+                                      "w-2.5 h-2.5 shrink-0 opacity-50 " +
+                                      "group-hover:opacity-100 " +
+                                      "group-hover:text-primary " +
+                                      "transition-opacity"
+                                    }
+                                  />
+                                </a>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>

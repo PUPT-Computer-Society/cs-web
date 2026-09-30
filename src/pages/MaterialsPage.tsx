@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ExternalLink,
   Eye,
   FileText,
   Folder,
+  FolderOpen,
   LayoutGrid,
   List,
+  Loader2,
   Pencil,
   Plus,
   Trash2,
@@ -30,6 +32,7 @@ import { Select } from "@/components/ui/Select";
 import { DriveLinkInput } from "@/components/ui/DriveLinkInput";
 import { DriveDropzone } from "@/components/ui/DriveDropzone";
 import { getGooglePreviewUrl } from "@/lib/preview";
+import { cn } from "@/lib/utils";
 import type { Material, MaterialCategory } from "@/types";
 
 const PAGE_SIZE = 8;
@@ -60,6 +63,9 @@ export const MaterialsPage: React.FC = () => {
   const canManage = hasPermission("manage_materials");
 
   const [activeTab, setActiveTab] = useState<"all" | MaterialCategory>("all");
+  const [resourceTypeFilter, setResourceTypeFilter] = useState<
+    "all" | "folders" | "files"
+  >("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("created_at:desc");
@@ -79,6 +85,11 @@ export const MaterialsPage: React.FC = () => {
 
   // Modals
   const [createOpen, setCreateOpen] = useState(false);
+  const [createFolderOpen, setCreateFolderOpen] = useState(false);
+  const [folderTitle, setFolderTitle] = useState("");
+  const [folderCategory, setFolderCategory] =
+    useState<MaterialCategory>("academic");
+  const [folderDescription, setFolderDescription] = useState("");
   const [previewMaterial, setPreviewMaterial] = useState<Material | null>(null);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [deletingMaterial, setDeletingMaterial] = useState<Material | null>(
@@ -150,6 +161,34 @@ export const MaterialsPage: React.FC = () => {
     },
   });
 
+  const createFolderMutation = useMutation({
+    mutationFn: (newFolder: {
+      title: string;
+      category: MaterialCategory;
+      description?: string;
+    }) => api.post("/materials/folders", newFolder),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["materials"] });
+      setCreateFolderOpen(false);
+      setFolderTitle("");
+      setFolderDescription("");
+      toastSuccess("Folder created successfully.");
+    },
+    onError: (err: any) => {
+      toastError(err.message || "Failed to create folder");
+    },
+  });
+
+  const handleCreateFolder = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!folderTitle.trim()) return;
+    createFolderMutation.mutate({
+      title: folderTitle.trim(),
+      category: folderCategory,
+      description: folderDescription.trim() || undefined,
+    });
+  };
+
   const handleAddMaterial = (e: React.FormEvent) => {
     e.preventDefault();
     createMaterialMutation.mutate({
@@ -202,8 +241,27 @@ export const MaterialsPage: React.FC = () => {
     mat.driveUrl.includes("/folders/") ||
     mat.fileType.toLowerCase().includes("folder");
 
+  const folderMaterials = useMemo(
+    () => materials.filter(isFolder),
+    [materials],
+  );
+
+  const fileMaterials = useMemo(
+    () => materials.filter((m) => !isFolder(m)),
+    [materials],
+  );
+
+  const displayFiles = useMemo(() => {
+    if (resourceTypeFilter === "folders") return [];
+    return fileMaterials;
+  }, [resourceTypeFilter, fileMaterials]);
+
+  const showFoldersShelf =
+    resourceTypeFilter !== "files" && folderMaterials.length > 0;
+
+  const totalFiles = displayFiles.length;
   const startIndex = (currentPage - 1) * PAGE_SIZE;
-  const paginatedMaterials = materials.slice(
+  const paginatedFiles = displayFiles.slice(
     startIndex,
     startIndex + PAGE_SIZE,
   );
@@ -245,6 +303,64 @@ export const MaterialsPage: React.FC = () => {
                   {tab.label}
                 </button>
               ))}
+            </div>
+
+            {/* Resource Type Filter (All / Folders / Files) */}
+            <div
+              className={
+                "flex items-center gap-0.5 p-1 rounded-lg border " +
+                "border-border bg-secondary/40"
+              }
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setResourceTypeFilter("all");
+                  setCurrentPage(1);
+                }}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-xs font-medium transition-all",
+                  resourceTypeFilter === "all"
+                    ? "bg-background text-foreground shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                All ({materials.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setResourceTypeFilter("folders");
+                  setCurrentPage(1);
+                }}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-xs font-medium transition-all",
+                  "flex items-center gap-1.5",
+                  resourceTypeFilter === "folders"
+                    ? "bg-background text-amber-500 shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Folder className="w-3.5 h-3.5" />
+                <span>Folders ({folderMaterials.length})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setResourceTypeFilter("files");
+                  setCurrentPage(1);
+                }}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-xs font-medium transition-all",
+                  "flex items-center gap-1.5",
+                  resourceTypeFilter === "files"
+                    ? "bg-background text-foreground shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Files ({fileMaterials.length})</span>
+              </button>
             </div>
 
             {/* View Mode Switcher (Google Drive style Grid / List) */}
@@ -290,15 +406,32 @@ export const MaterialsPage: React.FC = () => {
           </div>
 
           {(canManage || isPresident) && (
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => setCreateOpen(true)}
-              className="text-[11px] font-semibold shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Add Resource Link
-            </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setFolderCategory(
+                    activeTab === "all" ? "academic" : activeTab,
+                  );
+                  setCreateFolderOpen(true);
+                }}
+                className="text-[11px] font-semibold"
+              >
+                <FolderOpen className="w-3.5 h-3.5 mr-1 text-amber-500" />
+                New Folder
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setCreateOpen(true)}
+                className="text-[11px] font-semibold"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" />
+                Add Material
+              </Button>
+            </div>
           )}
         </div>
 
@@ -311,15 +444,221 @@ export const MaterialsPage: React.FC = () => {
             <Skeleton className="h-64 w-full rounded-xl" />
           </div>
         ) : materials.length === 0 ? (
-          <div className="p-12 text-center rounded-xl border border-dashed border-border bg-card">
+          <div
+            className={
+              "p-12 text-center rounded-xl border border-dashed " +
+              "border-border bg-card"
+            }
+          >
             <p className="text-xs text-muted-foreground">
               No materials cataloged under this category.
             </p>
           </div>
-        ) : viewMode === "grid" ? (
-          /* Google Drive Tiled Cards with Live Preview */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {paginatedMaterials.map((mat) => {
+        ) : resourceTypeFilter === "folders" && folderMaterials.length === 0 ? (
+          <div
+            className={
+              "p-12 text-center rounded-xl border border-dashed " +
+              "border-border bg-card"
+            }
+          >
+            <Folder
+              className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40"
+            />
+            <p className="text-xs text-muted-foreground">
+              No folders cataloged under this category.
+            </p>
+          </div>
+        ) : resourceTypeFilter === "files" && fileMaterials.length === 0 ? (
+          <div
+            className={
+              "p-12 text-center rounded-xl border border-dashed " +
+              "border-border bg-card"
+            }
+          >
+            <FileText
+              className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40"
+            />
+            <p className="text-xs text-muted-foreground">
+              No individual document files cataloged under this category.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* 1. Folders Shelf */}
+            {showFoldersShelf && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <FolderOpen className="w-4 h-4 text-amber-500" />
+                    <h3
+                      className={
+                        "text-xs font-bold uppercase tracking-wider " +
+                        "text-muted-foreground"
+                      }
+                    >
+                      Folders ({folderMaterials.length})
+                    </h3>
+                  </div>
+                  <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                    Organized collections and repositories
+                  </span>
+                </div>
+
+                <div
+                  className={
+                    "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 " +
+                    "lg:grid-cols-4 gap-3"
+                  }
+                >
+                  {folderMaterials.map((mat) => {
+                    const userCanEdit = canEdit(mat);
+                    return (
+                      <Card
+                        key={mat.id}
+                        className={cn(
+                          "group border border-border/80",
+                          "hover:border-amber-500/50 hover:shadow-xs",
+                          "transition-all bg-card/70 hover:bg-card",
+                        )}
+                      >
+                        <CardContent
+                          className={
+                            "p-3 flex items-center justify-between gap-2.5"
+                          }
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setPreviewMaterial(mat)}
+                            className={
+                              "flex items-center gap-2.5 min-w-0 " +
+                              "flex-1 group/link text-left cursor-pointer"
+                            }
+                            title={`Open ${mat.title}`}
+                          >
+                            <div
+                              className={cn(
+                                "w-9 h-9 rounded-lg bg-amber-500/10 border",
+                                "border-amber-500/20 flex items-center",
+                                "justify-center text-amber-500 shrink-0",
+                                "group-hover/link:scale-105 transition-transform",
+                              )}
+                            >
+                              <Folder className="w-4 h-4 fill-amber-500/20" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h4
+                                className={cn(
+                                  "text-xs font-semibold text-foreground",
+                                  "truncate group-hover/link:text-amber-500",
+                                  "group-hover/link:underline transition-colors",
+                                )}
+                              >
+                                {mat.title}
+                              </h4>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <Badge
+                                  variant="outline"
+                                  className="text-[9px] px-1 py-0 uppercase"
+                                >
+                                  {mat.category.replace(/_/g, " ")}
+                                </Badge>
+                              </div>
+                            </div>
+                          </button>
+
+                          <div className="flex items-center gap-0.5 shrink-0">
+                            {userCanEdit && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => openEditDialog(mat)}
+                                  className={cn(
+                                    "p-1.5 rounded-md hover:bg-secondary",
+                                    "text-muted-foreground",
+                                    "hover:text-foreground transition-colors",
+                                  )}
+                                  title="Edit Folder"
+                                >
+                                  <Pencil className="w-3 h-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setDeletingMaterial(mat)}
+                                  className={cn(
+                                    "p-1.5 rounded-md",
+                                    "hover:bg-destructive/10",
+                                    "text-muted-foreground",
+                                    "hover:text-destructive transition-colors",
+                                  )}
+                                  title="Delete Folder"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setPreviewMaterial(mat)}
+                              className={cn(
+                                "p-1.5 rounded-md hover:bg-secondary",
+                                "text-muted-foreground hover:text-amber-500",
+                                "transition-colors",
+                              )}
+                              title="View Folder"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 2. Files Section */}
+            {resourceTypeFilter !== "folders" && (
+              <div className="space-y-3">
+                {showFoldersShelf && displayFiles.length > 0 && (
+                  <div
+                    className={
+                      "flex items-center gap-2 pt-2 border-t " +
+                      "border-border/60"
+                    }
+                  >
+                    <FileText className="w-4 h-4 text-primary" />
+                    <h3
+                      className={
+                        "text-xs font-bold uppercase tracking-wider " +
+                        "text-muted-foreground"
+                      }
+                    >
+                      Files & Documents ({displayFiles.length})
+                    </h3>
+                  </div>
+                )}
+
+                {displayFiles.length === 0 ? (
+                  <div
+                    className={
+                      "p-8 text-center rounded-xl border border-dashed " +
+                      "border-border bg-card"
+                    }
+                  >
+                    <p className="text-xs text-muted-foreground">
+                      No individual document files in this category.
+                    </p>
+                  </div>
+                ) : viewMode === "grid" ? (
+                  /* Google Drive Tiled Cards with Live Preview */
+                  <div
+                    className={
+                      "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 " +
+                      "xl:grid-cols-4 gap-4"
+                    }
+                  >
+                    {paginatedFiles.map((mat) => {
               const isOwner = user?.id === mat.uploadedById;
               const userCanEdit = canEdit(mat);
               const previewUrl = getGooglePreviewUrl(mat.driveUrl);
@@ -461,7 +800,7 @@ export const MaterialsPage: React.FC = () => {
         ) : (
           /* Compact List View */
           <div className="space-y-3">
-            {paginatedMaterials.map((mat) => {
+            {paginatedFiles.map((mat) => {
               const isOwner = user?.id === mat.uploadedById;
               const userCanEdit = canEdit(mat);
               const isFolderResource = isFolder(mat);
@@ -552,14 +891,18 @@ export const MaterialsPage: React.FC = () => {
                 </Card>
               );
             })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
-        {materials.length > 0 && (
+        {resourceTypeFilter !== "folders" && totalFiles > PAGE_SIZE && (
           <div className="pt-2">
             <Pagination
               currentPage={currentPage}
-              totalItems={materials.length}
+              totalItems={totalFiles}
               pageSize={PAGE_SIZE}
               onPageChange={setCurrentPage}
             />
@@ -608,13 +951,13 @@ export const MaterialsPage: React.FC = () => {
                 type="text"
                 value={fileType}
                 onChange={(e) => setFileType(e.target.value)}
-                placeholder="e.g. Figma / PDF / Drive Folder"
+                placeholder="e.g. PDF / Slides / Spreadsheet / Kit"
               />
             </div>
           </div>
 
           <DriveDropzone
-            label="Upload Resource to Google Drive"
+            label="Attach File / Document"
             moduleType="material"
             title={title}
             category={category || "academic"}
@@ -623,7 +966,9 @@ export const MaterialsPage: React.FC = () => {
             onUploaded={(url, fid, fileName) => {
               setDriveUrl(url);
               if (fid) setFileId(fid);
-              if (fileName && !fileType) {
+              if (url.includes("/folders/")) {
+                setFileType("Folder");
+              } else if (fileName && !fileType) {
                 const ext = fileName.split(".").pop()?.toUpperCase() || "FILE";
                 setFileType(`${ext} Document`);
               }
@@ -654,6 +999,79 @@ export const MaterialsPage: React.FC = () => {
             </Button>
             <Button type="submit" size="sm">
               Save Material
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+
+      {/* Create Folder Dialog */}
+      <Dialog
+        open={createFolderOpen}
+        onOpenChange={setCreateFolderOpen}
+        title="Create New Folder"
+        description={
+          "Create a new folder to organize materials and files " +
+          "under this council wing."
+        }
+      >
+        <form onSubmit={handleCreateFolder} className="space-y-3">
+          <div>
+            <label
+              className="block text-[11px] font-semibold text-foreground mb-1"
+            >
+              Folder Name
+            </label>
+            <Input
+              type="text"
+              value={folderTitle}
+              onChange={(e) => setFolderTitle(e.target.value)}
+              placeholder="e.g. CS 1101 - Lecture Slides 2026"
+              required
+            />
+          </div>
+
+          <div>
+            <label
+              className="block text-[11px] font-semibold text-foreground mb-1"
+            >
+              Council Wing / Category
+            </label>
+            <Select
+              value={folderCategory}
+              onValueChange={(val) =>
+                setFolderCategory(val as MaterialCategory)
+              }
+              options={MATERIAL_CATEGORY_OPTIONS}
+            />
+          </div>
+
+          <MarkdownTextarea
+            label="Description (Optional)"
+            value={folderDescription}
+            onChange={setFolderDescription}
+            placeholder="Folder contents, syllabus, or instructions..."
+            minHeight="min-h-[70px]"
+            maxHeight="max-h-[160px]"
+          />
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setCreateFolderOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={createFolderMutation.isPending}
+            >
+              {createFolderMutation.isPending && (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              )}
+              Create Folder
             </Button>
           </div>
         </form>
@@ -707,7 +1125,7 @@ export const MaterialsPage: React.FC = () => {
           </div>
 
           <DriveDropzone
-            label="Upload Resource to Google Drive"
+            label="Attach File / Document"
             moduleType="material"
             title={editTitle}
             category={editCategory}
@@ -716,7 +1134,9 @@ export const MaterialsPage: React.FC = () => {
             onUploaded={(url, fid, fileName) => {
               setEditDriveUrl(url);
               if (fid) setEditFileId(fid);
-              if (fileName && !editFileType) {
+              if (url.includes("/folders/")) {
+                setEditFileType("Folder");
+              } else if (fileName && !editFileType) {
                 const ext = fileName.split(".").pop()?.toUpperCase() || "FILE";
                 setEditFileType(`${ext} Document`);
               }
@@ -773,7 +1193,9 @@ export const MaterialsPage: React.FC = () => {
           previewMaterial
             ? `${previewMaterial.category
                 .replace(/_/g, " ")
-                .toUpperCase()} • ${previewMaterial.fileType}`
+                .toUpperCase()} • ${
+                isFolder(previewMaterial) ? "FOLDER" : previewMaterial.fileType
+              }`
             : undefined
         }
         url={previewMaterial?.driveUrl || ""}
@@ -782,11 +1204,15 @@ export const MaterialsPage: React.FC = () => {
             ? {
                 title: previewMaterial.title,
                 fileName: previewMaterial.title,
-                fileType: previewMaterial.fileType,
+                fileType: isFolder(previewMaterial)
+                  ? "Folder"
+                  : previewMaterial.fileType,
                 category: previewMaterial.category
                   .replace(/_/g, " ")
                   .toUpperCase(),
-                status: "Active Repository File",
+                status: isFolder(previewMaterial)
+                  ? "Active Collection Folder"
+                  : "Active Repository File",
                 dateUploaded: new Date(
                   previewMaterial.createdAt,
                 ).toLocaleDateString(undefined, {

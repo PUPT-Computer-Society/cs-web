@@ -573,7 +573,7 @@ export const DRIVE_REGISTRY: Record<string, DriveFolderEntry> = {
     ],
     namingConvention: "TR_2026_[Event]_Final_Signed.pdf",
     acceptedFormats: "Signed PDF",
-    instructions: "Comprehensive terminal report for OSA/Dean.",
+    instructions: "Comprehensive accomplishment report for OSA/Dean.",
     driveUrl:
       "https://drive.google.com/drive/folders/1tNt41dUXbYerG1eIkOHHil8MSy1y2vMR?usp=drive_link",
   },
