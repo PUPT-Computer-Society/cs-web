@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   BookOpen,
   FolderOpen,
@@ -12,6 +12,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/client";
 import { queryKeys } from "@/lib/queryClient";
+import { sortRolesByHierarchy, sortUsersByRole } from "@/lib/roleHierarchy";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -46,44 +47,51 @@ export const DirectoryPage: React.FC = () => {
   const isLoading = isRolesLoading || isUsersLoading;
 
   const getOfficersForRole = (roleId: string) => {
-    return users.filter((u) => u.role?.id === roleId && u.isActive);
+    return sortUsersByRole(
+      users.filter((u) => u.role?.id === roleId && u.isActive),
+    );
   };
 
-  const filteredRoles = roles.filter((role) => {
-    // Search query filter
-    const matchesSearch =
-      role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      role.description.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredRoles = useMemo(() => {
+    const list = roles.filter((role) => {
+      // Search query filter
+      const matchesSearch =
+        role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        role.description.toLowerCase().includes(searchQuery.toLowerCase());
 
-    if (!matchesSearch) return false;
+      if (!matchesSearch) return false;
 
-    if (activeTab === "all") return true;
-    if (activeTab === "higher_exec") {
-      return (
-        role.name === "President" ||
-        (role.name.startsWith("Vice President") &&
-          !role.name.startsWith("Assistant Vice President"))
-      );
-    }
-    if (activeTab === "lower_exec") {
-      return (
-        role.name.startsWith("Assistant Vice President") ||
-        role.name === "Delegates Representative"
-      );
-    }
-    if (activeTab === "directors") {
-      return (
-        role.name.startsWith("Director") || role.name.startsWith("Co-Director")
-      );
-    }
-    if (activeTab === "committees") {
-      return role.tier === "committee" || role.name.includes("Committee");
-    }
-    if (activeTab === "apprentices") {
-      return role.tier === "apprentice" || role.name.includes("Apprentice");
-    }
-    return true;
-  });
+      if (activeTab === "all") return true;
+      if (activeTab === "higher_exec") {
+        return (
+          role.name === "President" ||
+          (role.name.startsWith("Vice President") &&
+            !role.name.startsWith("Assistant Vice President"))
+        );
+      }
+      if (activeTab === "lower_exec") {
+        return (
+          role.name.startsWith("Assistant Vice President") ||
+          role.name === "Delegates Representative"
+        );
+      }
+      if (activeTab === "directors") {
+        return (
+          role.name.startsWith("Director") ||
+          role.name.startsWith("Co-Director")
+        );
+      }
+      if (activeTab === "committees") {
+        return role.tier === "committee" || role.name.includes("Committee");
+      }
+      if (activeTab === "apprentices") {
+        return role.tier === "apprentice" || role.name.includes("Apprentice");
+      }
+      return true;
+    });
+
+    return sortRolesByHierarchy(list);
+  }, [roles, searchQuery, activeTab]);
 
   return (
     <>
@@ -282,13 +290,24 @@ export const DirectoryPage: React.FC = () => {
 
                   <CardContent className="p-5 flex-1 flex flex-col justify-between space-y-4">
                     {/* Incumbent Officers */}
-                    {/* <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-2">
+                    <div>
+                      <span
+                        className={
+                          "text-[10px] font-bold uppercase tracking-wider " +
+                          "text-muted-foreground block mb-2"
+                        }
+                      >
                         Active Officer Roster
                       </span>
 
                       {assignedOfficers.length === 0 ? (
-                        <div className="p-2.5 rounded-lg border border-border/60 bg-muted/20 text-muted-foreground text-[11px] italic flex items-center gap-2">
+                        <div
+                          className={
+                            "p-2.5 rounded-lg border border-border/60 " +
+                            "bg-muted/20 text-muted-foreground text-[11px] " +
+                            "italic flex items-center gap-2"
+                          }
+                        >
                           <UserCheck className="w-3.5 h-3.5" />
                           <span>No assigned officer (Vacant)</span>
                         </div>
@@ -297,18 +316,45 @@ export const DirectoryPage: React.FC = () => {
                           {assignedOfficers.map((officer) => (
                             <div
                               key={officer.id}
-                              className="p-2.5 rounded-lg border border-border/70 bg-secondary/30 hover:bg-secondary/50 transition-colors flex items-center justify-between"
+                              className={
+                                "p-2.5 rounded-lg border border-border/70 " +
+                                "bg-secondary/30 hover:bg-secondary/50 " +
+                                "transition-colors flex items-center " +
+                                "justify-between"
+                              }
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="w-7 h-7 rounded-full bg-primary/10 text-primary border border-primary/25 text-[11px] font-bold flex items-center justify-center shrink-0 shadow-xs">
+                                <div
+                                  className={
+                                    "w-7 h-7 rounded-full bg-primary/10 " +
+                                    "text-primary border border-primary/25 " +
+                                    "text-[11px] font-bold flex items-center " +
+                                    "justify-center shrink-0 shadow-xs"
+                                  }
+                                >
                                   {officer.fullName.charAt(0)}
                                 </div>
                                 <div className="min-w-0">
-                                  <p className="text-xs font-semibold text-foreground truncate">
+                                  <p
+                                    className={
+                                      "text-xs font-semibold text-foreground " +
+                                      "truncate"
+                                    }
+                                  >
                                     {officer.fullName}
                                   </p>
-                                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground truncate">
-                                    <Mail className="w-2.5 h-2.5 shrink-0 text-muted-foreground/80" />
+                                  <div
+                                    className={
+                                      "flex items-center gap-1 text-[10px] " +
+                                      "text-muted-foreground truncate"
+                                    }
+                                  >
+                                    <Mail
+                                      className={
+                                        "w-2.5 h-2.5 shrink-0 " +
+                                        "text-muted-foreground/80"
+                                      }
+                                    />
                                     <span className="truncate">
                                       {officer.email}
                                     </span>
@@ -319,7 +365,7 @@ export const DirectoryPage: React.FC = () => {
                           ))}
                         </div>
                       )}
-                    </div> */}
+                    </div>
 
                     {/* Granted RBAC Capabilities */}
                     <div className="pt-2 border-t border-border">

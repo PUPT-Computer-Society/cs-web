@@ -62,6 +62,7 @@ import {
 import type { GPOAEvent, Task, TaskStatus, User } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryClient";
+import { sortUsersByRole } from "@/lib/roleHierarchy";
 import { cn } from "@/lib/utils";
 
 const TASK_SORT_OPTIONS = [
@@ -656,6 +657,8 @@ export const TasksPage: React.FC = () => {
     [],
   );
 
+  const sortedUsers = useMemo(() => sortUsersByRole(users), [users]);
+
   const assigneeFilterOptions = useMemo(
     () => [
       { value: "all", label: "All Assignees" },
@@ -670,12 +673,12 @@ export const TasksPage: React.FC = () => {
           ]
         : []),
       { value: "unassigned", label: "Unassigned (Shared)" },
-      ...users.map((u) => ({
+      ...sortedUsers.map((u) => ({
         value: String(u.id),
         label: u.fullName || u.username || `Officer #${u.id}`,
       })),
     ],
-    [users, user, officerDepartment],
+    [sortedUsers, user, officerDepartment],
   );
 
   const eventFilterOptions = useMemo(
@@ -714,25 +717,25 @@ export const TasksPage: React.FC = () => {
   const userSelectOptions = useMemo(
     () => [
       { value: "", label: "Select Active Officer..." },
-      ...users.map((u) => ({
+      ...sortedUsers.map((u) => ({
         value: String(u.id),
         label: `${u.fullName || u.username || "Officer"} (${
           u.role?.name || "Officer"
         })`,
       })),
     ],
-    [users],
+    [sortedUsers],
   );
 
   const subtaskAssigneeOptions = useMemo(
     () => [
       { value: "", label: "Assignee" },
-      ...users.map((u) => ({
+      ...sortedUsers.map((u) => ({
         value: String(u.id),
         label: u.fullName || u.username || `Officer #${u.id}`,
       })),
     ],
-    [users],
+    [sortedUsers],
   );
 
   const gpoaModalOptions = useMemo(

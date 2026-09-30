@@ -24,6 +24,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/ui/Select";
 import { MarkdownTextarea } from "@/components/ui/MarkdownTextarea";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { sortRolesByHierarchy, sortUsersByRole } from "@/lib/roleHierarchy";
 import { cn } from "@/lib/utils";
 import type { Role, User } from "@/types";
 
@@ -85,27 +86,31 @@ export const AdminPage: React.FC = () => {
   });
 
   const isLoading = isUsersLoading || isRolesLoading;
+
+  const sortedUsers = useMemo(() => sortUsersByRole(users), [users]);
+  const sortedRoles = useMemo(() => sortRolesByHierarchy(roles), [roles]);
+
   const selectedRole =
-    roles.find((r) => r.id === selectedRoleId) || roles[0] || null;
+    sortedRoles.find((r) => r.id === selectedRoleId) || sortedRoles[0] || null;
 
   const matrixRoleOptions = useMemo(
     () =>
-      roles.map((r) => ({
+      sortedRoles.map((r) => ({
         value: String(r.id),
         label: r.name,
       })),
-    [roles],
+    [sortedRoles],
   );
 
   const admitRoleOptions = useMemo(
     () => [
       { value: "", label: "Select Constitutional Portfolio..." },
-      ...roles.map((r) => ({
+      ...sortedRoles.map((r) => ({
         value: String(r.id),
         label: `${r.name} (${r.tier})`,
       })),
     ],
-    [roles],
+    [sortedRoles],
   );
 
   // New Role / Committee Modal State
@@ -263,7 +268,7 @@ export const AdminPage: React.FC = () => {
   };
 
   const startIndex = (currentPage - 1) * PAGE_SIZE;
-  const paginatedUsers = users.slice(startIndex, startIndex + PAGE_SIZE);
+  const paginatedUsers = sortedUsers.slice(startIndex, startIndex + PAGE_SIZE);
 
   if (!isPresident) {
     return (
@@ -470,10 +475,7 @@ export const AdminPage: React.FC = () => {
                               onValueChange={(val) =>
                                 handleUpdateUserRole(u.id, val)
                               }
-                              options={roles.map((r) => ({
-                                value: String(r.id),
-                                label: r.name,
-                              }))}
+                              options={matrixRoleOptions}
                               placeholder="Change Role..."
                               className="flex-1"
                               triggerClassName={cn(
@@ -652,10 +654,7 @@ export const AdminPage: React.FC = () => {
                                   onValueChange={(val) =>
                                     handleUpdateUserRole(u.id, val)
                                   }
-                                  options={roles.map((r) => ({
-                                    value: String(r.id),
-                                    label: r.name,
-                                  }))}
+                                  options={matrixRoleOptions}
                                   placeholder="Change Role..."
                                   className="w-36"
                                   triggerClassName="h-8"
