@@ -18,6 +18,7 @@ import { MaterialsPage } from "@/pages/MaterialsPage";
 import { TemplatesPage } from "@/pages/TemplatesPage";
 import { AnnouncementsPage } from "@/pages/AnnouncementsPage";
 import { ResolutionsPage } from "@/pages/ResolutionsPage";
+import { ExternalsPage } from "@/pages/ExternalsPage";
 import { TasksPage } from "@/pages/TasksPage";
 import { AdminPage } from "@/pages/AdminPage";
 import { AuditLogsPage } from "@/pages/AuditLogsPage";
@@ -51,6 +52,7 @@ export const App: React.FC = () => {
                       element={<AnnouncementsPage />}
                     />
                     <Route path="/resolutions" element={<ResolutionsPage />} />
+                    <Route path="/externals" element={<ExternalsPage />} />
                     <Route path="/tasks" element={<TasksPage />} />
                     <Route path="/admin" element={<AdminPage />} />
                     <Route

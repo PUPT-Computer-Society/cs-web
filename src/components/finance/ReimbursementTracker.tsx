@@ -712,24 +712,29 @@ export const ReimbursementTracker: React.FC = () => {
             </div>
           </div>
 
-          <DriveDropzone
-            label="Upload Proof of Official Receipt (OR)"
-            moduleType="finance"
-            title={title}
-            merchant={title}
-            amount={typeof amount === "number" ? amount : undefined}
-            category={category}
-            value={receiptUrl}
-            fileId={proofFileId}
-            onUploaded={(url, fid) => {
-              setReceiptUrl(url);
-              if (fid) setProofFileId(fid);
-            }}
-            onCleared={() => {
-              setReceiptUrl("");
-              setProofFileId(null);
-            }}
-          />
+          <div>
+            <DriveDropzone
+              label="Upload Proof of Official Receipt (OR) (Optional)"
+              moduleType="finance"
+              title={title}
+              merchant={title}
+              amount={typeof amount === "number" ? amount : undefined}
+              category={category}
+              value={receiptUrl}
+              fileId={proofFileId}
+              onUploaded={(url, fid) => {
+                setReceiptUrl(url);
+                if (fid) setProofFileId(fid);
+              }}
+              onCleared={() => {
+                setReceiptUrl("");
+                setProofFileId(null);
+              }}
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Receipt proof is optional during initial submission.
+            </p>
+          </div>
 
           <MarkdownTextarea
             label="Justification & Breakdown Notes"
@@ -815,24 +820,31 @@ export const ReimbursementTracker: React.FC = () => {
               </div>
             </div>
 
-            <DriveDropzone
-              label="Upload Proof of Official Receipt (OR)"
-              moduleType="finance"
-              title={editTitle}
-              merchant={editTitle}
-              amount={typeof editAmount === "number" ? editAmount : undefined}
-              category={editCategory}
-              value={editReceiptUrl}
-              fileId={editProofFileId}
-              onUploaded={(url, fid) => {
-                setEditReceiptUrl(url);
-                if (fid) setEditProofFileId(fid);
-              }}
-              onCleared={() => {
-                setEditReceiptUrl("");
-                setEditProofFileId(null);
-              }}
-            />
+            <div>
+              <DriveDropzone
+                label="Upload Proof of Official Receipt (OR) (Optional)"
+                moduleType="finance"
+                title={editTitle}
+                merchant={editTitle}
+                amount={
+                  typeof editAmount === "number" ? editAmount : undefined
+                }
+                category={editCategory}
+                value={editReceiptUrl}
+                fileId={editProofFileId}
+                onUploaded={(url, fid) => {
+                  setEditReceiptUrl(url);
+                  if (fid) setEditProofFileId(fid);
+                }}
+                onCleared={() => {
+                  setEditReceiptUrl("");
+                  setEditProofFileId(null);
+                }}
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Receipt proof is optional.
+              </p>
+            </div>
 
             <MarkdownTextarea
               label="Justification & Breakdown Notes"

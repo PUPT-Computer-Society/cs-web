@@ -26,7 +26,8 @@ interface DriveDropzoneProps {
     | "inventory"
     | "material"
     | "gpoa"
-    | "template";
+    | "template"
+    | "external";
   targetFolderId?: string;
   title?: string;
   docType?: string;

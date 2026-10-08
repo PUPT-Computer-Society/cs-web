@@ -199,7 +199,31 @@ export interface Material {
   fileType: string;
   uploadedById: string | null;
   folderId?: string | null;
+  facebookPostUrl?: string | null;
   createdAt: string;
+}
+
+export type ExternalDocType =
+  | "moa_mou"
+  | "certificate"
+  | "logo_branding"
+  | "sponsorship_deck"
+  | "other";
+
+export interface ExternalDocument {
+  id: string;
+  title: string;
+  partnerName: string;
+  docType: ExternalDocType | string;
+  driveUrl: string;
+  fileId?: string | null;
+  description: string;
+  validUntil?: string | null;
+  status: "active" | "pending_signing" | "expired" | string;
+  gpoaEventId?: string | null;
+  uploadedById?: string | null;
+  createdAt: string;
+  version: number;
 }
 
 export interface DocumentTemplate {

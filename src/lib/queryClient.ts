@@ -48,6 +48,8 @@ export const queryKeys = {
   announcements: (scope?: string) => ["announcements", scope || "all"] as const,
   templates: (wing?: string, search?: string) =>
     ["templates", wing || "all", search || ""] as const,
+  externals: (docType?: string, status?: string) =>
+    ["externals", docType || "all", status || "all"] as const,
   auditLogs: (params?: Record<string, unknown>) =>
     ["audit-logs", params || {}] as const,
 };

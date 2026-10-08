@@ -119,6 +119,7 @@ export const MaterialsPage: React.FC = () => {
   const [driveUrl, setDriveUrl] = useState("");
   const [fileId, setFileId] = useState<string | null>(null);
   const [fileType, setFileType] = useState("");
+  const [facebookPostUrl, setFacebookPostUrl] = useState("");
 
   // Edit Form
   const [editTitle, setEditTitle] = useState("");
@@ -129,6 +130,7 @@ export const MaterialsPage: React.FC = () => {
   const [editDriveUrl, setEditDriveUrl] = useState("");
   const [editFileId, setEditFileId] = useState<string | null>(null);
   const [editFileType, setEditFileType] = useState("Google Drive Document");
+  const [editFacebookPostUrl, setEditFacebookPostUrl] = useState("");
 
   const canEdit = (mat: Material) =>
     Boolean(user && (user.id === mat.uploadedById || canManage || isPresident));
@@ -146,6 +148,7 @@ export const MaterialsPage: React.FC = () => {
       setFileId(null);
       setCategory("");
       setFileType("");
+      setFacebookPostUrl("");
       setCreateFolderId("root");
       toastSuccess("Material uploaded successfully.");
     },
@@ -155,11 +158,17 @@ export const MaterialsPage: React.FC = () => {
   });
 
   const updateMaterialMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
-      api.put(`/materials/${id}`, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Record<string, unknown>;
+    }) => api.put(`/materials/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["materials"] });
       setEditingMaterial(null);
+      setEditFacebookPostUrl("");
       toastSuccess("Material updated successfully.");
     },
     onError: (err: any) => {
@@ -249,6 +258,7 @@ export const MaterialsPage: React.FC = () => {
       driveUrl,
       fileId: fileId || null,
       fileType: fileType || "Google Drive Document",
+      facebookPostUrl: facebookPostUrl.trim() || null,
       folderId: createFolderId === "root" ? null : createFolderId,
     });
   };
@@ -261,6 +271,7 @@ export const MaterialsPage: React.FC = () => {
     setEditDriveUrl(mat.driveUrl);
     setEditFileId(mat.fileId || null);
     setEditFileType(mat.fileType || "Google Drive Document");
+    setEditFacebookPostUrl(mat.facebookPostUrl || "");
     setEditFolderId(mat.folderId || "root");
   };
 
@@ -276,6 +287,7 @@ export const MaterialsPage: React.FC = () => {
         driveUrl: editDriveUrl,
         fileId: editFileId || null,
         fileType: editFileType,
+        facebookPostUrl: editFacebookPostUrl.trim() || null,
         folderId: editFolderId === "root" ? null : editFolderId,
       },
     });
@@ -1238,6 +1250,22 @@ export const MaterialsPage: React.FC = () => {
                                 >
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
+                                {mat.facebookPostUrl && (
+                                  <a
+                                    href={mat.facebookPostUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={cn(
+                                      "p-1 rounded-md border",
+                                      "border-blue-500/30 bg-blue-500/10",
+                                      "text-blue-500 hover:bg-blue-500/20",
+                                      "transition-colors",
+                                    )}
+                                    title="View Facebook Post"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </a>
+                                )}
                                 <a
                                   href={mat.driveUrl}
                                   target="_blank"
@@ -1423,16 +1451,47 @@ export const MaterialsPage: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={() => setPreviewMaterial(mat)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary text-[11px] font-semibold transition-colors"
+                                className={cn(
+                                  "inline-flex items-center gap-1 px-2.5 py-1",
+                                  "rounded-md border border-primary/30",
+                                  "bg-primary/10 hover:bg-primary/20",
+                                  "text-primary text-[11px] font-semibold",
+                                  "transition-colors",
+                                )}
                               >
                                 <Eye className="w-3 h-3" />
                                 <span>Preview</span>
                               </button>
+                              {mat.facebookPostUrl && (
+                                <a
+                                  href={mat.facebookPostUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={cn(
+                                    "inline-flex items-center gap-1 px-2 py-1",
+                                    "rounded-md border border-blue-500/30",
+                                    "bg-blue-500/10 text-blue-500",
+                                    "text-[11px] font-medium",
+                                    "hover:bg-blue-500/20 transition-colors",
+                                  )}
+                                  title="View Facebook Post"
+                                >
+                                  <span>FB</span>
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              )}
                               <a
                                 href={mat.driveUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-border bg-background text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                                className={cn(
+                                  "inline-flex items-center gap-1 px-2 py-1",
+                                  "rounded-md border border-border",
+                                  "bg-background text-[11px] font-medium",
+                                  "text-muted-foreground",
+                                  "hover:text-foreground hover:bg-secondary",
+                                  "transition-colors",
+                                )}
                               >
                                 <span>Drive</span>
                                 <ExternalLink className="w-3 h-3" />
@@ -1549,6 +1608,20 @@ export const MaterialsPage: React.FC = () => {
               setFileId(null);
             }}
           />
+
+          <div>
+            <label
+              className="block text-[11px] font-semibold text-foreground mb-1"
+            >
+              Facebook Post Link (Optional)
+            </label>
+            <Input
+              type="url"
+              value={facebookPostUrl}
+              onChange={(e) => setFacebookPostUrl(e.target.value)}
+              placeholder="https://www.facebook.com/ComputerSociety/posts/..."
+            />
+          </div>
 
           <MarkdownTextarea
             label="Description"
@@ -1737,6 +1810,20 @@ export const MaterialsPage: React.FC = () => {
               setEditFileId(null);
             }}
           />
+
+          <div>
+            <label
+              className="block text-[11px] font-semibold text-foreground mb-1"
+            >
+              Facebook Post Link (Optional)
+            </label>
+            <Input
+              type="url"
+              value={editFacebookPostUrl}
+              onChange={(e) => setEditFacebookPostUrl(e.target.value)}
+              placeholder="https://www.facebook.com/ComputerSociety/posts/..."
+            />
+          </div>
 
           <MarkdownTextarea
             label="Description"
