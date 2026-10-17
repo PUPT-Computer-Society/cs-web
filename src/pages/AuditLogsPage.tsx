@@ -813,6 +813,42 @@ export const AuditLogsPage: React.FC = () => {
                     {selectedLog.actorId || "N/A"}
                   </span>
                 </div>
+                <div
+                  className={cn(
+                    "p-2.5 rounded-xl bg-secondary/40 border",
+                    "border-border/50",
+                  )}
+                >
+                  <span className="text-muted-foreground font-medium block">
+                    Status Code
+                  </span>
+                  <span
+                    className={cn(
+                      "font-mono font-bold",
+                      selectedLog.statusCode >= 500
+                        ? "text-rose-500"
+                        : selectedLog.statusCode >= 400
+                          ? "text-amber-500"
+                          : "text-emerald-500",
+                    )}
+                  >
+                    {selectedLog.statusCode}
+                  </span>
+                </div>
+                <div
+                  className={cn(
+                    "p-2.5 rounded-xl bg-secondary/40 border",
+                    "border-border/50",
+                  )}
+                >
+                  <span className="text-muted-foreground font-medium block">
+                    Severity / Category
+                  </span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {getSeverityBadge(selectedLog.severity)}
+                    {getCategoryBadge(selectedLog.category)}
+                  </div>
+                </div>
               </div>
 
               {selectedLog.userAgent && (
