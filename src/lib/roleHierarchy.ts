@@ -5,31 +5,62 @@
  */
 
 export const ROLE_HIERARCHY_ORDER: readonly string[] = [
-  // 1. Higher Executive Governance
+  // 1. Higher Executive Governance (Art. X Sec. 3)
   "President",
   "Vice President for Internal Affairs",
   "Vice President for External Affairs",
   "Vice President for Records",
   "Vice President for Finance",
-  "Vice President for Audit",
   "Vice President for Research and Documentation",
-  "Vice President for Communications",
 
-  // 2. Lower Executive Governance
+  // 2. Lower Executive Governance (Art. X Sec. 3)
   "Assistant Vice President for Records",
   "Assistant Vice President for Finance",
   "Assistant Vice President for Research and Documentation",
+  "Vice President for Audit",
+  "Vice President for Communications",
   "Assistant Vice President for Communications",
   "Delegates Representative",
 
   // 3. Board of Directors
-  "Director for Academics",
-  "Co-Director for Academics",
   "Director for Creatives",
   "Co-Director for Creatives",
+  "Director for Academics",
+  "Co-Director for Academics",
   "Director for Sports",
   "Co-Director for Sports",
 ] as const;
+
+export const HIGHER_EXEC_ROLES: ReadonlySet<string> = new Set([
+  "president",
+  "vice president for internal affairs",
+  "vice president for external affairs",
+  "vice president for records",
+  "vice president for finance",
+  "vice president for research and documentation",
+]);
+
+export const LOWER_EXEC_ROLES: ReadonlySet<string> = new Set([
+  "assistant vice president for records",
+  "assistant vice president for finance",
+  "assistant vice president for research and documentation",
+  "vice president for audit",
+  "vice president for communications",
+  "vice president for communication",
+  "assistant vice president for communications",
+  "assistant vice president for communication",
+  "delegates representative",
+]);
+
+export function isHigherExecRole(roleName?: string | null): boolean {
+  if (!roleName) return false;
+  return HIGHER_EXEC_ROLES.has(roleName.trim().toLowerCase());
+}
+
+export function isLowerExecRole(roleName?: string | null): boolean {
+  if (!roleName) return false;
+  return LOWER_EXEC_ROLES.has(roleName.trim().toLowerCase());
+}
 
 export const ROLE_HIERARCHY_MAP = new Map<string, number>(
   ROLE_HIERARCHY_ORDER.map((name, index) => [name.toLowerCase(), index + 1]),
@@ -46,9 +77,8 @@ export function getRoleRank(
 
   // Fallback heuristic based on titles and tiers
   if (normalized === "president") return 1;
-  if (normalized.startsWith("vice president")) return 50;
-  if (normalized.startsWith("assistant vice president")) return 100;
-  if (normalized.includes("representative")) return 150;
+  if (isHigherExecRole(normalized)) return 50;
+  if (isLowerExecRole(normalized)) return 100;
   if (normalized.startsWith("director")) return 200;
   if (normalized.startsWith("co-director")) return 250;
 

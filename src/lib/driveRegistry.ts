@@ -262,7 +262,10 @@ export const DRIVE_REGISTRY: Record<string, DriveFolderEntry> = {
     wingName: "03_EXTERNAL_AFFAIRS_&_COMMS",
     folderName: "01_Partnerships_&_MoU",
     path: "03_EXTERNAL_AFFAIRS_&_COMMS/01_Partnerships_&_MoU",
-    responsibleRoles: ["VP for External Affairs", "AVP External"],
+    responsibleRoles: [
+      "VP for External Affairs",
+      "External Affairs Apprentice",
+    ],
     namingConvention: "MOU_2026_[PartnerCompany]_[Scope].pdf",
     acceptedFormats: "PDF, Signed Scans",
     instructions: "Signed Memoranda of Understanding and partner contracts.",

@@ -12,7 +12,12 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/client";
 import { queryKeys } from "@/lib/queryClient";
-import { sortRolesByHierarchy, sortUsersByRole } from "@/lib/roleHierarchy";
+import {
+  isHigherExecRole,
+  isLowerExecRole,
+  sortRolesByHierarchy,
+  sortUsersByRole,
+} from "@/lib/roleHierarchy";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -63,17 +68,10 @@ export const DirectoryPage: React.FC = () => {
 
       if (activeTab === "all") return true;
       if (activeTab === "higher_exec") {
-        return (
-          role.name === "President" ||
-          (role.name.startsWith("Vice President") &&
-            !role.name.startsWith("Assistant Vice President"))
-        );
+        return isHigherExecRole(role.name);
       }
       if (activeTab === "lower_exec") {
-        return (
-          role.name.startsWith("Assistant Vice President") ||
-          role.name === "Delegates Representative"
-        );
+        return isLowerExecRole(role.name);
       }
       if (activeTab === "directors") {
         return (
@@ -221,10 +219,8 @@ export const DirectoryPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
             {filteredRoles.map((role) => {
               const assignedOfficers = getOfficersForRole(role.id);
-              const isHigher =
-                role.name === "President" ||
-                (role.name.startsWith("Vice President") &&
-                  !role.name.startsWith("Assistant Vice President"));
+              const isHigher = isHigherExecRole(role.name);
+              const isLower = isLowerExecRole(role.name);
               const isDirector =
                 role.name.startsWith("Director") ||
                 role.name.startsWith("Co-Director");
@@ -268,7 +264,9 @@ export const DirectoryPage: React.FC = () => {
                               ? "Board of Directors"
                               : isHigher
                                 ? "Higher Executive"
-                                : "Lower Executive"}
+                                : isLower
+                                  ? "Lower Executive"
+                                  : "Council Officer"}
                       </Badge>
 
                       {role.committee && (
